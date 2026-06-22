@@ -33,7 +33,10 @@ class VisionPipeline:
             "ocr": self.plate_scanner.backend if self.plate_scanner else "Disabled",
         }
 
-    def process(self, frame, frame_number, camera_fps):
+    def process(
+        self, frame, frame_number, camera_fps,
+        media_timestamp_seconds=None
+    ):
         detections = self.detector.detect(frame)
         objects = (
             self.tracker.update(detections, frame)
@@ -43,7 +46,11 @@ class VisionPipeline:
         movement, score = self.movement.detect(frame)
         vehicles = [item for item in objects if item["label"] in VEHICLES]
         plates = []
-        now = time.monotonic()
+        now = (
+            media_timestamp_seconds
+            if media_timestamp_seconds is not None
+            else time.monotonic()
+        )
         if (
             self.plate_scanner
             and vehicles

@@ -7,9 +7,15 @@ from uuid import uuid4
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_DIR / "data"
 VIDEOS_DIR = DATA_DIR / "videos"
+PROCESSED_VIDEOS_DIR = VIDEOS_DIR / "processed"
 LOGS_DIR = DATA_DIR / "logs"
 SNAPSHOTS_DIR = DATA_DIR / "snapshots"
 EXPORTS_DIR = DATA_DIR / "exports"
+INCIDENTS_DIR = DATA_DIR / "incidents"
+STOLEN_VEHICLES_DIR = DATA_DIR / "stolen_vehicles"
+GPS_DIR = DATA_DIR / "gps"
+CONTACTS_DIR = DATA_DIR / "contacts"
+PROFILE_DIR = DATA_DIR / "profile"
 
 
 def utc_now():
@@ -18,7 +24,18 @@ def utc_now():
 
 class VideoService:
     def __init__(self):
-        for path in (VIDEOS_DIR, LOGS_DIR, SNAPSHOTS_DIR, EXPORTS_DIR):
+        for path in (
+            VIDEOS_DIR,
+            PROCESSED_VIDEOS_DIR,
+            LOGS_DIR,
+            SNAPSHOTS_DIR,
+            EXPORTS_DIR,
+            INCIDENTS_DIR,
+            STOLEN_VEHICLES_DIR,
+            GPS_DIR,
+            CONTACTS_DIR,
+            PROFILE_DIR,
+        ):
             path.mkdir(parents=True, exist_ok=True)
 
     def create_record(self, camera_id, fps, resolution):
@@ -29,6 +46,8 @@ class VideoService:
             "video_id": video_id,
             "filename": filename,
             "video_path": str(VIDEOS_DIR / filename),
+            "original_video_path": str(VIDEOS_DIR / filename),
+            "processed_video_path": None,
             "started_at": utc_now(),
             "ended_at": None,
             "duration_seconds": 0,
@@ -36,6 +55,8 @@ class VideoService:
             "fps": float(fps),
             "resolution": resolution,
             "recording_status": "Recording",
+            "processing_status": "Waiting for recording to finish",
+            "processing_error": None,
             "sync_status": "Not synced",
             "objects_summary": {
                 "people_count_max": 0,
@@ -53,9 +74,28 @@ class VideoService:
 
     def save(self, record):
         path = LOGS_DIR / f'{record["video_id"]}.json'
-        temporary = path.with_suffix(".json.tmp")
-        temporary.write_text(json.dumps(record, indent=2), encoding="utf-8")
-        temporary.replace(path)
+        self._write_json(path, record)
+        video_path = Path(
+            record.get("original_video_path") or record["video_path"]
+        )
+        sidecar_path = video_path.with_suffix(".json")
+        self._write_json(sidecar_path, record)
+
+    @staticmethod
+    def _write_json(path, record):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = path.with_suffix(path.suffix + ".tmp")
+        payload = json.dumps(record, indent=2)
+        temporary.write_text(payload, encoding="utf-8")
+        try:
+            temporary.replace(path)
+        except PermissionError:
+            # OneDrive can briefly lock a newly-created temporary file.
+            path.write_text(payload, encoding="utf-8")
+            try:
+                temporary.unlink()
+            except OSError:
+                pass
 
     def load(self, video_id):
         return json.loads(

@@ -39,6 +39,7 @@ class DetectionLogService:
                 item["label"] for item in event["objects"]
             )
             for item in event["objects"]:
+                item["video_id"] = self.record["video_id"]
                 tracking_id = item.get("tracking_id")
                 if tracking_id is not None:
                     self._tracked_labels[int(tracking_id)] = item["label"]
@@ -65,3 +66,22 @@ class DetectionLogService:
         if serialized:
             with self.events_path.open("a", encoding="utf-8") as file:
                 file.write("\n".join(serialized) + "\n")
+
+    def replace_all(self, entries):
+        self.record["detections"] = []
+        self.record["objects_summary"] = {
+            "people_count_max": 0,
+            "vehicle_count_max": 0,
+            "plates_detected": [],
+            "movement_events": 0,
+            "object_counts": {},
+            "unique_tracking_ids": [],
+            "snapshots": 0,
+        }
+        self._previous_movement = False
+        self._tracked_labels = {}
+        try:
+            self.events_path.unlink()
+        except FileNotFoundError:
+            pass
+        self.add_many(entries)

@@ -34,6 +34,9 @@ def videos_dataframe(videos):
                 ),
                 "Movement events": summary.get("movement_events", 0),
                 "Sync status": video.get("sync_status", "Not synced"),
+                "Processing status": video.get(
+                    "processing_status", "Not processed"
+                ),
             }
         )
     return pd.DataFrame(rows)

@@ -1,4 +1,5 @@
 import copy
+import atexit
 import os
 import queue
 import threading
@@ -9,12 +10,13 @@ from pathlib import Path
 import cv2
 
 from core.annotation import annotate_frame
+from core.video_io import finalize_video_file, open_mp4_writer
 from core.vision_pipeline import VisionPipeline
 from services.detection_log_service import DetectionLogService
 from services.video_service import VideoService
 
 
-class OpenCVVisionRecorder:
+class CameraManager:
     def __init__(self, settings, model=None, ocr_reader=None):
         self.settings = settings
         self.pipeline = VisionPipeline(
@@ -60,7 +62,9 @@ class OpenCVVisionRecorder:
             self.record, settings["save_snapshots"]
         )
         self.raw_path = Path(self.record["video_path"]).with_suffix(".raw.mp4")
-        self.writer = self._open_writer()
+        self.writer, self.video_codec = self._open_writer()
+        self.record["video_codec"] = self.video_codec
+        self.video_service.save(self.record)
         self.active = True
         self.started = time.monotonic()
         self.frame_number = 0
@@ -68,7 +72,11 @@ class OpenCVVisionRecorder:
         self._latest_frame = None
         self._latest_frame_number = 0
         self._latest_event = None
+        self._detection_entries = []
+        self._flushed_detection_count = 0
         self._state_lock = threading.Lock()
+        self._detection_lock = threading.Lock()
+        self._flush_lock = threading.Lock()
         self._stop = threading.Event()
         self._ai_queue = queue.Queue(
             maxsize=max(1, int(settings.get("ai_queue_maxsize", 1)))
@@ -110,6 +118,7 @@ class OpenCVVisionRecorder:
             self._log_thread,
         ):
             thread.start()
+        atexit.register(self._stop_on_exit)
 
     @property
     def elapsed(self):
@@ -149,16 +158,15 @@ class OpenCVVisionRecorder:
         return cap
 
     def _open_writer(self):
-        writer = cv2.VideoWriter(
-            str(self.raw_path),
-            cv2.VideoWriter_fourcc(*"mp4v"),
-            self.recording_fps,
-            (self.actual_width, self.actual_height),
-        )
-        if not writer.isOpened():
+        try:
+            return open_mp4_writer(
+                self.raw_path,
+                self.recording_fps,
+                (self.actual_width, self.actual_height),
+            )
+        except RuntimeError as exc:
             self.cap.release()
-            raise RuntimeError("Could not create the recording file.")
-        return writer
+            raise RuntimeError("Could not create the recording file.") from exc
 
     def _capture_loop(self):
         fps_started, fps_frames = time.monotonic(), 0
@@ -260,7 +268,17 @@ class OpenCVVisionRecorder:
                     ai_frame, number, self.metrics["camera_fps"]
                 )
                 event = self._scale_event(event, original_frame, ai_frame)
+                event["video_id"] = self.record["video_id"]
                 event["timestamp"] = datetime.now(timezone.utc).isoformat()
+                for item in event.get("objects", []):
+                    item["video_id"] = self.record["video_id"]
+                event["tracking_ids"] = sorted(
+                    {
+                        item["tracking_id"]
+                        for item in event.get("objects", [])
+                        if item.get("tracking_id") is not None
+                    }
+                )
                 annotated = annotate_frame(
                     original_frame.copy(),
                     event["objects"],
@@ -278,15 +296,12 @@ class OpenCVVisionRecorder:
                     self._metrics["ai_fps"] = count / max(
                         time.monotonic() - started, 0.001
                     )
-                if (
-                    event["objects"]
-                    or event["movement_detected"]
-                    or event["plates"]
-                ):
-                    try:
-                        self._log_queue.put_nowait((event, annotated))
-                    except queue.Full:
-                        pass
+                with self._detection_lock:
+                    self._detection_entries.append((event, annotated))
+                try:
+                    self._log_queue.put_nowait(True)
+                except queue.Full:
+                    pass
             except Exception as exc:
                 with self._state_lock:
                     self.latest_error = f"AI frame {number}: {exc}"
@@ -294,7 +309,7 @@ class OpenCVVisionRecorder:
                 self._ai_queue.task_done()
 
     def _log_loop(self):
-        pending, last_flush = [], time.monotonic()
+        last_flush = time.monotonic()
         interval = float(self.settings["log_flush_interval_seconds"])
         while (
             not self._stop.is_set()
@@ -302,20 +317,31 @@ class OpenCVVisionRecorder:
             or not self._log_queue.empty()
         ):
             try:
-                pending.append(self._log_queue.get(timeout=0.2))
+                self._log_queue.get(timeout=0.2)
+                self._log_queue.task_done()
             except queue.Empty:
                 pass
-            should_flush = pending and (
+            should_flush = (
                 time.monotonic() - last_flush >= interval
                 or (self._stop.is_set() and not self._ai_thread.is_alive())
             )
             if should_flush:
-                self.log_service.add_many(pending)
-                self.video_service.save(self.record)
-                for _ in pending:
-                    self._log_queue.task_done()
-                pending.clear()
+                self._flush_detections()
                 last_flush = time.monotonic()
+
+    def _flush_detections(self):
+        with self._flush_lock:
+            with self._detection_lock:
+                pending = self._detection_entries[
+                    self._flushed_detection_count:
+                ]
+                if not pending:
+                    return
+                pending = list(pending)
+            self.log_service.add_many(pending)
+            self.video_service.save(self.record)
+            with self._detection_lock:
+                self._flushed_detection_count += len(pending)
 
     def get_dashboard_state(self):
         with self._state_lock:
@@ -348,6 +374,7 @@ class OpenCVVisionRecorder:
         self._sample_thread.join(timeout=2)
         self._ai_thread.join(timeout=15)
         self._log_thread.join(timeout=8)
+        self._flush_detections()
         self.writer.release()
         self.record["ended_at"] = datetime.now(timezone.utc).isoformat()
         self.record["duration_seconds"] = round(self.elapsed, 1)
@@ -360,9 +387,21 @@ class OpenCVVisionRecorder:
         }
         final_path = Path(self.record["video_path"])
         if self.raw_path.exists() and self.raw_path.stat().st_size:
-            self.raw_path.replace(final_path)
+            finalize_video_file(self.raw_path, final_path)
             self.record["recording_status"] = "Complete"
         else:
             self.record["recording_status"] = "No camera frames received"
         self.video_service.save(self.record)
+        try:
+            atexit.unregister(self._stop_on_exit)
+        except Exception:
+            pass
         return self.record
+
+    def _stop_on_exit(self):
+        if self.active:
+            self.stop()
+
+
+# Keep the old import name working for integrations that already use it.
+OpenCVVisionRecorder = CameraManager

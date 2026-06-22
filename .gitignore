@@ -210,8 +210,14 @@ Ultralytics/
 output_processed.mp4
 settings.json
 data/videos/*.mp4
+data/videos/
+!data/videos/
+!data/videos/.gitkeep
+!data/videos/processed/
+!data/videos/processed/.gitkeep
 data/logs/*.json
 data/logs/*.jsonl
 data/snapshots/**
+data/snapshots/
 data/exports/**
 !data/**/.gitkeep
