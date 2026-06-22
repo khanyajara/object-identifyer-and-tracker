@@ -13,7 +13,7 @@
   "recording_status": "Complete",
   "processing_status": "Processed video saved successfully.",
   "processing_error": null,
-  "sync_status": "Not synced",
+  "sync_status": "Uploading processed video",
   "objects_summary": {
     "people_count_max": 2,
     "vehicle_count_max": 0,
@@ -9111,5 +9111,6 @@
     "ai_dropped_samples": 44
   },
   "processed_video_codec": "avc1",
-  "processed_frame_count": 323
+  "processed_frame_count": 323,
+  "sync_error": null
 }

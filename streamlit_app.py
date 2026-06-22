@@ -2,6 +2,7 @@ import base64
 import html
 import json
 import os
+import threading
 from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -14,13 +15,13 @@ from core.opencv_recorder import CameraManager
 from core.ocr import load_ocr_reader
 from core.video_io import is_playable_video_path
 from services.contact_service import ContactService
+from services.firebase_service import FirebaseService
 from services.gps_service import GPSService
 from services.incident_service import INCIDENT_TYPES, IncidentService
 from services.report_service import build_summary, videos_dataframe
 from services.storage_service import StorageService
 from services.stolen_vehicle_service import StolenVehicleService
 from services.supabase_service import SupabaseService
-from services.sync_service import SyncService
 from services.vehicle_profile_service import VehicleProfileService
 from services.video_processing_service import VideoProcessingService
 from services.video_service import VideoService
@@ -39,6 +40,8 @@ ENV_SETTING_KEYS = {
     "VITE_SUPABASE_URL": "supabase_url",
     "VITE_SUPABASE_ANON_KEY": "supabase_anon_key",
     "VITE_SUPABASE_BUCKET": "supabase_bucket",
+    "FIREBASE_PUSH_URL": "firebase_push_url",
+    "FIREBASE_API_KEY": "firebase_api_key",
 }
 
 
@@ -95,6 +98,8 @@ DEFAULTS = {
     "supabase_url": "",
     "supabase_anon_key": "",
     "supabase_bucket": "videos",
+    "firebase_push_url": "",
+    "firebase_api_key": "",
 }
 
 
@@ -297,8 +302,6 @@ def styles():
         .timeline-track{height:14px;border-radius:999px;background:linear-gradient(90deg,#009a9a 0 18%,#d6a400 18% 24%,#008e91 24% 45%,#0ea5e9 45% 58%,#ef4444 58% 60%,#008e91 60% 100%);box-shadow:0 0 18px rgba(34,211,238,.16)}
         .list-row{display:flex;justify-content:space-between;gap:1rem;border-bottom:1px solid rgba(148,163,184,.12);padding:.72rem 0}
         .list-row:last-child{border-bottom:0}
-        .evidence-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:.85rem;margin:.8rem 0 1rem}
-        .evidence-card{border:1px solid rgba(34,211,238,.22);border-radius:18px;background:linear-gradient(180deg,rgba(3,24,36,.78),rgba(2,10,16,.78));padding:1rem;box-shadow:0 18px 42px rgba(0,0,0,.25)}
         .evidence-thumb{height:96px;border-radius:14px;border:1px solid rgba(34,211,238,.22);background:radial-gradient(circle at 50% 20%,rgba(34,211,238,.18),transparent 42%),linear-gradient(135deg,#020617,#082f49);display:grid;place-items:center;color:#67e8f9;font-weight:900;letter-spacing:.18em}
         .archive-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.85rem;margin:.8rem 0 1rem}
         .archive-card{border:1px solid rgba(34,211,238,.22);border-radius:18px;background:rgba(3,18,28,.72);padding:1rem}
@@ -542,11 +545,14 @@ def render_video_player(record):
             ]
             st.dataframe(pd.DataFrame(checked), width="stretch")
         return None
+    version_key = f'video-version-{record["video_id"]}'
+    if st.session_state.get(version_key) not in versions:
+        st.session_state[version_key] = versions[0]
     version = st.radio(
         "Video version",
         versions,
         horizontal=True,
-        key=f'video-version-{record["video_id"]}',
+        key=version_key,
     )
     path = processed_path if version == "Processed" else original_path
     try:
@@ -853,6 +859,59 @@ def video_matches_filter(video, selected_filter):
     return True
 
 
+def upload_processed_video_background(video_id, settings):
+    service = VideoService()
+    try:
+        service.update_sync_fields(video_id, sync_status="Uploading processed video", sync_error=None)
+        record = service.load(video_id)
+        upload = SupabaseService(
+            settings.get("supabase_url", ""),
+            settings.get("supabase_anon_key", ""),
+            settings.get("supabase_bucket", "videos"),
+        ).upload_processed_video(record)
+
+        firebase_result = FirebaseService(
+            settings.get("firebase_push_url", ""),
+            settings.get("firebase_api_key", ""),
+        ).push_video_link(record, upload["public_url"])
+
+        service.update_sync_fields(
+            video_id,
+            sync_status="Synced",
+            synced_at=datetime.now().isoformat(),
+            supabase_bucket=upload["bucket"],
+            supabase_object_name=upload["object_name"],
+            supabase_processed_url=upload["public_url"],
+            firebase_push_url=settings.get("firebase_push_url", ""),
+            firebase_push_result=firebase_result,
+            sync_error=None,
+        )
+    except Exception as exc:
+        service.update_sync_fields(
+            video_id,
+            sync_status="Sync failed",
+            sync_error=str(exc),
+        )
+
+
+def queue_processed_video_upload(record, settings):
+    processed_path = record.get("processed_video_path")
+    if not processed_path:
+        raise RuntimeError("Only processed videos can be uploaded. Generate the processed video first.")
+    if not Path(processed_path).exists():
+        raise RuntimeError(f"Processed video file not found: {processed_path}")
+    if not settings.get("supabase_url") or not settings.get("supabase_anon_key"):
+        raise RuntimeError("Configure Supabase URL and anon key before syncing.")
+
+    VideoService().update_sync_fields(record["video_id"], sync_status="Upload queued", sync_error=None)
+    worker = threading.Thread(
+        target=upload_processed_video_background,
+        args=(record["video_id"], dict(settings)),
+        daemon=True,
+    )
+    worker.start()
+
+
 def videos_page(service, settings):
     header(
         "Evidence library",
@@ -883,34 +942,25 @@ def videos_page(service, settings):
         if video_matches_query(video, query)
         and video_matches_filter(video, selected_filter)
     ]
-    evidence_cards = []
-    for video in filtered[:4]:
-        summary = video.get("objects_summary", {})
-        filename = esc(video.get("filename", "Recording"))
-        status = esc(video.get("processing_status", video.get("sync_status", "Local evidence")))
-        started = esc(video.get("started_at", "")[:19])
-        plates = ", ".join(summary.get("plates_detected", [])) or "No plates"
-        evidence_cards.append(
-            f"""
-            <div class="evidence-card">
-              <div class="evidence-thumb">VIDEO</div>
-              <div class="panel-title" style="margin:.8rem 0 .35rem">{filename}</div>
-              <div class="list-row"><span>Started</span><span>{started}</span></div>
-              <div class="list-row"><span>Duration</span><span>{format_duration(video.get("duration_seconds", 0))}</span></div>
-              <div class="list-row"><span>Objects</span><span>{sum(summary.get("object_counts", {}).values())}</span></div>
-              <div class="list-row"><span>Plates</span><span>{esc(plates)}</span></div>
-              <div class="badge badge-blue" style="margin-top:.65rem">{status}</div>
-            </div>
-            """
-        )
-    if evidence_cards:
-        st.markdown(
-            '<div class="panel-title">Evidence Library Video Cards</div>'
-            + '<div class="evidence-grid">'
-            + "".join(evidence_cards)
-            + "</div>",
-            unsafe_allow_html=True,
-        )
+    if filtered:
+        st.markdown('<div class="panel-title">Evidence Library Video Cards</div>', unsafe_allow_html=True)
+        for row_start in range(0, min(len(filtered), 4), 2):
+            cols = st.columns(2)
+            for col, video in zip(cols, filtered[row_start:row_start + 2]):
+                summary = video.get("objects_summary", {})
+                plates = ", ".join(summary.get("plates_detected", [])) or "No plates"
+                with col:
+                    with st.container(border=True):
+                        st.markdown('<div class="evidence-thumb">VIDEO</div>', unsafe_allow_html=True)
+                        st.markdown(f'#### {video.get("filename", "Recording")}')
+                        st.caption(video.get("processing_status", video.get("sync_status", "Local evidence")))
+                        c1, c2 = st.columns(2)
+                        c1.metric("Duration", format_duration(video.get("duration_seconds", 0)))
+                        c2.metric("Objects", sum(summary.get("object_counts", {}).values()))
+                        st.write(f'**Started:** {video.get("started_at", "")[:19]}')
+                        st.write(f"**Plates:** {plates}")
+                        if video.get("supabase_processed_url"):
+                            st.link_button("Open uploaded clip", video["supabase_processed_url"], width="stretch")
     st.dataframe(videos_dataframe(filtered), width="stretch", hide_index=True)
     if not filtered:
         st.warning("No videos match that search/filter.")
@@ -940,11 +990,17 @@ def videos_page(service, settings):
                 ("Tracked IDs", len(tracking_ids), "Unique objects"),
             ]
         )
-        if st.button("Sync this video", width="stretch"):
+        if selected.get("supabase_processed_url"):
+            st.link_button("Open Supabase processed video", selected["supabase_processed_url"], width="stretch")
+        if selected.get("firebase_push_url"):
+            st.caption(f'Firebase link target: {selected["firebase_push_url"]}')
+        if selected.get("sync_error"):
+            st.error(selected["sync_error"])
+        if st.button("Upload processed video", width="stretch"):
             try:
-                SyncService(settings["sync_url"], settings["sync_api_key"]).sync(selected)
-                service.mark_synced(selected["video_id"], "Synced")
-                st.success("Synced.")
+                queue_processed_video_upload(selected, settings)
+                st.success("Processed video upload queued. You can keep using the app while it runs.")
+                st.rerun()
             except Exception as exc:
                 st.error(str(exc))
     st.markdown("</div>", unsafe_allow_html=True)
@@ -1330,6 +1386,8 @@ def settings_page(settings):
             supabase_url = st.text_input("Supabase URL placeholder", settings.get("supabase_url", ""))
             supabase_key = st.text_input("Supabase anon key placeholder", settings.get("supabase_anon_key", ""), type="password")
             supabase_bucket = st.text_input("Supabase bucket placeholder", settings.get("supabase_bucket", "videos"))
+            firebase_push_url = st.text_input("Firebase push URL", settings.get("firebase_push_url", ""))
+            firebase_api_key = st.text_input("Firebase API key placeholder", settings.get("firebase_api_key", ""), type="password")
         if st.form_submit_button("Save settings", type="primary"):
             updated = {
                 **settings,
@@ -1354,6 +1412,8 @@ def settings_page(settings):
                 "supabase_url": supabase_url,
                 "supabase_anon_key": supabase_key,
                 "supabase_bucket": supabase_bucket,
+                "firebase_push_url": firebase_push_url,
+                "firebase_api_key": firebase_api_key,
             }
             save_settings(updated)
             st.success("Settings saved.")
@@ -1377,19 +1437,23 @@ def main():
     settings = load_settings()
     service = VideoService()
     sidebar_brand("Dash Cam")
+    nav_options = [
+        "Live Dash Cam",
+        "Videos",
+        "Incidents",
+        "Stolen Vehicles",
+        "GPS History",
+        "Emergency Contacts",
+        "Vehicle Profile",
+        "Analytics",
+        "Settings",
+    ]
+    if st.session_state.get("main_navigation") not in nav_options:
+        st.session_state.main_navigation = nav_options[0]
     page = st.sidebar.radio(
         "Workspace",
-        [
-            "Live Dash Cam",
-            "Videos",
-            "Incidents",
-            "Stolen Vehicles",
-            "GPS History",
-            "Emergency Contacts",
-            "Vehicle Profile",
-            "Analytics",
-            "Settings",
-        ],
+        nav_options,
+        key="main_navigation",
         label_visibility="collapsed",
     )
     sidebar_status(settings)

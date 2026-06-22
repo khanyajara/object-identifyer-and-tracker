@@ -118,3 +118,9 @@ class VideoService:
         record["sync_status"] = status
         self.save(record)
         return record
+
+    def update_sync_fields(self, video_id, **fields):
+        record = self.load(video_id)
+        record.update(fields)
+        self.save(record)
+        return record
