@@ -42,6 +42,7 @@ class CameraManager:
             settings["camera_id"],
             self.recording_fps,
             f"{self.actual_width}x{self.actual_height}",
+            settings.get("device_id", "roadwatch_local_01"),
         )
         self.record["camera_index"] = settings["camera_index"]
         self.record["performance"] = {

@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "contact_id": "contact_0dcac5eb",
+    "device_id": "roadwatch_local_01",
+    "name": "khanya ",
+    "phone": "0764902903",
+    "relationship": "me",
+    "active_for_sos": true
+  }
+]

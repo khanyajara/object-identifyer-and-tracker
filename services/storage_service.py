@@ -22,6 +22,7 @@ class StorageService:
             "gps": DATA_DIR / "gps",
             "contacts": DATA_DIR / "contacts",
             "profile": DATA_DIR / "profile",
+            "notifications": DATA_DIR / "notifications",
         }
 
     def status(self):

@@ -22,6 +22,7 @@ class StolenVehicleService:
         payload = {
             **payload,
             "report_id": f"stolen_{uuid4().hex[:8]}",
+            "device_id": payload.get("device_id", "roadwatch_local_01"),
             "plate_number": payload.get("plate_number", "").upper().strip(),
             "created_at": datetime.now(timezone.utc).isoformat(),
         }

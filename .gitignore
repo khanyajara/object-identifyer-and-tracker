@@ -205,19 +205,59 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Editors, OS files, and cloud-sync clutter
+.idea/
+.vscode/
+*.code-workspace
+.DS_Store
+Thumbs.db
+Desktop.ini
+~$*
+.~lock.*
+*.tmp
+*.temp
+
+# Roadwatch local configuration and secrets
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+settings.json
+
+# AI model weights and local model caches
 Ultralytics/
 *.pt
+*.pth
+models/**/*.pt
+models/**/*.pth
+models/easyocr/
+
+# Generated media, reports, and processing output
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+*.raw.mp4
 output_processed.mp4
-settings.json
-data/videos/*.mp4
-data/videos/
-!data/videos/
-!data/videos/.gitkeep
+Object Detection and Tracking Report.pdf
+
+# Roadwatch runtime data generated per local device
+data/**/*.tmp
+data/logs/**
+data/videos/**
+data/snapshots/**
+data/exports/**
+data/incidents/**
+data/stolen_vehicles/**
+data/gps/**
+data/contacts/**
+data/profile/**
+data/notifications/**
+
+# Keep empty runtime folders available for fresh clones
+!data/**/
+!data/**/.gitkeep
 !data/videos/processed/
 !data/videos/processed/.gitkeep
-data/logs/*.json
-data/logs/*.jsonl
-data/snapshots/**
-data/snapshots/
-data/exports/**
-!data/**/.gitkeep

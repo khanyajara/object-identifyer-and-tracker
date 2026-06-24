@@ -2,6 +2,7 @@ from services.local_json_service import DATA_DIR, LocalJsonStore
 
 
 DEFAULT_PROFILE = {
+    "device_id": "roadwatch_local_01",
     "vehicle_make": "",
     "vehicle_model": "",
     "year": "",

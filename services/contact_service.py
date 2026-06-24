@@ -12,10 +12,11 @@ class ContactService:
     def list_contacts(self):
         return self.store.read()
 
-    def add_contact(self, name, phone, relationship, active=True):
+    def add_contact(self, name, phone, relationship, active=True, device_id="roadwatch_local_01"):
         contacts = self.list_contacts()
         contact = {
             "contact_id": f"contact_{uuid4().hex[:8]}",
+            "device_id": device_id,
             "name": name,
             "phone": phone,
             "relationship": relationship,

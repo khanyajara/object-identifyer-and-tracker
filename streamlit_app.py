@@ -14,10 +14,12 @@ from core.detector import load_yolo_model
 from core.opencv_recorder import CameraManager
 from core.ocr import load_ocr_reader
 from core.video_io import is_playable_video_path
+from services.auth_service import AdminAuthService
 from services.contact_service import ContactService
 from services.firebase_service import FirebaseService
 from services.gps_service import GPSService
 from services.incident_service import INCIDENT_TYPES, IncidentService
+from services.notification_service import NotificationService
 from services.report_service import build_summary, videos_dataframe
 from services.storage_service import StorageService
 from services.stolen_vehicle_service import StolenVehicleService
@@ -42,6 +44,13 @@ ENV_SETTING_KEYS = {
     "VITE_SUPABASE_BUCKET": "supabase_bucket",
     "FIREBASE_PUSH_URL": "firebase_push_url",
     "FIREBASE_API_KEY": "firebase_api_key",
+    "ROADWATCH_DEVICE_ID": "device_id",
+    "ROADWATCH_NOTIFICATION_WEBHOOK_URL": "notification_webhook_url",
+    "ROADWATCH_SMTP_HOST": "notification_smtp_host",
+    "ROADWATCH_SMTP_USERNAME": "notification_smtp_username",
+    "ROADWATCH_SMTP_PASSWORD": "notification_smtp_password",
+    "ROADWATCH_EMAIL_FROM": "notification_email_from",
+    "ROADWATCH_EMAIL_TO": "notification_email_to",
 }
 
 
@@ -70,6 +79,7 @@ PERFORMANCE_MODES = {
 }
 
 DEFAULTS = {
+    "device_id": "roadwatch_local_01",
     "camera_id": "streamlit-camera-001",
     "camera_index": 0,
     "camera_width": 1280,
@@ -100,6 +110,21 @@ DEFAULTS = {
     "supabase_bucket": "videos",
     "firebase_push_url": "",
     "firebase_api_key": "",
+    "notifications_enabled": True,
+    "notification_in_app_enabled": True,
+    "notification_webhook_enabled": False,
+    "notification_webhook_url": "",
+    "notification_email_enabled": False,
+    "notification_smtp_host": "",
+    "notification_smtp_port": 587,
+    "notification_smtp_username": "",
+    "notification_smtp_password": "",
+    "notification_email_from": "",
+    "notification_email_to": "",
+    "notify_on_sos": True,
+    "notify_on_incident": True,
+    "notify_on_processing": True,
+    "notify_on_sync": True,
 }
 
 
@@ -119,6 +144,27 @@ def load_settings():
 
 def save_settings(settings):
     SETTINGS_PATH.write_text(json.dumps(settings, indent=2), encoding="utf-8")
+
+
+def notification_settings(settings):
+    return {
+        "device_id": settings.get("device_id", "roadwatch_local_01"),
+        "enabled": settings.get("notifications_enabled", True),
+        "in_app_enabled": settings.get("notification_in_app_enabled", True),
+        "webhook_enabled": settings.get("notification_webhook_enabled", False),
+        "webhook_url": settings.get("notification_webhook_url", ""),
+        "email_enabled": settings.get("notification_email_enabled", False),
+        "smtp_host": settings.get("notification_smtp_host", ""),
+        "smtp_port": int(settings.get("notification_smtp_port", 587) or 587),
+        "smtp_username": settings.get("notification_smtp_username", ""),
+        "smtp_password": settings.get("notification_smtp_password", ""),
+        "email_from": settings.get("notification_email_from", ""),
+        "email_to": settings.get("notification_email_to", ""),
+        "notify_on_sos": settings.get("notify_on_sos", True),
+        "notify_on_incident": settings.get("notify_on_incident", True),
+        "notify_on_processing": settings.get("notify_on_processing", True),
+        "notify_on_sync": settings.get("notify_on_sync", True),
+    }
 
 
 @st.cache_resource(show_spinner="Loading YOLO model...")
@@ -345,6 +391,7 @@ def esc(value):
 
 def system_top_bar(settings):
     camera_manager = st.session_state.get("camera_manager")
+    auth = AdminAuthService()
     recording = bool(camera_manager and camera_manager.active)
     elapsed = format_duration(camera_manager.elapsed) if recording else "00:00"
     now = datetime.now().strftime("%H:%M:%S")
@@ -403,6 +450,67 @@ def cards_html(items):
         for label, value, hint in items
     )
     st.markdown(f'<div class="metric-grid">{cards}</div>', unsafe_allow_html=True)
+
+
+def storage_usage_summary():
+    paths = StorageService().paths()
+    total_bytes = 0
+    for label in ("videos", "processed_videos", "logs", "snapshots"):
+        path = paths[label]
+        if path.exists():
+            total_bytes += sum(item.stat().st_size for item in path.rglob("*") if item.is_file())
+    if total_bytes >= 1024 ** 3:
+        return f"{total_bytes / (1024 ** 3):.1f} GB"
+    if total_bytes >= 1024 ** 2:
+        return f"{total_bytes / (1024 ** 2):.1f} MB"
+    return f"{total_bytes / 1024:.1f} KB"
+
+
+def video_analysis(videos):
+    incident_like = 0
+    with_plates = 0
+    with_movement = 0
+    processed = 0
+    latest = videos[0] if videos else {}
+    for video in videos:
+        summary = video.get("objects_summary", {})
+        processed += 1 if video.get("processed_video_path") else 0
+        with_plates += 1 if summary.get("plates_detected") else 0
+        movement_events = summary.get("movement_events", 0)
+        with_movement += 1 if movement_events else 0
+        incident_like += 1 if movement_events or video.get("processing_error") else 0
+    return {
+        "total": len(videos),
+        "processed": processed,
+        "incident_like": incident_like,
+        "with_plates": with_plates,
+        "with_movement": with_movement,
+        "latest": latest,
+        "storage_used": storage_usage_summary(),
+    }
+
+
+def incident_analysis(incidents):
+    severity_counts = Counter(item.get("severity", "unknown") for item in incidents)
+    type_counts = Counter(item.get("type", "unknown") for item in incidents)
+    latest = sorted(incidents, key=lambda item: item.get("created_at", ""), reverse=True)[0] if incidents else {}
+    return {
+        "total": len(incidents),
+        "open": sum(1 for item in incidents if item.get("status") == "open"),
+        "reviewed": sum(1 for item in incidents if item.get("status") == "reviewed"),
+        "high": severity_counts.get("high", 0),
+        "by_type": type_counts,
+        "by_severity": severity_counts,
+        "latest": latest,
+    }
+
+
+def clean_dataframe(title, rows, empty_message, expanded=False):
+    with st.expander(title, expanded=expanded):
+        if rows:
+            st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
+        else:
+            st.info(empty_message)
 
 
 def format_duration(seconds):
@@ -585,13 +693,30 @@ def stop_and_process(camera_manager, settings):
         [record], StolenVehicleService().list_reports()
     )
     st.session_state.last_record = record
+    notifier = NotificationService(notification_settings(settings))
     if record.get("processed_video_path"):
+        if settings.get("notify_on_processing", True):
+            notifier.notify(
+                "Processed video ready",
+                f'{record.get("filename")} has been processed with detection overlays.',
+                level="success",
+                category="processing",
+                payload={"video_id": record.get("video_id")},
+            )
         processing_status.update(
             label="Processed video saved successfully.",
             state="complete",
             expanded=False,
         )
     else:
+        if settings.get("notify_on_processing", True):
+            notifier.notify(
+                "Video processing failed",
+                record.get("processing_error") or "The original video was preserved.",
+                level="error",
+                category="processing",
+                payload={"video_id": record.get("video_id")},
+            )
         processing_status.update(
             label="Post-processing failed; original video preserved.",
             state="error",
@@ -640,8 +765,17 @@ def dash_cam_page(settings):
             active = False
     with controls[2]:
         if st.button("SOS", width="stretch"):
+            active_contacts = ContactService().active_count()
+            if settings.get("notify_on_sos", True):
+                NotificationService(notification_settings(settings)).notify(
+                    "SOS triggered",
+                    f"SOS was triggered from Roadwatch. {active_contacts} active emergency contacts are configured.",
+                    level="critical",
+                    category="sos",
+                    payload={"active_contacts": active_contacts},
+                )
             st.warning(
-                f"SOS UI triggered. {ContactService().active_count()} active contacts would be notified when a notification service is configured."
+                f"SOS notification created. {active_contacts} active contacts are configured."
             )
     with controls[3]:
         if active:
@@ -689,6 +823,7 @@ def dash_cam_page(settings):
 
     timeline_box = st.empty()
     bottom_metrics_box = st.empty()
+    location_box = st.empty()
     lower_a, lower_b, lower_c, lower_d = st.columns([1.15, 1.15, 1.15, 1])
     with lower_a:
         incidents_box = st.empty()
@@ -708,6 +843,12 @@ def dash_cam_page(settings):
             "active_resolution": f'{settings["camera_width"]}x{settings["camera_height"]}',
         }
         objects = event.get("objects", [])
+        active_record = getattr(st.session_state.get("camera_manager"), "record", None)
+        linked_video_id = (
+            active_record.get("video_id")
+            if active_record
+            else gps.get("video_id")
+        )
         labels = event_object_labels(event) if event else []
         label_text = ", ".join(labels[:4]) if labels else "Awaiting scan"
         movement = "DETECTED" if event.get("movement_detected") else "CLEAR"
@@ -720,7 +861,7 @@ def dash_cam_page(settings):
             f"""
             <div class="metric-grid" style="grid-template-columns:1fr 1fr">
               <div class="metric-card"><div class="metric-label">AI Telemetry</div><div class="list-row"><span>Model</span><span>YOLOv8</span></div><div class="list-row"><span>Tracking</span><span>{'Deep SORT' if settings.get("enable_tracking") else 'Sampled'}</span></div><div class="list-row"><span>OCR</span><span>{'Active' if settings.get("enable_ocr") else 'Off'}</span></div><div class="list-row"><span>Frame Rate</span><span>{metrics.get("camera_fps", 0):.1f} FPS</span></div><div class="list-row"><span>Processing</span><span>{metrics.get("processing_time_ms", 0):.0f} ms</span></div></div>
-              <div class="metric-card"><div class="metric-label">GPS Status</div><div class="metric-value" style="font-size:1rem;color:#22c55e">{gps["status"]}</div><div style="margin-top:.8rem;color:#dffcff">{gps["latitude"] or "25.2048 S"}<br>{gps["longitude"] or "28.0473 E"}<br><span class="muted">Altitude: 1398 m</span></div><div class="metric-spark"></div></div>
+              <div class="metric-card"><div class="metric-label">GPS Status</div><div class="metric-value" style="font-size:1rem;color:{'#22c55e' if gps["status"] == 'Active' else '#facc15'}">{gps["status"]}</div><div style="margin-top:.8rem;color:#dffcff">{gps.get("latitude") or "Latitude unavailable"}<br>{gps.get("longitude") or "Longitude unavailable"}<br><span class="muted">{esc(gps.get("address") or gps.get("message"))}</span></div><div class="metric-spark"></div></div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -742,6 +883,16 @@ def dash_cam_page(settings):
               <div class="metric-card"><div class="metric-label">Movement</div><div class="metric-value" style="font-size:1rem;color:{'#22c55e' if movement == 'CLEAR' else '#facc15'}">{movement}</div><div class="metric-spark"></div></div>
               <div class="metric-card"><div class="metric-label">Latest Plate</div><div class="metric-value" style="font-size:1.25rem">{plate}</div><div class="muted">Confidence 92%</div></div>
               <div class="metric-card"><div class="metric-label">Storage</div><div class="metric-value">{int((storage_ready / max(len(storage_rows), 1)) * 100)}%</div><div class="muted">{storage_ready}/{len(storage_rows)} folders ready</div><div class="metric-spark"></div></div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        location_box.markdown(
+            f"""
+            <div class="metric-grid" style="margin-top:.85rem">
+              <div class="metric-card"><div class="metric-label">Current Location</div><div class="metric-value" style="font-size:1.05rem">{esc(gps.get("address") or gps.get("message"))}</div><div class="muted">Status: {esc(gps.get("status"))}</div></div>
+              <div class="metric-card"><div class="metric-label">Coordinates</div><div class="metric-value" style="font-size:1rem">{esc(gps.get("latitude") or "Unavailable")} / {esc(gps.get("longitude") or "Unavailable")}</div><div class="muted">Speed {gps.get("speed_kmh", 0)} km/h</div></div>
+              <div class="metric-card"><div class="metric-label">Location Updated</div><div class="metric-value" style="font-size:1rem">{esc(gps.get("last_updated") or "Not available")}</div><div class="muted">Video ID: {esc(linked_video_id or "Not recording")}</div></div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -777,13 +928,24 @@ def dash_cam_page(settings):
             """,
             unsafe_allow_html=True,
         )
+        latest_notifications = NotificationService(
+            notification_settings(settings)
+        ).list_notifications(limit=4)
+        if latest_notifications:
+            notification_rows = "".join(
+                f'<div class="list-row"><span class="{ "danger" if item.get("level") in ["error", "critical"] else ("warn" if item.get("level") == "warning" else "good") }">{esc(item.get("title"))}</span><span>{esc(item.get("created_at", "")[11:19])}</span></div>'
+                for item in latest_notifications
+            )
+        else:
+            notification_rows = (
+                '<div class="list-row"><span class="good">Notifications ready</span>'
+                f'<span>{datetime.now().strftime("%H:%M:%S")}</span></div>'
+            )
         notifications_box.markdown(
             f"""
             <div class="panel">
               <div class="panel-title">System Notifications</div>
-              <div class="list-row"><span class="good">Video storage ready</span><span>{datetime.now().strftime("%H:%M:%S")}</span></div>
-              <div class="list-row"><span class="warn">High memory watch</span><span>OK</span></div>
-              <div class="list-row"><span class="cyan">Sync bucket</span><span>{settings.get("supabase_bucket", "Local")}</span></div>
+              {notification_rows}
             </div>
             """,
             unsafe_allow_html=True,
@@ -863,6 +1025,7 @@ def upload_processed_video_background(video_id, settings):
     service = VideoService()
     try:
         service.update_sync_fields(video_id, sync_status="Uploading processed video", sync_error=None)
+        notifier = NotificationService(notification_settings(settings))
         record = service.load(video_id)
         upload = SupabaseService(
             settings.get("supabase_url", ""),
@@ -886,12 +1049,31 @@ def upload_processed_video_background(video_id, settings):
             firebase_push_result=firebase_result,
             sync_error=None,
         )
+        if settings.get("notify_on_sync", True):
+            notifier.notify(
+                "Processed video uploaded",
+                f'{record.get("filename")} was uploaded to Supabase and queued for Firebase push.',
+                level="success",
+                category="sync",
+                payload={
+                    "video_id": video_id,
+                    "supabase_processed_url": upload["public_url"],
+                },
+            )
     except Exception as exc:
         service.update_sync_fields(
             video_id,
             sync_status="Sync failed",
             sync_error=str(exc),
         )
+        if settings.get("notify_on_sync", True):
+            NotificationService(notification_settings(settings)).notify(
+                "Processed video upload failed",
+                str(exc),
+                level="error",
+                category="sync",
+                payload={"video_id": video_id},
+            )
 
 
 def queue_processed_video_upload(record, settings):
@@ -922,6 +1104,19 @@ def videos_page(service, settings):
     if not videos:
         st.info("No recordings yet.")
         return
+    video_stats = video_analysis(videos)
+    latest_name = video_stats["latest"].get("filename", "None")
+    cards_html(
+        [
+            ("Total clips", video_stats["total"], "All saved recordings"),
+            ("Processed clips", video_stats["processed"], "Annotated videos"),
+            ("With incidents", video_stats["incident_like"], "Movement/errors"),
+            ("With plates", video_stats["with_plates"], "OCR matches"),
+            ("With movement", video_stats["with_movement"], "Motion events"),
+            ("Latest", latest_name[:18] if latest_name else "None", "Newest clip"),
+            ("Storage used", video_stats["storage_used"], "Videos/logs/snapshots"),
+        ]
+    )
     search, filter_col = st.columns([2, 1])
     query = search.text_input("Search by filename, object, plate, or date")
     selected_filter = filter_col.selectbox(
@@ -961,7 +1156,8 @@ def videos_page(service, settings):
                         st.write(f"**Plates:** {plates}")
                         if video.get("supabase_processed_url"):
                             st.link_button("Open uploaded clip", video["supabase_processed_url"], width="stretch")
-    st.dataframe(videos_dataframe(filtered), width="stretch", hide_index=True)
+    with st.expander("View full video library table", expanded=False):
+        st.dataframe(videos_dataframe(filtered), width="stretch", hide_index=True)
     if not filtered:
         st.warning("No videos match that search/filter.")
         return
@@ -1014,45 +1210,46 @@ def videos_page(service, settings):
             ("Plates", len(summary.get("plates_detected", [])), "Unique OCR"),
         ]
     )
-    c1, c2 = st.columns(2)
-    with c1:
-        st.markdown("#### Object Counts")
-        object_counts = summary.get("object_counts", {})
-        if object_counts:
+    with st.expander("View Details: object counts, detection timeline, and captured objects", expanded=False):
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown("#### Object Counts")
+            object_counts = summary.get("object_counts", {})
+            if object_counts:
+                st.dataframe(
+                    pd.DataFrame(
+                        [{"Object label": label, "Count": count} for label, count in sorted(object_counts.items())]
+                    ),
+                    width="stretch",
+                    hide_index=True,
+                )
+            else:
+                st.info("No object counts saved for this video.")
+        with c2:
+            st.markdown("#### Plates and Movement")
+            st.write("**Plates detected:** " + (", ".join(summary.get("plates_detected", [])) or "None"))
+            st.write(f'**Movement events:** {summary.get("movement_events", 0)}')
+            st.write("**Tracking IDs:** " + (", ".join(map(str, tracking_ids)) or "None"))
+        st.markdown("#### Detection Timeline")
+        detections = selected.get("detections", [])
+        if detections:
+            st.dataframe(pd.DataFrame(detections), width="stretch", hide_index=True)
+        else:
+            st.info("No detection events were recorded for this video.")
+        st.markdown("#### Captured Objects")
+        captured_objects = captured_objects_for_video(selected)
+        if captured_objects:
             st.dataframe(
-                pd.DataFrame(
-                    [{"Object label": label, "Count": count} for label, count in sorted(object_counts.items())]
-                ),
+                pd.DataFrame(captured_objects),
                 width="stretch",
                 hide_index=True,
+                column_config={
+                    "Snapshot preview": st.column_config.ImageColumn("Snapshot preview", width="medium"),
+                    "Confidence": st.column_config.NumberColumn("Confidence", format="%.1f%%"),
+                },
             )
         else:
-            st.info("No object counts saved for this video.")
-    with c2:
-        st.markdown("#### Plates and Movement")
-        st.write("**Plates detected:** " + (", ".join(summary.get("plates_detected", [])) or "None"))
-        st.write(f'**Movement events:** {summary.get("movement_events", 0)}')
-        st.write("**Tracking IDs:** " + (", ".join(map(str, tracking_ids)) or "None"))
-    st.markdown("### Detection Timeline")
-    detections = selected.get("detections", [])
-    if detections:
-        st.dataframe(pd.DataFrame(detections), width="stretch", hide_index=True)
-    else:
-        st.info("No detection events were recorded for this video.")
-    st.markdown("### Captured Objects")
-    captured_objects = captured_objects_for_video(selected)
-    if captured_objects:
-        st.dataframe(
-            pd.DataFrame(captured_objects),
-            width="stretch",
-            hide_index=True,
-            column_config={
-                "Snapshot preview": st.column_config.ImageColumn("Snapshot preview", width="medium"),
-                "Confidence": st.column_config.NumberColumn("Confidence", format="%.1f%%"),
-            },
-        )
-    else:
-        st.info("No captured objects were recorded for this video.")
+            st.info("No captured objects were recorded for this video.")
 
 
 def incidents_page(service):
@@ -1064,11 +1261,20 @@ def incidents_page(service):
     incident_service = IncidentService()
     stolen_reports = StolenVehicleService().list_reports()
     incidents = incident_service.sync_generated(service.list_videos(), stolen_reports)
-    top = st.columns(4)
-    top[0].metric("Total incidents", len(incidents))
-    top[1].metric("High severity", sum(1 for item in incidents if item.get("severity") == "high"))
-    top[2].metric("Open", sum(1 for item in incidents if item.get("status") == "open"))
-    top[3].metric("Reviewed", sum(1 for item in incidents if item.get("status") == "reviewed"))
+    incident_stats = incident_analysis(incidents)
+    latest_incident = incident_stats["latest"]
+    cards_html(
+        [
+            ("Total incidents", incident_stats["total"], "All generated/manual"),
+            ("Open", incident_stats["open"], "Needs attention"),
+            ("Reviewed", incident_stats["reviewed"], "Handled"),
+            ("High severity", incident_stats["high"], "Priority"),
+            ("Latest", latest_incident.get("type", "None"), latest_incident.get("created_at", "")[:16] or "No incidents"),
+        ]
+    )
+    if incident_stats["by_type"]:
+        st.markdown("### Incidents by Type")
+        st.bar_chart(pd.Series(dict(incident_stats["by_type"])))
     filters = st.columns(3)
     severity = filters[0].selectbox("Severity", ["All", "low", "medium", "high"])
     incident_type = filters[1].selectbox("Type", ["All"] + INCIDENT_TYPES)
@@ -1102,7 +1308,8 @@ def incidents_page(service):
             + "</div>",
             unsafe_allow_html=True,
         )
-        st.dataframe(pd.DataFrame(filtered), width="stretch", hide_index=True)
+        with st.expander("View full incident table", expanded=False):
+            st.dataframe(pd.DataFrame(filtered), width="stretch", hide_index=True)
         selected = st.selectbox(
             "Update incident",
             [f'{item["incident_id"]} | {item.get("type")}' for item in filtered],
@@ -1129,16 +1336,37 @@ def incidents_page(service):
             desc = st.text_area("Description")
             if st.form_submit_button("Create incident", type="primary"):
                 incident_service.create_manual(labels[linked], desc, sev)
+                settings = load_settings()
+                if settings.get("notify_on_incident", True):
+                    NotificationService(notification_settings(settings)).notify(
+                        "Manual incident created",
+                        desc or "A manual Roadwatch incident was created.",
+                        level="warning" if sev != "high" else "critical",
+                        category="incident",
+                        payload={"video_id": labels[linked], "severity": sev},
+                    )
                 st.success("Manual incident created.")
 
 
-def stolen_vehicle_page(service):
+def stolen_vehicle_page(service, settings=None):
+    settings = settings or load_settings()
     header(
         "Plate watchlist",
-        "Stolen Vehicle",
-        "Local stolen vehicle reports and detected OCR plate matching.",
+        "Report Stolen Vehicle",
+        "Create a local stolen vehicle report and review plate matches when needed.",
     )
     stolen_service = StolenVehicleService()
+    reports_all = stolen_service.list_reports()
+    matches_all = stolen_service.match_videos(service.list_videos())
+    active_reports = sum(1 for item in reports_all if item.get("status") == "active")
+    cards_html(
+        [
+            ("Reports", len(reports_all), "Local watchlist"),
+            ("Active", active_reports, "Currently watched"),
+            ("Plate matches", len(matches_all), "Detected OCR links"),
+            ("Latest report", reports_all[0].get("plate_number", "None") if reports_all else "None", "Newest entry"),
+        ]
+    )
     with st.form("stolen-report"):
         st.markdown("### Add Local Report")
         c1, c2, c3 = st.columns(3)
@@ -1160,22 +1388,26 @@ def stolen_vehicle_page(service):
                     "owner_contact_note": note,
                     "case_reference": case_reference,
                     "status": status,
+                    "device_id": settings.get("device_id", "roadwatch_local_01"),
                 }
             )
             st.success("Stolen vehicle report saved.")
     query = st.text_input("Search reported plates")
     reports = stolen_service.search(query)
-    st.markdown("### Local Stolen Vehicle List")
-    st.dataframe(pd.DataFrame(reports), width="stretch", hide_index=True)
-    matches = stolen_service.match_videos(service.list_videos())
-    if matches:
-        st.markdown("### Matches Against Detected Plates")
-        st.dataframe(pd.DataFrame(matches), width="stretch", hide_index=True)
-    else:
-        st.info("No detected OCR plates match the local stolen vehicle list.")
+    with st.expander("View stolen vehicle list", expanded=False):
+        if reports:
+            st.dataframe(pd.DataFrame(reports), width="stretch", hide_index=True)
+        else:
+            st.info("No stolen vehicle reports yet.")
+    with st.expander("View plate matches", expanded=False):
+        if matches_all:
+            st.dataframe(pd.DataFrame(matches_all), width="stretch", hide_index=True)
+        else:
+            st.info("No detected OCR plates match the local stolen vehicle list.")
 
 
-def gps_page(service):
+def gps_page(service, settings=None):
+    settings = settings or load_settings()
     header(
         "Location trail",
         "GPS History",
@@ -1185,31 +1417,42 @@ def gps_page(service):
     status = gps_service.status()
     cards_html(
         [
-            ("GPS status", status["status"], "Desktop fallback"),
+            ("GPS status", status["status"], status.get("message", "Location status")),
             ("Latitude", status["latitude"] or "Unavailable", "Latest"),
             ("Longitude", status["longitude"] or "Unavailable", "Latest"),
             ("Speed", f'{status["speed_kmh"]} km/h', "Latest"),
+            ("Last updated", status.get("last_updated") or "Unavailable", "Latest point"),
+            ("Linked video", status.get("video_id") or "None", "Current/last"),
         ]
     )
-    st.info("Desktop GPS is unavailable unless you add a local/mock point or connect a real GPS source later.")
+    if status["status"] != "Active":
+        st.info("Location unavailable. Please enable GPS permissions.")
     with st.form("mock-gps"):
         c1, c2, c3 = st.columns(3)
         lat = c1.number_input("Latitude", value=0.0, format="%.6f")
         lon = c2.number_input("Longitude", value=0.0, format="%.6f")
         speed = c3.number_input("Speed km/h", value=0.0, min_value=0.0)
+        address = st.text_input("Location/address", value="")
         videos = service.list_videos()
         labels = {"No linked video": None}
         labels.update({f'{item["filename"]} | {item["video_id"]}': item["video_id"] for item in videos})
         linked = st.selectbox("Link to video", list(labels))
         if st.form_submit_button("Add mock GPS point"):
-            gps_service.add_mock_point(lat, lon, speed, labels[linked])
+            gps_service.add_mock_point(
+                lat,
+                lon,
+                speed,
+                labels[linked],
+                address or None,
+                settings.get("device_id", "roadwatch_local_01"),
+            )
             st.success("GPS point saved.")
     points = gps_service.list_points()
-    if points:
-        st.dataframe(pd.DataFrame(points), width="stretch", hide_index=True)
+    clean_dataframe("Advanced: full GPS history", points, "No GPS points saved yet.")
 
 
-def contacts_page():
+def contacts_page(settings=None):
+    settings = settings or load_settings()
     header(
         "SOS roster",
         "Emergency Contacts",
@@ -1225,7 +1468,13 @@ def contacts_page():
         relationship = c3.text_input("Relationship")
         active = c4.checkbox("Active for SOS", value=True)
         if st.form_submit_button("Add contact", type="primary"):
-            contact_service.add_contact(name, phone, relationship, active)
+            contact_service.add_contact(
+                name,
+                phone,
+                relationship,
+                active,
+                settings.get("device_id", "roadwatch_local_01"),
+            )
             st.success("Contact added.")
     if contacts:
         edited = st.data_editor(
@@ -1252,7 +1501,8 @@ def contacts_page():
         st.info("No emergency contacts saved yet.")
 
 
-def vehicle_profile_page():
+def vehicle_profile_page(settings=None):
+    settings = settings or load_settings()
     header(
         "Fleet identity",
         "Vehicle Profile",
@@ -1274,6 +1524,7 @@ def vehicle_profile_page():
             service.save_profile(
                 {
                     "vehicle_make": make,
+                    "device_id": settings.get("device_id", "roadwatch_local_01"),
                     "vehicle_model": model,
                     "year": year,
                     "colour": colour,
@@ -1347,6 +1598,17 @@ def analytics_page(service):
     if plates_by_day:
         st.markdown("### Plates Detected by Day")
         st.line_chart(pd.Series(dict(plates_by_day)))
+    duration_by_recording = {
+        item.get("started_at", item.get("filename", ""))[:19]: item.get("duration_seconds", 0)
+        for item in videos
+    }
+    if duration_by_recording:
+        st.markdown("### Recording Duration Trends")
+        st.line_chart(pd.Series(duration_by_recording))
+    with st.expander("Advanced: analytics source records", expanded=False):
+        st.caption("Detailed metadata is hidden by default to keep the dashboard readable.")
+        if videos:
+            st.dataframe(videos_dataframe(videos), width="stretch", hide_index=True)
 
 
 def settings_page(settings):
@@ -1356,6 +1618,8 @@ def settings_page(settings):
         "Camera, AI, storage, and sync placeholders. Secrets belong in .env, not here.",
     )
     with st.form("settings"):
+        with st.expander("Device Settings", expanded=True):
+            device_id = st.text_input("Device ID", settings.get("device_id", "roadwatch_local_01"))
         with st.expander("Camera Settings", expanded=True):
             camera_id = st.text_input("Camera ID", settings["camera_id"])
             c1, c2, c3, c4 = st.columns(4)
@@ -1388,9 +1652,30 @@ def settings_page(settings):
             supabase_bucket = st.text_input("Supabase bucket placeholder", settings.get("supabase_bucket", "videos"))
             firebase_push_url = st.text_input("Firebase push URL", settings.get("firebase_push_url", ""))
             firebase_api_key = st.text_input("Firebase API key placeholder", settings.get("firebase_api_key", ""), type="password")
+        with st.expander("Notification Settings", expanded=True):
+            notification_cols = st.columns(4)
+            notifications_enabled = notification_cols[0].toggle("Enable notifications", settings.get("notifications_enabled", True))
+            notification_in_app_enabled = notification_cols[1].toggle("In-app", settings.get("notification_in_app_enabled", True))
+            notification_webhook_enabled = notification_cols[2].toggle("Webhook", settings.get("notification_webhook_enabled", False))
+            notification_email_enabled = notification_cols[3].toggle("Email", settings.get("notification_email_enabled", False))
+            trigger_cols = st.columns(4)
+            notify_on_sos = trigger_cols[0].checkbox("SOS alerts", settings.get("notify_on_sos", True))
+            notify_on_incident = trigger_cols[1].checkbox("Incident alerts", settings.get("notify_on_incident", True))
+            notify_on_processing = trigger_cols[2].checkbox("Processing alerts", settings.get("notify_on_processing", True))
+            notify_on_sync = trigger_cols[3].checkbox("Sync alerts", settings.get("notify_on_sync", True))
+            notification_webhook_url = st.text_input("Notification webhook URL", settings.get("notification_webhook_url", ""))
+            email_cols = st.columns(2)
+            notification_email_from = email_cols[0].text_input("Email from", settings.get("notification_email_from", ""))
+            notification_email_to = email_cols[1].text_input("Email to", settings.get("notification_email_to", ""))
+            smtp_cols = st.columns(4)
+            notification_smtp_host = smtp_cols[0].text_input("SMTP host", settings.get("notification_smtp_host", ""))
+            notification_smtp_port = smtp_cols[1].number_input("SMTP port", 1, 65535, int(settings.get("notification_smtp_port", 587)))
+            notification_smtp_username = smtp_cols[2].text_input("SMTP username", settings.get("notification_smtp_username", ""))
+            notification_smtp_password = smtp_cols[3].text_input("SMTP password", settings.get("notification_smtp_password", ""), type="password")
         if st.form_submit_button("Save settings", type="primary"):
             updated = {
                 **settings,
+                "device_id": device_id,
                 "camera_id": camera_id,
                 "camera_index": int(camera_index),
                 "camera_width": int(width),
@@ -1414,8 +1699,26 @@ def settings_page(settings):
                 "supabase_bucket": supabase_bucket,
                 "firebase_push_url": firebase_push_url,
                 "firebase_api_key": firebase_api_key,
+                "notifications_enabled": notifications_enabled,
+                "notification_in_app_enabled": notification_in_app_enabled,
+                "notification_webhook_enabled": notification_webhook_enabled,
+                "notification_webhook_url": notification_webhook_url,
+                "notification_email_enabled": notification_email_enabled,
+                "notification_smtp_host": notification_smtp_host,
+                "notification_smtp_port": int(notification_smtp_port),
+                "notification_smtp_username": notification_smtp_username,
+                "notification_smtp_password": notification_smtp_password,
+                "notification_email_from": notification_email_from,
+                "notification_email_to": notification_email_to,
+                "notify_on_sos": notify_on_sos,
+                "notify_on_incident": notify_on_incident,
+                "notify_on_processing": notify_on_processing,
+                "notify_on_sync": notify_on_sync,
             }
             save_settings(updated)
+            NotificationService(notification_settings(updated)).save_settings(
+                notification_settings(updated)
+            )
             st.success("Settings saved.")
             st.rerun()
     supabase = SupabaseService(
@@ -1424,6 +1727,165 @@ def settings_page(settings):
         settings.get("supabase_bucket", "videos"),
     )
     st.info(supabase.status()["message"])
+    notifier = NotificationService(notification_settings(settings))
+    with st.expander("Notification Center", expanded=False):
+        st.metric("Unread notifications", notifier.unread_count())
+        if st.button("Mark all notifications read", width="stretch"):
+            notifier.mark_all_read()
+            st.success("Notifications marked as read.")
+            st.rerun()
+        notifications = notifier.list_notifications(limit=25)
+        if notifications:
+            st.dataframe(pd.DataFrame(notifications), width="stretch", hide_index=True)
+        else:
+            st.info("No notifications yet.")
+
+
+def admin_login_page():
+    header(
+        "Admin access",
+        "Admin Login",
+        "Admin tools are separate from the normal dashcam flow.",
+    )
+    auth = AdminAuthService()
+    st.warning("Development credentials detected. Change before production deployment.")
+    with st.form("admin-login"):
+        username = st.text_input("Admin username")
+        password = st.text_input("Admin password", type="password")
+        if st.form_submit_button("Enter admin dashboard", type="primary"):
+            admin = auth.authenticate(username, password)
+            if admin:
+                st.session_state.admin_authenticated = True
+                st.session_state.admin_account = admin
+                st.session_state.admin_login_redirect = "Admin Dashboard"
+                st.success("Admin access granted.")
+                st.rerun()
+            else:
+                st.error("Invalid admin password.")
+    with st.expander("Development admin accounts", expanded=False):
+        st.dataframe(pd.DataFrame(auth.list_admins()), width="stretch", hide_index=True)
+
+
+def admin_dashboard_page(service, settings):
+    header(
+        "Command center",
+        "Admin Dashboard",
+        "System-wide Roadwatch health, evidence, contacts, and AI status.",
+    )
+    videos = service.list_videos()
+    incidents = IncidentService().sync_generated(videos, StolenVehicleService().list_reports())
+    stolen_reports = StolenVehicleService().list_reports()
+    contacts = ContactService().list_contacts()
+    profiles = VehicleProfileService().get_profile()
+    storage_rows = StorageService().status()
+    camera_manager = st.session_state.get("camera_manager")
+    auth = AdminAuthService()
+    supabase = SupabaseService(
+        settings.get("supabase_url", ""),
+        settings.get("supabase_anon_key", ""),
+        settings.get("supabase_bucket", "videos"),
+    )
+    cards_html(
+        [
+            ("Users/devices", 1, settings.get("device_id", "Local device")),
+            ("Admins", len(auth.list_admins()), "Admin accounts only"),
+            ("Total videos", len(videos), "All recordings"),
+            ("Incidents", len(incidents), "Generated/manual"),
+            ("Stolen reports", sum(1 for item in stolen_reports if item.get("status") == "active"), "Active watchlist"),
+            ("SOS contacts", len(contacts), "Emergency roster"),
+            ("System health", "Online", "Local services"),
+            ("Storage usage", storage_usage_summary(), "Tracked folders"),
+            ("AI service", "Ready", settings.get("model_name", "YOLO")),
+            ("Camera", "Active" if camera_manager and camera_manager.active else "Ready", f'Index {settings["camera_index"]}'),
+            ("Sync/API", "Configured" if supabase.configured else "Local only", supabase.bucket),
+            ("Vehicle profile", "Saved" if any(profiles.values()) else "Empty", "Local profile"),
+        ]
+    )
+    c1, c2 = st.columns(2)
+    with c1:
+        severity_counts = Counter(item.get("severity", "unknown") for item in incidents)
+        st.markdown("### Incidents by Severity")
+        if severity_counts:
+            st.bar_chart(pd.Series(dict(severity_counts)))
+        else:
+            st.info("No incidents yet.")
+    with c2:
+        day_counts = Counter((item.get("started_at", "")[:10] or "Unknown") for item in videos)
+        st.markdown("### Recordings by Day")
+        if day_counts:
+            st.bar_chart(pd.Series(dict(day_counts)))
+        else:
+            st.info("No recordings yet.")
+    with st.expander("Advanced: system storage folders", expanded=False):
+        st.dataframe(pd.DataFrame(storage_rows), width="stretch", hide_index=True)
+
+
+def reports_page(service):
+    header(
+        "Admin reports",
+        "Reports",
+        "Clean export-ready summaries for recordings, incidents, and detections.",
+    )
+    videos = service.list_videos()
+    incidents = IncidentService().sync_generated(videos, StolenVehicleService().list_reports())
+    stats = video_analysis(videos)
+    incident_stats = incident_analysis(incidents)
+    cards_html(
+        [
+            ("Recordings", stats["total"], "Report scope"),
+            ("Processed", stats["processed"], "Annotated clips"),
+            ("Incidents", incident_stats["total"], "All severities"),
+            ("High severity", incident_stats["high"], "Priority"),
+            ("Storage used", stats["storage_used"], "Evidence folders"),
+        ]
+    )
+    with st.expander("Export-ready video summary", expanded=False):
+        if videos:
+            st.dataframe(videos_dataframe(videos), width="stretch", hide_index=True)
+        else:
+            st.info("No videos available for reports.")
+    with st.expander("Export-ready incident summary", expanded=False):
+        if incidents:
+            st.dataframe(pd.DataFrame(incidents), width="stretch", hide_index=True)
+        else:
+            st.info("No incidents available for reports.")
+
+
+def admin_management_page():
+    header(
+        "Admin controls",
+        "Admin Management",
+        "Local admin management summary. Add external user management later when authentication is introduced.",
+    )
+    auth = AdminAuthService()
+    current_admin = st.session_state.get("admin_account") or {}
+    cards_html(
+        [
+            ("Admin accounts", len(auth.list_admins()), "Hashed local credentials"),
+            ("Current admin", current_admin.get("username", "Unknown"), current_admin.get("role", "")),
+            ("User login", "Disabled", "Normal users enter directly"),
+            ("Devices", 1, "This recorder"),
+            ("Permissions", "Local", "No remote roles yet"),
+        ]
+    )
+    with st.expander("Advanced: admin setup note", expanded=False):
+        st.info("Normal users do not have a login page. Admin mode is intentionally separate and locally gated.")
+        st.dataframe(pd.DataFrame(auth.list_admins()), width="stretch", hide_index=True)
+
+
+def roadwatch_home_page(service, settings):
+    user_tab, admin_tab = st.tabs(["User Recorder", "Admin"])
+    with user_tab:
+        dash_cam_page(settings)
+    with admin_tab:
+        if st.session_state.get("admin_authenticated"):
+            admin_dashboard_page(service, settings)
+            if st.button("Sign out admin", key="home-admin-signout", width="stretch"):
+                st.session_state.admin_authenticated = False
+                st.session_state.admin_account = None
+                st.rerun()
+        else:
+            admin_login_page()
 
 
 def main():
@@ -1437,17 +1899,41 @@ def main():
     settings = load_settings()
     service = VideoService()
     sidebar_brand("Dash Cam")
-    nav_options = [
-        "Live Dash Cam",
+    admin_query = str(st.query_params.get("admin", "")).lower()
+    admin_route = (
+        admin_query in {"1", "true", "yes"}
+        or st.session_state.get("admin_authenticated", False)
+    )
+    public_pages = [
+        "Roadwatch",
         "Videos",
-        "Incidents",
-        "Stolen Vehicles",
-        "GPS History",
+        "Report Stolen Vehicle",
         "Emergency Contacts",
         "Vehicle Profile",
-        "Analytics",
         "Settings",
     ]
+    admin_pages = [
+        "Admin Dashboard",
+        "Users / Devices",
+        "Live Recorder",
+        "All Videos",
+        "Incidents",
+        "Stolen Vehicles",
+        "GPS Tracking",
+        "Emergency Contacts",
+        "Vehicle Profiles",
+        "Analytics",
+        "Reports",
+        "Settings",
+        "Admin Management",
+        "System Health",
+    ]
+    if admin_route and not st.session_state.get("admin_authenticated"):
+        nav_options = ["Admin Login"]
+    else:
+        nav_options = admin_pages if admin_route else public_pages
+    if st.session_state.get("admin_login_redirect") in nav_options:
+        st.session_state.main_navigation = st.session_state.pop("admin_login_redirect")
     if st.session_state.get("main_navigation") not in nav_options:
         st.session_state.main_navigation = nav_options[0]
     page = st.sidebar.radio(
@@ -1457,16 +1943,33 @@ def main():
         label_visibility="collapsed",
     )
     sidebar_status(settings)
+    if admin_route and st.session_state.get("admin_authenticated"):
+        if st.sidebar.button("Sign out admin", width="stretch"):
+            st.session_state.admin_authenticated = False
+            st.session_state.admin_account = None
+            st.session_state.main_navigation = "Admin Login"
+            st.rerun()
     system_top_bar(settings)
     {
+        "Admin Login": admin_login_page,
+        "Admin Dashboard": lambda: admin_dashboard_page(service, settings),
+        "Users / Devices": admin_management_page,
+        "Roadwatch": lambda: roadwatch_home_page(service, settings),
         "Live Dash Cam": lambda: dash_cam_page(settings),
+        "Live Recorder": lambda: dash_cam_page(settings),
         "Videos": lambda: videos_page(service, settings),
+        "All Videos": lambda: videos_page(service, settings),
+        "Report Stolen Vehicle": lambda: stolen_vehicle_page(service, settings),
         "Incidents": lambda: incidents_page(service),
-        "Stolen Vehicles": lambda: stolen_vehicle_page(service),
-        "GPS History": lambda: gps_page(service),
-        "Emergency Contacts": contacts_page,
-        "Vehicle Profile": vehicle_profile_page,
+        "Stolen Vehicles": lambda: stolen_vehicle_page(service, settings),
+        "GPS Tracking": lambda: gps_page(service, settings),
+        "Emergency Contacts": lambda: contacts_page(settings),
+        "Vehicle Profile": lambda: vehicle_profile_page(settings),
+        "Vehicle Profiles": lambda: vehicle_profile_page(settings),
         "Analytics": lambda: analytics_page(service),
+        "Reports": lambda: reports_page(service),
+        "Admin Management": admin_management_page,
+        "System Health": lambda: admin_dashboard_page(service, settings),
         "Settings": lambda: settings_page(settings),
     }[page]()
 

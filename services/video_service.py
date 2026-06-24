@@ -16,6 +16,7 @@ STOLEN_VEHICLES_DIR = DATA_DIR / "stolen_vehicles"
 GPS_DIR = DATA_DIR / "gps"
 CONTACTS_DIR = DATA_DIR / "contacts"
 PROFILE_DIR = DATA_DIR / "profile"
+NOTIFICATIONS_DIR = DATA_DIR / "notifications"
 
 
 def utc_now():
@@ -35,15 +36,17 @@ class VideoService:
             GPS_DIR,
             CONTACTS_DIR,
             PROFILE_DIR,
+            NOTIFICATIONS_DIR,
         ):
             path.mkdir(parents=True, exist_ok=True)
 
-    def create_record(self, camera_id, fps, resolution):
+    def create_record(self, camera_id, fps, resolution, device_id="roadwatch_local_01"):
         now = datetime.now()
         video_id = f"vid_{now:%Y%m%d_%H%M%S}_{uuid4().hex[:6]}"
         filename = f"recording_{now:%Y_%m_%d_%H%M%S}.mp4"
         record = {
             "video_id": video_id,
+            "device_id": device_id,
             "filename": filename,
             "video_path": str(VIDEOS_DIR / filename),
             "original_video_path": str(VIDEOS_DIR / filename),

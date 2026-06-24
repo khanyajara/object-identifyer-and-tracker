@@ -13,7 +13,7 @@
   "recording_status": "Complete",
   "processing_status": "Processed video saved successfully.",
   "processing_error": null,
-  "sync_status": "Uploading processed video",
+  "sync_status": "Synced",
   "objects_summary": {
     "people_count_max": 2,
     "vehicle_count_max": 0,
@@ -9112,5 +9112,14 @@
   },
   "processed_video_codec": "avc1",
   "processed_frame_count": 323,
-  "sync_error": null
+  "sync_error": null,
+  "synced_at": "2026-06-22T10:41:01.242905",
+  "supabase_bucket": "Dash-cam",
+  "supabase_object_name": "processed/vid_20260622_094125_121ff7/recording_vid_20260622_094125_121ff7_processed.mp4",
+  "supabase_processed_url": "https://qjhfgjyiyryvfzktwfwt.supabase.co/storage/v1/object/public/Dash-cam/processed/vid_20260622_094125_121ff7/recording_vid_20260622_094125_121ff7_processed.mp4",
+  "firebase_push_url": "",
+  "firebase_push_result": {
+    "configured": false,
+    "message": "Firebase push URL not configured; link stored locally only."
+  }
 }

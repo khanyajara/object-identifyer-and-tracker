@@ -20,19 +20,36 @@ class GPSService:
 
     def status(self):
         latest = self.latest()
+        if latest is None:
+            return {
+                "status": "Unavailable",
+                "message": "Location unavailable. Please enable GPS permissions.",
+                "latitude": None,
+                "longitude": None,
+                "address": None,
+                "speed_kmh": 0,
+                "last_updated": None,
+                "video_id": None,
+            }
         return {
-            "status": "Offline" if latest is None else "Local/mock",
-            "latitude": latest.get("latitude") if latest else None,
-            "longitude": latest.get("longitude") if latest else None,
-            "speed_kmh": latest.get("speed_kmh", 0) if latest else 0,
+            "status": "Active",
+            "message": "Location tracking active.",
+            "latitude": latest.get("latitude"),
+            "longitude": latest.get("longitude"),
+            "address": latest.get("address") or "Address unavailable",
+            "speed_kmh": latest.get("speed_kmh", 0),
+            "last_updated": latest.get("timestamp"),
+            "video_id": latest.get("video_id"),
         }
 
-    def add_mock_point(self, latitude, longitude, speed_kmh=0, video_id=None):
+    def add_mock_point(self, latitude, longitude, speed_kmh=0, video_id=None, address=None, device_id="roadwatch_local_01"):
         points = self.list_points()
         point = {
+            "device_id": device_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "latitude": latitude,
             "longitude": longitude,
+            "address": address,
             "speed_kmh": speed_kmh,
             "video_id": video_id,
         }

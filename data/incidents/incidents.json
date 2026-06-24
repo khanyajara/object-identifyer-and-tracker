@@ -1,5 +1,3945 @@
 [
   {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_301_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:34.112363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_300_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:34.079030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_299_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:34.045696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_298_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:34.012363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_297_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.979030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_296_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.945696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_295_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.912363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_294_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.879030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_293_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.845696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_292_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.812363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_291_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.779030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_290_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.745696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_289_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.712363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_288_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.679030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_287_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.645696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_282_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.479030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_281_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.445696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_280_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.412363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_279_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.379030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_278_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.345696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_277_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.312363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_276_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.279030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_275_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.245696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_274_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.212363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_273_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.179030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_272_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.145696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_271_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.112363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_270_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.079030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_269_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.045696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_268_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:33.012363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_265_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:32.912363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_264_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:32.879030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_262_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:32.812363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_261_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:32.779030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_260_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:32.745696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_259_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:32.712363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_257_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:32.645696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_256_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:32.612363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_255_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:32.579030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_254_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:32.545696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_253_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:32.512363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_252_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:32.479030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_251_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:32.445696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_250_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:32.412363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_249_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:32.379030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_245_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:32.245696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_244_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:32.212363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_242_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:32.145696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_241_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:32.112363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_240_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:32.079030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_239_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:32.045696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_238_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:32.012363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_237_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.979030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_236_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.945696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_235_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.912363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_234_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.879030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_233_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.845696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_232_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.812363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_231_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.779030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_230_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.745696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_229_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.712363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_228_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.679030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_227_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.645696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_226_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.612363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_225_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.579030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_224_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.545696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_223_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.512363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_222_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.479030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_221_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.445696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_220_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.412363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_219_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.379030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_218_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.345696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_217_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.312363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_216_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.279030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_215_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.245696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_214_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.212363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_213_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.179030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_212_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.145696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_211_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.112363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_210_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.079030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_209_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.045696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_208_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:31.012363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_207_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:30.979030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_206_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:30.945696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_205_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:30.912363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_201_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:30.779030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_200_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:30.745696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_199_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:30.712363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_198_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:30.679030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_197_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:30.645696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_196_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:30.612363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_194_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:30.545696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_193_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:30.512363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_192_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:30.479030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_191_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:30.445696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_190_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:30.412363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_185_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:30.245696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_180_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:30.079030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_179_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:30.045696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_178_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:30.012363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_172_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.812363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_171_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.779030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_169_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.712363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_168_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.679030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_167_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.645696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_166_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.612363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_165_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.579030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_164_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.545696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_163_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.512363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_162_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.479030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_161_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.445696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_160_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.412363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_159_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.379030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_158_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.345696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_157_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.312363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_156_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.279030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_155_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.245696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_154_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.212363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_153_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.179030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_152_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.145696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_151_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.112363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_150_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.079030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_149_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.045696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_148_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:29.012363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_147_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:28.979030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_133_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:28.512363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_132_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:28.479030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_130_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:28.412363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_129_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:28.379030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_128_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:28.345696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_127_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:28.312363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "couch",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_126_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:28.279030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_125_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:28.245696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_123_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:28.179030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_122_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:28.145696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_121_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:28.112363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_120_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:28.079030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_119_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:28.045696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_118_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:28.012363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_117_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.979030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_116_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.945696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_115_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.912363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_114_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.879030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_113_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.845696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_112_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.812363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_111_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.779030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_110_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.745696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_109_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.712363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_108_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.679030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_107_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.645696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_106_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.612363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_105_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.579030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_104_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.545696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_103_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.512363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_102_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.479030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_101_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.445696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_100_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.412363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_99_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.379030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_98_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.345696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_97_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.312363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_96_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.279030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_95_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.245696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_94_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.212363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_93_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.179030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_92_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.145696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_91_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.112363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_90_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.079030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_89_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.045696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_88_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:27.012363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_87_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.979030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_86_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.945696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_85_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.912363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_84_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.879030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_83_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.845696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_82_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.812363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_81_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.779030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_80_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.745696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_79_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.712363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_78_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.679030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_77_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.645696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_76_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.612363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_75_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.579030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_74_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.545696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_73_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.512363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_72_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.479030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_71_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.445696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_70_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.412363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_69_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.379030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_68_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.345696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_67_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.312363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_66_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.279030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_65_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.245696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_64_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.212363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_63_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.179030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_62_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.145696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_61_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.112363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_60_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.079030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_59_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.045696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_58_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:26.012363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_57_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.979030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_56_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.945696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_55_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.912363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_54_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.879030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_53_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.845696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_52_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.812363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_51_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.779030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_50_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.745696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_49_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.712363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_48_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.679030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_47_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.645696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_46_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.612363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_45_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.579030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_44_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.545696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_43_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.512363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_42_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.479030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_41_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.445696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_40_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.412363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_39_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.379030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_38_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.345696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_37_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.312363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_36_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.279030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_35_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.245696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_34_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.212363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_33_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.179030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_32_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.145696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_31_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.112363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_30_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.079030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_29_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.045696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_28_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:25.012363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_27_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.979030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_26_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.945696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_25_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.912363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_24_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.879030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_23_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.845696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_22_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.812363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_21_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.779030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_20_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.745696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_19_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.712363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_18_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.679030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_17_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.645696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_16_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.612363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_15_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.579030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_14_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.545696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_13_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.512363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_12_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.479030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_11_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.445696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_10_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.412363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_9_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.379030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_8_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.345696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_7_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.312363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_6_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.279030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "dog",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_movement_detected_5_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.245696+00:00",
+    "type": "movement detected",
+    "severity": "low",
+    "description": "Movement was detected during recording.",
+    "plate_text": null,
+    "object_labels": [
+      "dog",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_5_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.245696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "dog",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_4_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.212363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "dog",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_3_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.179030+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "dog",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_2_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.145696+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "dog",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
+    "incident_id": "inc_vid_20260623_113724_6e3d89_person_detected_1_none",
+    "linked_video_id": "vid_20260623_113724_6e3d89",
+    "timestamp": "2026-06-23T09:37:24.112363+00:00",
+    "type": "person detected",
+    "severity": "medium",
+    "description": "Person detected by AI scanner.",
+    "plate_text": null,
+    "object_labels": [
+      "dog",
+      "person"
+    ],
+    "video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\recording_2026_06_23_113724.mp4",
+    "processed_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\recording_vid_20260623_113724_6e3d89_processed.mp4",
+    "status": "open"
+  },
+  {
     "incident_id": "inc_vid_20260622_094125_121ff7_person_detected_323_none",
     "linked_video_id": "vid_20260622_094125_121ff7",
     "timestamp": "2026-06-22T07:41:35.942109+00:00",
