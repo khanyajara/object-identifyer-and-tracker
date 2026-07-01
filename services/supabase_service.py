@@ -3,6 +3,8 @@ from urllib.parse import quote
 
 import requests
 
+from core.video_io import video_mime_type
+
 
 class SupabaseService:
     def __init__(self, url="", anon_key="", bucket="videos"):
@@ -44,7 +46,7 @@ class SupabaseService:
         headers = {
             "Authorization": f"Bearer {self.anon_key}",
             "apikey": self.anon_key,
-            "Content-Type": "video/mp4",
+            "Content-Type": video_mime_type(path),
             "x-upsert": "true",
         }
         with path.open("rb") as file_obj:

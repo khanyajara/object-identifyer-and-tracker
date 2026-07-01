@@ -29,16 +29,16 @@ Start Recording
   -> create video_id
   -> open camera once
   -> start camera capture thread
-  -> write original frames to MP4
+  -> write original frames to WebM
   -> sample frames for live AI preview
   -> save live detection metadata
 
 Stop Recording
   -> stop camera thread
   -> release camera and writer
-  -> finalize original MP4
+  -> finalize original WebM
   -> run full post-processing over saved video
-  -> write processed annotated MP4
+  -> write processed annotated WebM
   -> rebuild/save final detection metadata
   -> show recording in Recorded Videos
 ```
@@ -51,29 +51,30 @@ Each recording keeps both the original and processed video when available.
 
 ```text
 data/videos/
-  recording_2026_06_11_153024.mp4
+  recording_2026_07_01_143522.webm
   recording_2026_06_11_153024.json
 
 data/videos/processed/
-  recording_vid_20260611_153024_d9a878_processed.mp4
+  recording_vid_20260701_143522_d9a878_processed.webm
 ```
 
 Metadata stores paths like:
 
 ```json
 {
-  "video_id": "vid_20260611_153024_d9a878",
-  "filename": "recording_2026_06_11_153024.mp4",
-  "video_path": "data/videos/recording_2026_06_11_153024.mp4",
-  "original_video_path": "data/videos/recording_2026_06_11_153024.mp4",
-  "processed_video_path": "data/videos/processed/recording_vid_20260611_153024_d9a878_processed.mp4",
+  "video_id": "vid_20260701_143522_d9a878",
+  "filename": "recording_2026_07_01_143522.webm",
+  "video_format": "webm",
+  "video_path": "data/videos/recording_2026_07_01_143522.webm",
+  "original_video_path": "data/videos/recording_2026_07_01_143522.webm",
+  "processed_video_path": "data/videos/processed/recording_vid_20260701_143522_d9a878_processed.webm",
   "processing_status": "Processed video saved successfully.",
   "detections": [],
   "objects_summary": {}
 }
 ```
 
-The Recorded Videos page defaults to the processed annotated video. If there is no processed video, it falls back to the original. If a metadata record exists but the MP4 has been deleted or moved, the page shows a clear warning and lists the checked paths.
+The Recorded Videos page defaults to the processed annotated video. If there is no processed video, it falls back to the original. New recordings use WebM. Older MP4 recordings remain supported and playable during the transition.
 
 ## Detection Metadata
 
@@ -154,7 +155,7 @@ Saved evidence library.
 - Shows plates and movement events.
 - Shows full detection timeline.
 - Shows Captured Objects table for the selected video only.
-- Warns when metadata exists but the MP4 file is missing.
+- Warns when metadata exists but the WebM or MP4 file is missing.
 
 ### Incidents
 
@@ -260,9 +261,9 @@ VisionPipeline
   -> frame annotation
 
 VideoProcessingService
-  -> reads finalized original MP4
+  -> reads finalized original WebM or legacy MP4
   -> runs full AI pass frame by frame
-  -> writes processed annotated MP4
+  -> writes processed annotated WebM
   -> saves final detection timeline
 
 Services
@@ -409,7 +410,7 @@ Post-processing: full saved video after Stop
 
 - Streamlit is not a high-FPS video renderer, so the preview is intentionally limited.
 - Recording uses OpenCV in a background thread.
-- The original MP4 is written before any AI work.
+- The original WebM is written before any AI work.
 - Live AI uses sampled frames to keep the webcam smooth.
 - Full detection overlays are generated after recording stops.
 - OCR is slower than object detection and is throttled.
@@ -422,12 +423,12 @@ The app now checks whether video files are actually present and readable before 
 If you see:
 
 ```text
-Video file unavailable. The metadata exists, but the MP4 is missing or unreadable on disk.
+Video file unavailable. The metadata exists, but the video is missing or unreadable on disk.
 ```
 
-that means the JSON record exists in `data/logs`, but the actual MP4 is missing, moved, empty, or unreadable. Restore the MP4 to the expected path or record a new video.
+that means the JSON record exists in `data/logs`, but the actual WebM or MP4 file is missing, moved, empty, or unreadable. Restore the video to the expected path or record a new video.
 
-For new recordings, the app attempts browser-friendly MP4 codecs first and falls back if needed.
+For new recordings, the app writes browser-friendly WebM files using VP9 first and VP8 as a fallback. Existing MP4 files are still discovered, validated, and played.
 
 ## Sync With Existing Dashcam App
 
@@ -479,7 +480,7 @@ Recording should not wait for AI. If it still lags:
 ### Saved video does not play
 
 - Open the Recorded Videos warning and check the listed paths.
-- Confirm the MP4 exists under `data/videos` or `data/videos/processed`.
+- Confirm the WebM or MP4 exists under `data/videos` or `data/videos/processed`.
 - Old metadata records may point to MP4s that were deleted or moved.
 - Record a new sample after this update to verify the current playback flow.
 
@@ -490,7 +491,7 @@ The original video is kept. The metadata stores `processing_error` so the issue 
 Common causes:
 
 - original video file missing
-- invalid/empty MP4
+- invalid/empty WebM or MP4
 - YOLO model missing
 - codec writer unavailable
 - insufficient disk space

@@ -63,6 +63,7 @@ class IncidentService:
             item.get("plate_number", "").upper(): item
             for item in stolen_reports
             if item.get("plate_number")
+            and item.get("status") == "Active Alert"
         }
         incidents = {
             item.get("incident_id"): item for item in self.list_incidents()

@@ -3,6 +3,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
+from core.video_io import DEFAULT_VIDEO_EXTENSION
+
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_DIR / "data"
@@ -43,11 +45,12 @@ class VideoService:
     def create_record(self, camera_id, fps, resolution, device_id="roadwatch_local_01"):
         now = datetime.now()
         video_id = f"vid_{now:%Y%m%d_%H%M%S}_{uuid4().hex[:6]}"
-        filename = f"recording_{now:%Y_%m_%d_%H%M%S}.mp4"
+        filename = f"recording_{now:%Y_%m_%d_%H%M%S}{DEFAULT_VIDEO_EXTENSION}"
         record = {
             "video_id": video_id,
             "device_id": device_id,
             "filename": filename,
+            "video_format": DEFAULT_VIDEO_EXTENSION.lstrip("."),
             "video_path": str(VIDEOS_DIR / filename),
             "original_video_path": str(VIDEOS_DIR / filename),
             "processed_video_path": None,

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import cv2
 
-from core.video_io import finalize_video_file, open_mp4_writer
+from core.video_io import DEFAULT_VIDEO_EXTENSION, finalize_video_file, open_video_writer
 from core.vision_pipeline import VisionPipeline
 from services.detection_log_service import DetectionLogService
 from services.video_service import PROCESSED_VIDEOS_DIR, VideoService
@@ -21,9 +21,9 @@ class VideoProcessingService:
             record.get("original_video_path") or record["video_path"]
         )
         output_path = PROCESSED_VIDEOS_DIR / (
-            f'recording_{record["video_id"]}_processed.mp4'
+            f'recording_{record["video_id"]}_processed{DEFAULT_VIDEO_EXTENSION}'
         )
-        temporary_path = output_path.with_suffix(".raw.mp4")
+        temporary_path = output_path.with_suffix(".raw.webm")
         record["processing_status"] = "Processing detection overlays..."
         record["processing_error"] = None
         self.video_service.save(record)
@@ -63,7 +63,7 @@ class VideoProcessingService:
                 raise RuntimeError("Saved video has an invalid resolution.")
             if not 1 <= fps <= 120:
                 fps = float(self.settings["target_camera_fps"])
-            writer, codec = open_mp4_writer(
+            writer, codec = open_video_writer(
                 temporary_path, fps, (width, height)
             )
             record["processed_video_codec"] = codec

@@ -10,7 +10,7 @@ from pathlib import Path
 import cv2
 
 from core.annotation import annotate_frame
-from core.video_io import finalize_video_file, open_mp4_writer
+from core.video_io import finalize_video_file, open_video_writer
 from core.vision_pipeline import VisionPipeline
 from services.detection_log_service import DetectionLogService
 from services.video_service import VideoService
@@ -62,7 +62,7 @@ class CameraManager:
         self.log_service = DetectionLogService(
             self.record, settings["save_snapshots"]
         )
-        self.raw_path = Path(self.record["video_path"]).with_suffix(".raw.mp4")
+        self.raw_path = Path(self.record["video_path"]).with_suffix(".raw.webm")
         self.writer, self.video_codec = self._open_writer()
         self.record["video_codec"] = self.video_codec
         self.video_service.save(self.record)
@@ -160,7 +160,7 @@ class CameraManager:
 
     def _open_writer(self):
         try:
-            return open_mp4_writer(
+            return open_video_writer(
                 self.raw_path,
                 self.recording_fps,
                 (self.actual_width, self.actual_height),

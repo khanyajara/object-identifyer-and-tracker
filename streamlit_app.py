@@ -13,11 +13,11 @@ import streamlit as st
 from core.detector import load_yolo_model
 from core.opencv_recorder import CameraManager
 from core.ocr import load_ocr_reader
-from core.video_io import is_playable_video_path
+from core.video_io import is_playable_video_path, video_mime_type
 from services.auth_service import AdminAuthService
 from services.contact_service import ContactService
 from services.firebase_service import FirebaseService
-from services.gps_service import GPSService
+from services.gps_service import GPSService, LocationTrackingService
 from services.incident_service import INCIDENT_TYPES, IncidentService
 from services.notification_service import NotificationService
 from services.report_service import build_summary, videos_dataframe
@@ -51,6 +51,11 @@ ENV_SETTING_KEYS = {
     "ROADWATCH_SMTP_PASSWORD": "notification_smtp_password",
     "ROADWATCH_EMAIL_FROM": "notification_email_from",
     "ROADWATCH_EMAIL_TO": "notification_email_to",
+    "ROADWATCH_LOCATION_TRACKING": "location_tracking_enabled",
+    "ROADWATCH_REVERSE_GEOCODING": "location_reverse_geocoding_enabled",
+    "ROADWATCH_SAVE_GPS_HISTORY": "location_save_history",
+    "ROADWATCH_HIGH_ACCURACY_LOCATION": "location_high_accuracy",
+    "ROADWATCH_SHOW_CURRENT_ADDRESS": "location_show_address",
 }
 
 
@@ -125,15 +130,24 @@ DEFAULTS = {
     "notify_on_incident": True,
     "notify_on_processing": True,
     "notify_on_sync": True,
+    "location_tracking_enabled": True,
+    "location_reverse_geocoding_enabled": False,
+    "location_save_history": True,
+    "location_high_accuracy": False,
+    "location_show_address": True,
 }
 
 
 def load_settings():
-    env_settings = {
-        setting_key: os.environ[env_key]
-        for env_key, setting_key in ENV_SETTING_KEYS.items()
-        if os.environ.get(env_key)
-    }
+    env_settings = {}
+    for env_key, setting_key in ENV_SETTING_KEYS.items():
+        if not os.environ.get(env_key):
+            continue
+        value = os.environ[env_key]
+        default = DEFAULTS.get(setting_key)
+        if isinstance(default, bool):
+            value = value.strip().lower() in {"1", "true", "yes", "on"}
+        env_settings[setting_key] = value
     if SETTINGS_PATH.exists():
         try:
             return {**DEFAULTS, **json.loads(SETTINGS_PATH.read_text("utf-8")), **env_settings}
@@ -165,6 +179,35 @@ def notification_settings(settings):
         "notify_on_processing": settings.get("notify_on_processing", True),
         "notify_on_sync": settings.get("notify_on_sync", True),
     }
+
+
+def ensure_location_tracking(settings):
+    tracker = st.session_state.get("location_tracker")
+    if tracker is None:
+        tracker = LocationTrackingService(settings)
+        st.session_state.location_tracker = tracker
+        tracker.start()
+    else:
+        tracker.update_settings(settings)
+        tracker.start()
+    return tracker
+
+
+def location_status(settings):
+    tracker = ensure_location_tracking(settings)
+    return tracker.status()
+
+
+def link_location_to_video(video_id):
+    tracker = st.session_state.get("location_tracker")
+    if tracker:
+        tracker.link_video(video_id)
+
+
+def unlink_location_from_video():
+    tracker = st.session_state.get("location_tracker")
+    if tracker:
+        tracker.unlink_video()
 
 
 @st.cache_resource(show_spinner="Loading YOLO model...")
@@ -396,13 +439,20 @@ def system_top_bar(settings):
     elapsed = format_duration(camera_manager.elapsed) if recording else "00:00"
     now = datetime.now().strftime("%H:%M:%S")
     mode = "ACTIVE" if recording else "STANDBY"
+    gps = location_status(settings)
+    gps_label = {
+        "Active": "ACTIVE",
+        "Acquiring Signal": "ACQUIRING",
+        "Permission Required": "PERMISSION",
+        "Unavailable": "UNAVAILABLE",
+    }.get(gps.get("status"), gps.get("status", "UNKNOWN")).upper()
     st.markdown(
         f"""
         <div class="system-bar">
           <div class="system-cell"><div class="system-label">System mode</div><div class="system-value cyan">{mode}</div></div>
           <div class="system-cell"><div class="system-label">Recorder</div><div class="system-value {'red' if recording else 'cyan'}">{'RECORDING' if recording else 'READY'}</div></div>
           <div class="system-cell"><div class="system-label">Session</div><div class="system-value">{elapsed}</div></div>
-          <div class="system-cell"><div class="system-label">GPS</div><div class="system-value cyan">LOCKED</div></div>
+          <div class="system-cell"><div class="system-label">GPS</div><div class="system-value cyan">{esc(gps_label)}</div></div>
           <div class="system-cell"><div class="system-label">Network</div><div class="system-value cyan">5G</div></div>
           <div class="system-cell"><div class="system-label">Cameras</div><div class="system-value cyan">FRONT + REAR</div></div>
           <div class="system-cell"><div class="system-label">Clock</div><div class="system-value">{now}</div></div>
@@ -602,13 +652,14 @@ def video_path_candidates(record, version):
         processed = record.get("processed_video_path")
         if processed:
             candidates.append(Path(processed))
-        candidates.append(
-            PROJECT_DIR
-            / "data"
-            / "videos"
-            / "processed"
-            / f'recording_{record["video_id"]}_processed.mp4'
-        )
+        for suffix in (".webm", ".mp4"):
+            candidates.append(
+                PROJECT_DIR
+                / "data"
+                / "videos"
+                / "processed"
+                / f'recording_{record["video_id"]}_processed{suffix}'
+            )
     for key in ("original_video_path", "video_path"):
         value = record.get(key)
         if value:
@@ -642,7 +693,7 @@ def render_video_player(record):
         versions.append("Original")
     if not versions:
         st.warning(
-            "Video file unavailable. The metadata exists, but the MP4 is "
+            "Video file unavailable. The metadata exists, but the video is "
             "missing or unreadable on disk."
         )
         with st.expander("Checked video paths", expanded=False):
@@ -664,7 +715,7 @@ def render_video_player(record):
     )
     path = processed_path if version == "Processed" else original_path
     try:
-        st.video(path.read_bytes(), format="video/mp4")
+        st.video(path.read_bytes(), format=video_mime_type(path))
         st.caption(str(path))
         return path
     except OSError as exc:
@@ -684,6 +735,7 @@ def stop_and_process(camera_manager, settings):
     processing_status = st.status("Processing detection overlays...", expanded=True)
     record = camera_manager.stop()
     st.session_state.camera_manager = None
+    unlink_location_from_video()
     record = VideoProcessingService(
         settings,
         cached_model(settings["model_name"]),
@@ -728,7 +780,7 @@ def stop_and_process(camera_manager, settings):
 
 def dash_cam_page(settings):
     camera_manager, active = get_camera_state(settings)
-    gps = GPSService().status()
+    gps = location_status(settings)
     storage_rows = StorageService().status()
     videos = VideoService().list_videos()
     latest_videos = videos[:3]
@@ -755,6 +807,7 @@ def dash_cam_page(settings):
                 )
                 st.session_state.camera_manager = camera_manager
                 st.session_state.last_record = None
+                link_location_to_video(camera_manager.record.get("video_id"))
                 active = True
             except Exception as exc:
                 st.error(str(exc))
@@ -835,6 +888,7 @@ def dash_cam_page(settings):
         quick_actions_box = st.empty()
 
     def render_static_hud(event=None, metrics=None, error=None, elapsed="00:00"):
+        gps = location_status(settings)
         event = event or {}
         metrics = metrics or {
             "camera_fps": 0,
@@ -861,7 +915,7 @@ def dash_cam_page(settings):
             f"""
             <div class="metric-grid" style="grid-template-columns:1fr 1fr">
               <div class="metric-card"><div class="metric-label">AI Telemetry</div><div class="list-row"><span>Model</span><span>YOLOv8</span></div><div class="list-row"><span>Tracking</span><span>{'Deep SORT' if settings.get("enable_tracking") else 'Sampled'}</span></div><div class="list-row"><span>OCR</span><span>{'Active' if settings.get("enable_ocr") else 'Off'}</span></div><div class="list-row"><span>Frame Rate</span><span>{metrics.get("camera_fps", 0):.1f} FPS</span></div><div class="list-row"><span>Processing</span><span>{metrics.get("processing_time_ms", 0):.0f} ms</span></div></div>
-              <div class="metric-card"><div class="metric-label">GPS Status</div><div class="metric-value" style="font-size:1rem;color:{'#22c55e' if gps["status"] == 'Active' else '#facc15'}">{gps["status"]}</div><div style="margin-top:.8rem;color:#dffcff">{gps.get("latitude") or "Latitude unavailable"}<br>{gps.get("longitude") or "Longitude unavailable"}<br><span class="muted">{esc(gps.get("address") or gps.get("message"))}</span></div><div class="metric-spark"></div></div>
+              <div class="metric-card"><div class="metric-label">GPS Status</div><div class="metric-value" style="font-size:1rem;color:{'#22c55e' if gps["status"] == 'Active' else '#facc15'}">{gps["status"]}</div><div style="margin-top:.8rem;color:#dffcff">{gps.get("latitude") or "Latitude unavailable"}<br>{gps.get("longitude") or "Longitude unavailable"}<br><span class="muted">{esc(gps.get("address") or gps.get("message"))}</span></div><div class="list-row"><span>Source</span><span>{esc(gps.get("source") or "Unavailable")}</span></div><div class="list-row"><span>Accuracy</span><span>{esc(str(gps.get("accuracy_m") or "Unknown"))} m</span></div><div class="metric-spark"></div></div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -891,8 +945,8 @@ def dash_cam_page(settings):
             f"""
             <div class="metric-grid" style="margin-top:.85rem">
               <div class="metric-card"><div class="metric-label">Current Location</div><div class="metric-value" style="font-size:1.05rem">{esc(gps.get("address") or gps.get("message"))}</div><div class="muted">Status: {esc(gps.get("status"))}</div></div>
-              <div class="metric-card"><div class="metric-label">Coordinates</div><div class="metric-value" style="font-size:1rem">{esc(gps.get("latitude") or "Unavailable")} / {esc(gps.get("longitude") or "Unavailable")}</div><div class="muted">Speed {gps.get("speed_kmh", 0)} km/h</div></div>
-              <div class="metric-card"><div class="metric-label">Location Updated</div><div class="metric-value" style="font-size:1rem">{esc(gps.get("last_updated") or "Not available")}</div><div class="muted">Video ID: {esc(linked_video_id or "Not recording")}</div></div>
+              <div class="metric-card"><div class="metric-label">Coordinates</div><div class="metric-value" style="font-size:1rem">{esc(gps.get("latitude") or "Unavailable")} / {esc(gps.get("longitude") or "Unavailable")}</div><div class="muted">Speed {gps.get("speed_kmh", 0)} km/h / Accuracy {esc(str(gps.get("accuracy_m") or "Unknown"))} m</div></div>
+              <div class="metric-card"><div class="metric-label">Location Updated</div><div class="metric-value" style="font-size:1rem">{esc(gps.get("last_updated") or "Not available")}</div><div class="muted">Source: {esc(gps.get("source") or "Unavailable")} / Video ID: {esc(linked_video_id or "Not recording")}</div></div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -1348,62 +1402,340 @@ def incidents_page(service):
                 st.success("Manual incident created.")
 
 
-def stolen_vehicle_page(service, settings=None):
+def report_status_badge(status):
+    status_class = {
+        "Active Alert": "badge-red",
+        "Rejected": "badge-red",
+        "Submitted": "badge-blue",
+        "Under Admin Review": "badge-yellow",
+        "Located": "badge-blue",
+        "Closed": "badge",
+    }.get(status, "badge")
+    return f'<span class="badge {status_class}">{html.escape(status or "Draft")}</span>'
+
+
+def uploaded_file_names(paths):
+    return [Path(path).name for path in paths or []]
+
+
+def stolen_report_summary(report):
+    return {
+        "Report ID": report.get("report_id"),
+        "Plate": report.get("plate_number"),
+        "Vehicle": " ".join(
+            item for item in [
+                report.get("year"),
+                report.get("make"),
+                report.get("model"),
+            ]
+            if item
+        ),
+        "Colour": report.get("colour"),
+        "Status": report.get("status", "Draft"),
+        "Images": len(report.get("image_paths", [])),
+        "Documents": len(report.get("document_paths", [])),
+        "Updated": report.get("updated_at"),
+    }
+
+
+def stolen_report_step_for_status(status):
+    return {
+        "Awaiting Images": 2,
+        "Awaiting Ownership Documents": 3,
+        "Submitted": 4,
+        "Rejected": 1,
+    }.get(status, 1)
+
+
+def render_stolen_report_details(report, include_documents=False):
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown("#### Vehicle Details")
+        st.write(f"**Plate:** {report.get('plate_number') or 'Missing'}")
+        st.write(
+            "**Vehicle:** "
+            f"{report.get('year') or ''} {report.get('make') or ''} "
+            f"{report.get('model') or ''}".strip()
+            or "Missing"
+        )
+        st.write(f"**Colour:** {report.get('colour') or 'Missing'}")
+        st.write(f"**VIN/chassis:** {report.get('vin') or 'Not provided'}")
+        st.write(f"**Case/reference:** {report.get('case_reference') or 'Not provided'}")
+    with c2:
+        st.markdown("#### Last Seen / Contact")
+        st.write(f"**Last seen:** {report.get('last_seen_location') or 'Missing'}")
+        st.write(f"**Date/time:** {report.get('last_seen_datetime') or 'Missing'}")
+        st.write(f"**Contact:** {report.get('contact_number') or 'Missing'}")
+        st.write(f"**Status:** {report.get('status', 'Draft')}")
+        st.write(f"**Notes:** {report.get('notes') or 'No notes'}")
+    image_paths = [Path(path) for path in report.get("image_paths", [])]
+    existing_images = [path for path in image_paths if path.exists()]
+    st.markdown("#### Vehicle Images")
+    if existing_images:
+        cols = st.columns(min(4, len(existing_images)))
+        for index, path in enumerate(existing_images):
+            cols[index % len(cols)].image(str(path), caption=path.name, use_container_width=True)
+    else:
+        st.info("No vehicle images uploaded yet.")
+    st.markdown("#### Ownership Documents")
+    if include_documents:
+        document_paths = [Path(path) for path in report.get("document_paths", [])]
+        existing_docs = [path for path in document_paths if path.exists()]
+        if existing_docs:
+            for path in existing_docs:
+                with path.open("rb") as file_obj:
+                    st.download_button(
+                        f"Download {path.name}",
+                        file_obj.read(),
+                        file_name=path.name,
+                        key=f"doc-{report.get('report_id')}-{path.name}",
+                    )
+        else:
+            st.info("No ownership documents uploaded yet.")
+    else:
+        st.caption("Ownership documents are restricted to the report owner and admins.")
+
+
+def stolen_vehicle_page(service, settings=None, admin_mode=False):
     settings = settings or load_settings()
     header(
         "Plate watchlist",
-        "Report Stolen Vehicle",
-        "Create a local stolen vehicle report and review plate matches when needed.",
+        "Stolen Vehicles" if admin_mode else "Report Stolen Vehicle",
+        (
+            "Review submitted reports, evidence, and active alerts."
+            if admin_mode
+            else "Create a staged stolen vehicle report with images and ownership proof."
+        ),
     )
     stolen_service = StolenVehicleService()
     reports_all = stolen_service.list_reports()
     matches_all = stolen_service.match_videos(service.list_videos())
-    active_reports = sum(1 for item in reports_all if item.get("status") == "active")
+    active_reports = sum(1 for item in reports_all if item.get("status") == "Active Alert")
+    submitted_reports = sum(1 for item in reports_all if item.get("status") == "Submitted")
+    draft_reports = sum(1 for item in reports_all if item.get("status") in {"Draft", "Awaiting Images", "Awaiting Ownership Documents"})
     cards_html(
         [
-            ("Reports", len(reports_all), "Local watchlist"),
-            ("Active", active_reports, "Currently watched"),
+            ("Reports", len(reports_all), "Local device reports"),
+            ("Drafts", draft_reports, "Can continue later"),
+            ("Submitted", submitted_reports, "Awaiting review"),
+            ("Active alerts", active_reports, "Plate matching enabled"),
             ("Plate matches", len(matches_all), "Detected OCR links"),
-            ("Latest report", reports_all[0].get("plate_number", "None") if reports_all else "None", "Newest entry"),
         ]
     )
-    with st.form("stolen-report"):
-        st.markdown("### Add Local Report")
-        c1, c2, c3 = st.columns(3)
-        plate = c1.text_input("Plate number")
-        make = c2.text_input("Vehicle make")
-        model = c3.text_input("Vehicle model")
-        c4, c5, c6 = st.columns(3)
-        colour = c4.text_input("Colour")
-        case_reference = c5.text_input("Case/reference number")
-        status = c6.selectbox("Status", ["active", "recovered", "closed"])
-        note = st.text_area("Owner/contact note")
-        if st.form_submit_button("Save stolen vehicle report", type="primary"):
-            stolen_service.add_report(
-                {
-                    "plate_number": plate,
-                    "vehicle_make": make,
-                    "vehicle_model": model,
-                    "colour": colour,
-                    "owner_contact_note": note,
-                    "case_reference": case_reference,
-                    "status": status,
-                    "device_id": settings.get("device_id", "roadwatch_local_01"),
-                }
+
+    if admin_mode:
+        query = st.text_input("Search report, plate, vehicle, or status")
+        reports = stolen_service.search(query)
+        if reports:
+            st.dataframe(
+                pd.DataFrame([stolen_report_summary(item) for item in reports]),
+                width="stretch",
+                hide_index=True,
             )
-            st.success("Stolen vehicle report saved.")
+            labels = {
+                f'{item.get("plate_number", "No plate")} | {item.get("status", "Draft")} | {item.get("report_id")}': item.get("report_id")
+                for item in reports
+            }
+            selected_label = st.selectbox("Open report for admin review", list(labels))
+            selected = stolen_service.get_report(labels[selected_label])
+            if selected:
+                st.markdown("### Admin Review")
+                st.markdown(report_status_badge(selected.get("status")), unsafe_allow_html=True)
+                render_stolen_report_details(selected, include_documents=True)
+                missing = stolen_service.missing_required_fields(selected)
+                if missing:
+                    st.warning("Missing before active alert: " + ", ".join(missing))
+                a1, a2, a3, a4 = st.columns(4)
+                if a1.button("Start admin review", width="stretch"):
+                    stolen_service.update_status(selected["report_id"], "Under Admin Review")
+                    st.rerun()
+                if a2.button("Approve / Active Alert", width="stretch", disabled=bool(missing)):
+                    stolen_service.update_status(selected["report_id"], "Active Alert")
+                    st.rerun()
+                if a3.button("Mark Located", width="stretch"):
+                    stolen_service.update_status(selected["report_id"], "Located")
+                    st.rerun()
+                if a4.button("Close Report", width="stretch"):
+                    stolen_service.update_status(selected["report_id"], "Closed")
+                    st.rerun()
+                with st.form(f"reject-{selected['report_id']}"):
+                    reason = st.text_area("Reject reason")
+                    if st.form_submit_button("Reject report"):
+                        stolen_service.update_status(selected["report_id"], "Rejected", reason or "No reason provided")
+                        st.rerun()
+        else:
+            st.info("No stolen vehicle reports match this search.")
+        with st.expander("Plate matches against active alerts", expanded=False):
+            if matches_all:
+                st.dataframe(pd.DataFrame(matches_all), width="stretch", hide_index=True)
+            else:
+                st.info("No detected OCR plates match active stolen vehicle alerts.")
+        return
+
+    if "stolen_report_step" not in st.session_state:
+        st.session_state.stolen_report_step = 1
+    device_id = settings.get("device_id", "roadwatch_local_01")
+    editable_reports = [
+        item for item in reports_all
+        if item.get("device_id") == device_id
+        and item.get("status") not in {"Under Admin Review", "Active Alert", "Located", "Closed"}
+    ]
+    if editable_reports:
+        labels = {"Start new report": ""}
+        labels.update(
+            {
+                f'{item.get("plate_number", "Draft")} | {item.get("status", "Draft")} | {item.get("report_id")}': item.get("report_id")
+                for item in editable_reports
+            }
+        )
+        selected_draft = st.selectbox("Continue an existing draft/report", list(labels))
+        selected_report_id = labels[selected_draft]
+        if selected_report_id and st.session_state.get("stolen_report_id") != selected_report_id:
+            selected_report = stolen_service.get_report(selected_report_id)
+            st.session_state.stolen_report_id = selected_report_id
+            st.session_state.stolen_report_step = stolen_report_step_for_status(
+                (selected_report or {}).get("status")
+            )
+            st.rerun()
+        if not selected_report_id and st.session_state.get("stolen_report_id"):
+            st.session_state.stolen_report_id = ""
+            st.session_state.stolen_report_step = 1
+            st.rerun()
+    current_report = stolen_service.get_report(st.session_state.get("stolen_report_id", ""))
+    step = int(st.session_state.stolen_report_step)
+    st.progress((step - 1) / 3, text=f"Step {step} of 4")
+
+    if step == 1:
+        with st.form("stolen-report-details"):
+            st.markdown("### Step 1: Vehicle Details")
+            c1, c2, c3 = st.columns(3)
+            plate = c1.text_input("Plate number *", value=(current_report or {}).get("plate_number", ""))
+            make = c2.text_input("Vehicle make *", value=(current_report or {}).get("make", ""))
+            model = c3.text_input("Vehicle model *", value=(current_report or {}).get("model", ""))
+            c4, c5, c6 = st.columns(3)
+            year = c4.text_input("Vehicle year *", value=(current_report or {}).get("year", ""))
+            colour = c5.text_input("Vehicle colour *", value=(current_report or {}).get("colour", ""))
+            vin = c6.text_input("VIN/chassis number", value=(current_report or {}).get("vin", ""))
+            last_seen_location = st.text_input("Last seen location *", value=(current_report or {}).get("last_seen_location", ""))
+            c7, c8 = st.columns(2)
+            last_seen_datetime = c7.text_input("Last seen date/time *", value=(current_report or {}).get("last_seen_datetime", ""))
+            case_reference = c8.text_input("Case/reference number", value=(current_report or {}).get("case_reference", ""))
+            contact_number = st.text_input("Contact number *", value=(current_report or {}).get("contact_number", ""))
+            notes = st.text_area("Additional notes", value=(current_report or {}).get("notes", ""))
+            save_draft = st.form_submit_button("Save Draft")
+            continue_next = st.form_submit_button("Save and Continue", type="primary")
+            if save_draft or continue_next:
+                report = stolen_service.save_report(
+                    {
+                        "report_id": (current_report or {}).get("report_id"),
+                        "plate_number": plate,
+                        "make": make,
+                        "model": model,
+                        "year": year,
+                        "colour": colour,
+                        "vin": vin,
+                        "last_seen_location": last_seen_location,
+                        "last_seen_datetime": last_seen_datetime,
+                        "case_reference": case_reference,
+                        "contact_number": contact_number,
+                        "notes": notes,
+                        "status": "Draft",
+                        "device_id": device_id,
+                    }
+                )
+                st.session_state.stolen_report_id = report["report_id"]
+                if continue_next:
+                    st.session_state.stolen_report_step = 2
+                    st.rerun()
+                st.success("Draft saved.")
+
+    elif step == 2:
+        st.markdown("### Step 2: Upload Vehicle Images")
+        if not current_report:
+            st.warning("Complete vehicle details first.")
+        else:
+            uploads = st.file_uploader(
+                "Upload vehicle images (.jpg, .jpeg, .png, .webp)",
+                type=["jpg", "jpeg", "png", "webp"],
+                accept_multiple_files=True,
+            )
+            if st.button("Save Images", type="primary"):
+                saved = stolen_service.save_uploads(current_report["report_id"], uploads, "image")
+                st.success(f"Saved {len(saved)} image(s).")
+                st.session_state.stolen_report_step = 3
+                st.rerun()
+            st.caption(f"Current images: {len(current_report.get('image_paths', []))}")
+            if st.button("Back to Details"):
+                st.session_state.stolen_report_step = 1
+                st.rerun()
+
+    elif step == 3:
+        st.markdown("### Step 3: Upload Ownership Documents")
+        if not current_report:
+            st.warning("Complete vehicle details first.")
+        else:
+            uploads = st.file_uploader(
+                "Upload ownership proof (.pdf, .jpg, .jpeg, .png)",
+                type=["pdf", "jpg", "jpeg", "png"],
+                accept_multiple_files=True,
+            )
+            st.caption("Documents are restricted to the report owner and admins.")
+            if st.button("Save Ownership Documents", type="primary"):
+                saved = stolen_service.save_uploads(current_report["report_id"], uploads, "document")
+                st.success(f"Saved {len(saved)} document(s).")
+                st.session_state.stolen_report_step = 4
+                st.rerun()
+            st.caption(f"Current documents: {len(current_report.get('document_paths', []))}")
+            if st.button("Back to Images"):
+                st.session_state.stolen_report_step = 2
+                st.rerun()
+
+    elif step == 4:
+        st.markdown("### Step 4: Review and Submit")
+        if not current_report:
+            st.warning("Complete vehicle details first.")
+        else:
+            current_report = stolen_service.get_report(current_report["report_id"])
+            render_stolen_report_details(current_report, include_documents=True)
+            missing = stolen_service.missing_required_fields(current_report)
+            cards_html(
+                [
+                    ("Uploaded images", len(current_report.get("image_paths", [])), "Vehicle preview evidence"),
+                    ("Documents", len(current_report.get("document_paths", [])), "Restricted ownership proof"),
+                    ("Missing fields", len(missing), ", ".join(missing) or "Ready"),
+                    ("Report status", current_report.get("status", "Draft"), "Current state"),
+                ]
+            )
+            if missing:
+                st.warning("Complete these before submission: " + ", ".join(missing))
+            c1, c2 = st.columns(2)
+            if c1.button("Confirm and Submit", type="primary", disabled=bool(missing), width="stretch"):
+                _, missing = stolen_service.submit_report(current_report["report_id"])
+                if missing:
+                    st.warning("Missing required items: " + ", ".join(missing))
+                else:
+                    st.success("Report submitted for admin review.")
+                    st.session_state.stolen_report_step = 1
+                    st.rerun()
+            if c2.button("Edit Details", width="stretch"):
+                st.session_state.stolen_report_step = 1
+                st.rerun()
+
     query = st.text_input("Search reported plates")
     reports = stolen_service.search(query)
-    with st.expander("View stolen vehicle list", expanded=False):
+    with st.expander("Your stolen vehicle reports", expanded=False):
         if reports:
-            st.dataframe(pd.DataFrame(reports), width="stretch", hide_index=True)
+            own_reports = [item for item in reports if item.get("device_id") == device_id]
+            if own_reports:
+                st.dataframe(
+                    pd.DataFrame([stolen_report_summary(item) for item in own_reports]),
+                    width="stretch",
+                    hide_index=True,
+                )
+            else:
+                st.info("No reports for this device yet.")
         else:
             st.info("No stolen vehicle reports yet.")
-    with st.expander("View plate matches", expanded=False):
-        if matches_all:
-            st.dataframe(pd.DataFrame(matches_all), width="stretch", hide_index=True)
-        else:
-            st.info("No detected OCR plates match the local stolen vehicle list.")
 
 
 def gps_page(service, settings=None):
@@ -1414,13 +1746,15 @@ def gps_page(service, settings=None):
         "Desktop-safe GPS history with local/mock fallback.",
     )
     gps_service = GPSService()
-    status = gps_service.status()
+    status = location_status(settings)
     cards_html(
         [
             ("GPS status", status["status"], status.get("message", "Location status")),
             ("Latitude", status["latitude"] or "Unavailable", "Latest"),
             ("Longitude", status["longitude"] or "Unavailable", "Latest"),
             ("Speed", f'{status["speed_kmh"]} km/h', "Latest"),
+            ("Accuracy", f'{status.get("accuracy_m") or "Unknown"} m', "Latest"),
+            ("Source", status.get("source") or "Unavailable", "GPS / Network / Mock"),
             ("Last updated", status.get("last_updated") or "Unavailable", "Latest point"),
             ("Linked video", status.get("video_id") or "None", "Current/last"),
         ]
@@ -1432,19 +1766,22 @@ def gps_page(service, settings=None):
         lat = c1.number_input("Latitude", value=0.0, format="%.6f")
         lon = c2.number_input("Longitude", value=0.0, format="%.6f")
         speed = c3.number_input("Speed km/h", value=0.0, min_value=0.0)
+        accuracy = st.number_input("GPS accuracy meters", value=25.0, min_value=0.0)
         address = st.text_input("Location/address", value="")
         videos = service.list_videos()
         labels = {"No linked video": None}
         labels.update({f'{item["filename"]} | {item["video_id"]}': item["video_id"] for item in videos})
         linked = st.selectbox("Link to video", list(labels))
         if st.form_submit_button("Add mock GPS point"):
-            gps_service.add_mock_point(
+            gps_service.add_point(
                 lat,
                 lon,
                 speed,
-                labels[linked],
-                address or None,
-                settings.get("device_id", "roadwatch_local_01"),
+                video_id=labels[linked],
+                address=address or None,
+                device_id=settings.get("device_id", "roadwatch_local_01"),
+                accuracy_m=accuracy,
+                source="Mock",
             )
             st.success("GPS point saved.")
     points = gps_service.list_points()
@@ -1643,6 +1980,34 @@ def settings_page(settings):
             annotated = st.toggle("Save processed annotated video", settings["save_annotated_video"])
         with st.expander("Storage Settings", expanded=False):
             st.dataframe(pd.DataFrame(StorageService().status()), width="stretch", hide_index=True)
+        with st.expander("Location Tracking", expanded=True):
+            location_cols = st.columns(5)
+            location_tracking_enabled = location_cols[0].toggle(
+                "Enable Continuous Location Tracking",
+                bool(settings.get("location_tracking_enabled", True)),
+            )
+            location_reverse_geocoding_enabled = location_cols[1].toggle(
+                "Enable Reverse Geocoding",
+                bool(settings.get("location_reverse_geocoding_enabled", False)),
+            )
+            location_save_history = location_cols[2].toggle(
+                "Save GPS History",
+                bool(settings.get("location_save_history", True)),
+            )
+            location_high_accuracy = location_cols[3].toggle(
+                "High Accuracy Mode",
+                bool(settings.get("location_high_accuracy", False)),
+            )
+            location_show_address = location_cols[4].toggle(
+                "Show Current Address",
+                bool(settings.get("location_show_address", True)),
+            )
+            live_location = location_status(settings)
+            st.caption(
+                "Current location service: "
+                f"{live_location.get('status')} - "
+                f"{live_location.get('message')}"
+            )
         with st.expander("Sync/API Settings", expanded=False):
             sync_url = st.text_input("Sync URL", settings["sync_url"])
             sync_key = st.text_input("Sync API key placeholder", settings["sync_api_key"], type="password")
@@ -1691,6 +2056,11 @@ def settings_page(settings):
                 "enable_movement": movement,
                 "save_snapshots": snapshots,
                 "save_annotated_video": annotated,
+                "location_tracking_enabled": location_tracking_enabled,
+                "location_reverse_geocoding_enabled": location_reverse_geocoding_enabled,
+                "location_save_history": location_save_history,
+                "location_high_accuracy": location_high_accuracy,
+                "location_show_address": location_show_address,
                 "sync_url": sync_url,
                 "sync_api_key": sync_key,
                 "ai_api_key": ai_api_key,
@@ -1719,6 +2089,7 @@ def settings_page(settings):
             NotificationService(notification_settings(updated)).save_settings(
                 notification_settings(updated)
             )
+            ensure_location_tracking(updated)
             st.success("Settings saved.")
             st.rerun()
     supabase = SupabaseService(
@@ -1791,7 +2162,7 @@ def admin_dashboard_page(service, settings):
             ("Admins", len(auth.list_admins()), "Admin accounts only"),
             ("Total videos", len(videos), "All recordings"),
             ("Incidents", len(incidents), "Generated/manual"),
-            ("Stolen reports", sum(1 for item in stolen_reports if item.get("status") == "active"), "Active watchlist"),
+            ("Stolen reports", sum(1 for item in stolen_reports if item.get("status") == "Active Alert"), "Active watchlist"),
             ("SOS contacts", len(contacts), "Emergency roster"),
             ("System health", "Online", "Local services"),
             ("Storage usage", storage_usage_summary(), "Tracked folders"),
@@ -1897,6 +2268,7 @@ def main():
     )
     styles()
     settings = load_settings()
+    ensure_location_tracking(settings)
     service = VideoService()
     sidebar_brand("Dash Cam")
     admin_query = str(st.query_params.get("admin", "")).lower()
@@ -1959,9 +2331,9 @@ def main():
         "Live Recorder": lambda: dash_cam_page(settings),
         "Videos": lambda: videos_page(service, settings),
         "All Videos": lambda: videos_page(service, settings),
-        "Report Stolen Vehicle": lambda: stolen_vehicle_page(service, settings),
+        "Report Stolen Vehicle": lambda: stolen_vehicle_page(service, settings, admin_mode=False),
         "Incidents": lambda: incidents_page(service),
-        "Stolen Vehicles": lambda: stolen_vehicle_page(service, settings),
+        "Stolen Vehicles": lambda: stolen_vehicle_page(service, settings, admin_mode=True),
         "GPS Tracking": lambda: gps_page(service, settings),
         "Emergency Contacts": lambda: contacts_page(settings),
         "Vehicle Profile": lambda: vehicle_profile_page(settings),
