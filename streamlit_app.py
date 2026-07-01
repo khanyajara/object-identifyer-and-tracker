@@ -135,6 +135,8 @@ DEFAULTS = {
     "location_save_history": True,
     "location_high_accuracy": False,
     "location_show_address": True,
+    "privacy_consent_accepted": False,
+    "privacy_consent_accepted_at": None,
 }
 
 
@@ -158,6 +160,69 @@ def load_settings():
 
 def save_settings(settings):
     SETTINGS_PATH.write_text(json.dumps(settings, indent=2), encoding="utf-8")
+
+
+def privacy_permission_gate(settings):
+    if settings.get("privacy_consent_accepted"):
+        return True
+    st.markdown(
+        """
+        <div class="eyebrow">Roadwatch permissions</div>
+        <div class="hero">Privacy & Device Access</div>
+        <p class="muted">
+          Roadwatch uses camera, recording, AI detection, location tracking,
+          and local evidence storage. Please review and accept before the
+          dashcam system starts.
+        </p>
+        """,
+        unsafe_allow_html=True,
+    )
+    cards_html(
+        [
+            ("Camera", "Required", "Used when you start recording"),
+            ("Video/audio evidence", "Stored locally", "Saved under data/videos"),
+            ("Location tracking", "Starts after consent", "Can be disabled in Settings"),
+            ("AI analysis", "Local processing", "Objects, plates, movement metadata"),
+            ("Uploads/sync", "Optional", "Only when cloud settings are configured"),
+        ]
+    )
+    st.info(
+        "Roadwatch stores recordings, GPS history, reports, vehicle data, "
+        "and detection metadata on this device unless you enable sync/upload features."
+    )
+    with st.expander("What you are allowing", expanded=True):
+        st.markdown(
+            """
+            - OpenCV camera access when recording starts.
+            - Video recording and processed AI-overlay video generation.
+            - Continuous location status/history while the app is open.
+            - Object detection, tracking, OCR/plate scanning, and movement detection.
+            - Local storage of recordings, stolen vehicle reports, ownership documents, emergency contacts, and metadata.
+            - Optional upload/sync only when configured and triggered.
+            """
+        )
+    required = st.checkbox(
+        "I understand and allow Roadwatch to use camera, location, recording, AI analysis, and local data storage on this device.",
+        key="privacy-required-consent",
+    )
+    optional = st.checkbox(
+        "I understand cloud upload/sync may send processed video links and metadata to configured services.",
+        key="privacy-sync-consent",
+    )
+    c1, c2 = st.columns([1, 2])
+    if c1.button("Accept and Start Roadwatch", type="primary", disabled=not required, width="stretch"):
+        updated = {
+            **settings,
+            "privacy_consent_accepted": True,
+            "privacy_consent_accepted_at": datetime.now().astimezone().isoformat(),
+            "privacy_sync_notice_acknowledged": bool(optional),
+        }
+        save_settings(updated)
+        st.session_state.privacy_consent_accepted = True
+        st.rerun()
+    with c2:
+        st.warning("Roadwatch will stay paused until permission is accepted.")
+    return False
 
 
 def notification_settings(settings):
@@ -1957,6 +2022,15 @@ def settings_page(settings):
     with st.form("settings"):
         with st.expander("Device Settings", expanded=True):
             device_id = st.text_input("Device ID", settings.get("device_id", "roadwatch_local_01"))
+        with st.expander("Privacy Permissions", expanded=False):
+            st.caption(
+                "Accepted at: "
+                f"{settings.get('privacy_consent_accepted_at') or 'Not accepted'}"
+            )
+            st.info(
+                "Roadwatch requires consent before starting camera workflows, "
+                "continuous location tracking, AI analysis, recording, and local data storage."
+            )
         with st.expander("Camera Settings", expanded=True):
             camera_id = st.text_input("Camera ID", settings["camera_id"])
             c1, c2, c3, c4 = st.columns(4)
@@ -2092,6 +2166,20 @@ def settings_page(settings):
             ensure_location_tracking(updated)
             st.success("Settings saved.")
             st.rerun()
+    if st.button("Reset privacy permissions", width="stretch"):
+        updated = {
+            **settings,
+            "privacy_consent_accepted": False,
+            "privacy_consent_accepted_at": None,
+            "privacy_sync_notice_acknowledged": False,
+        }
+        tracker = st.session_state.get("location_tracker")
+        if tracker:
+            tracker.stop()
+            st.session_state.location_tracker = None
+        save_settings(updated)
+        st.warning("Privacy permissions reset. Roadwatch will ask again on startup.")
+        st.rerun()
     supabase = SupabaseService(
         settings.get("supabase_url", ""),
         settings.get("supabase_anon_key", ""),
@@ -2268,6 +2356,8 @@ def main():
     )
     styles()
     settings = load_settings()
+    if not privacy_permission_gate(settings):
+        return
     ensure_location_tracking(settings)
     service = VideoService()
     sidebar_brand("Dash Cam")
