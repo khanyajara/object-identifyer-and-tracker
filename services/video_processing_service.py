@@ -3,10 +3,19 @@ from pathlib import Path
 
 import cv2
 
-from core.video_io import DEFAULT_VIDEO_EXTENSION, finalize_video_file, open_video_writer
+from core.video_io import (
+    DEFAULT_VIDEO_EXTENSION,
+    compress_video_for_playback,
+    finalize_video_file,
+    open_video_writer,
+)
 from core.vision_pipeline import VisionPipeline
 from services.detection_log_service import DetectionLogService
-from services.video_service import PROCESSED_VIDEOS_DIR, VideoService
+from services.video_service import (
+    COMPRESSED_PROCESSED_VIDEOS_DIR,
+    PROCESSED_VIDEOS_DIR,
+    VideoService,
+)
 
 
 class VideoProcessingService:
@@ -23,25 +32,53 @@ class VideoProcessingService:
         output_path = PROCESSED_VIDEOS_DIR / (
             f'recording_{record["video_id"]}_processed{DEFAULT_VIDEO_EXTENSION}'
         )
-        temporary_path = output_path.with_suffix(".raw.webm")
+        temporary_path = output_path.with_suffix(".raw")
         record["processing_status"] = "Processing detection overlays..."
         record["processing_error"] = None
         self.video_service.save(record)
         try:
-            events, frame_count = self._process_video(
+            events, frame_count, actual_temporary_path = self._process_video(
                 record, original_path, temporary_path
             )
-            finalize_video_file(temporary_path, output_path)
+            output_path = output_path.with_suffix(actual_temporary_path.suffix)
+            finalize_video_file(actual_temporary_path, output_path)
+            compressed_target = (
+                COMPRESSED_PROCESSED_VIDEOS_DIR
+                / output_path.with_suffix(".mp4").name
+            )
+            compression = compress_video_for_playback(output_path, compressed_target)
+            record["processed_compression_status"] = (
+                "success" if compression["ok"] else "fallback"
+            )
+            record["processed_compression_error"] = (
+                None if compression["ok"] else compression.get("error")
+            )
+            record["processed_compression_message"] = compression["message"]
             self._replace_detection_metadata(record, events)
             record["processed_video_path"] = str(output_path)
+            record["processed_video_format"] = output_path.suffix.lstrip(".")
+            record["compressed_processed_path"] = (
+                str(compression["path"]) if compression["ok"] else None
+            )
+            record["playback_video_path"] = (
+                str(compression["path"]) if compression["ok"] else str(output_path)
+            )
+            record["upload_video_path"] = (
+                str(compression["path"]) if compression["ok"] else str(output_path)
+            )
             record["processed_frame_count"] = frame_count
+            record.pop("processed_temporary_path", None)
             record["processing_status"] = "Processed video saved successfully."
             record["processing_error"] = None
         except Exception as exc:
-            try:
-                temporary_path.unlink()
-            except OSError:
-                pass
+            cleanup_paths = {temporary_path}
+            if record.get("processed_temporary_path"):
+                cleanup_paths.add(Path(record["processed_temporary_path"]))
+            for path in cleanup_paths:
+                try:
+                    path.unlink()
+                except OSError:
+                    pass
             record["processed_video_path"] = None
             record["processing_status"] = "Post-processing failed"
             record["processing_error"] = str(exc)
@@ -63,10 +100,11 @@ class VideoProcessingService:
                 raise RuntimeError("Saved video has an invalid resolution.")
             if not 1 <= fps <= 120:
                 fps = float(self.settings["target_camera_fps"])
-            writer, codec = open_video_writer(
+            writer, actual_temporary_path, codec = open_video_writer(
                 temporary_path, fps, (width, height)
             )
             record["processed_video_codec"] = codec
+            record["processed_temporary_path"] = str(actual_temporary_path)
             pipeline = VisionPipeline(
                 self.settings["model_name"],
                 self.settings["confidence"],
@@ -109,7 +147,7 @@ class VideoProcessingService:
                 writer.write(annotated)
             if frame_number == 0:
                 raise RuntimeError("The original video contains no frames.")
-            return events, frame_number
+            return events, frame_number, actual_temporary_path
         finally:
             capture.release()
             if writer is not None:

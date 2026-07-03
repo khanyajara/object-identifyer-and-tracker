@@ -56,6 +56,7 @@ ENV_SETTING_KEYS = {
     "ROADWATCH_SAVE_GPS_HISTORY": "location_save_history",
     "ROADWATCH_HIGH_ACCURACY_LOCATION": "location_high_accuracy",
     "ROADWATCH_SHOW_CURRENT_ADDRESS": "location_show_address",
+    "KEEP_FALLBACK_VIDEO": "keep_fallback_video",
 }
 
 
@@ -137,6 +138,7 @@ DEFAULTS = {
     "location_show_address": True,
     "privacy_consent_accepted": False,
     "privacy_consent_accepted_at": None,
+    "keep_fallback_video": False,
 }
 
 
@@ -714,10 +716,14 @@ def captured_objects_for_video(record):
 def video_path_candidates(record, version):
     candidates = []
     if version == "Processed":
+        for key in ("compressed_processed_path", "upload_video_path"):
+            value = record.get(key)
+            if value:
+                candidates.append(Path(value))
         processed = record.get("processed_video_path")
         if processed:
             candidates.append(Path(processed))
-        for suffix in (".webm", ".mp4"):
+        for suffix in (".webm", ".avi", ".mp4"):
             candidates.append(
                 PROJECT_DIR
                 / "data"
@@ -725,7 +731,7 @@ def video_path_candidates(record, version):
                 / "processed"
                 / f'recording_{record["video_id"]}_processed{suffix}'
             )
-    for key in ("original_video_path", "video_path"):
+    for key in ("compressed_original_path", "original_video_path", "video_path"):
         value = record.get(key)
         if value:
             candidates.append(Path(value))
@@ -748,6 +754,51 @@ def first_playable_video_path(record, version):
     return None
 
 
+def playback_diagnostics(record, selected_path=None):
+    metadata_path = PROJECT_DIR / "data" / "logs" / f'{record["video_id"]}.json'
+    rows = [
+        {
+            "version": "Metadata",
+            "path": str(metadata_path),
+            "exists": metadata_path.exists(),
+            "size_bytes": metadata_path.stat().st_size if metadata_path.exists() else 0,
+            "playable": "",
+            "selected": False,
+        }
+    ]
+    checked = []
+    for version in ("Processed", "Original"):
+        for path in video_path_candidates(record, version):
+            checked.append((version, path))
+    seen = set()
+    for version, path in checked:
+        key = str(path)
+        if key in seen:
+            continue
+        seen.add(key)
+        rows.append(
+            {
+                "version": version,
+                "path": key,
+                "exists": path.exists(),
+                "size_bytes": path.stat().st_size if path.exists() and path.is_file() else 0,
+                "playable": is_playable_video_path(path),
+                "selected": str(selected_path) == key if selected_path else False,
+            }
+        )
+    rows.append(
+        {
+            "version": "Supabase",
+            "path": record.get("supabase_processed_path") or record.get("supabase_processed_url") or "",
+            "exists": bool(record.get("supabase_processed_url")),
+            "size_bytes": "",
+            "playable": record.get("supabase_upload_status") == "uploaded",
+            "selected": False,
+        }
+    )
+    return rows
+
+
 def render_video_player(record):
     processed_path = first_playable_video_path(record, "Processed")
     original_path = first_playable_video_path(record, "Original")
@@ -761,13 +812,13 @@ def render_video_player(record):
             "Video file unavailable. The metadata exists, but the video is "
             "missing or unreadable on disk."
         )
-        with st.expander("Checked video paths", expanded=False):
-            checked = [
-                {"Version": version, "Path": str(path)}
-                for version in ("Processed", "Original")
-                for path in video_path_candidates(record, version)
-            ]
-            st.dataframe(pd.DataFrame(checked), width="stretch")
+        if st.session_state.get("admin_authenticated"):
+            with st.expander("Playback Diagnostics", expanded=False):
+                st.dataframe(
+                    pd.DataFrame(playback_diagnostics(record)),
+                    width="stretch",
+                    hide_index=True,
+                )
         return None
     version_key = f'video-version-{record["video_id"]}'
     if st.session_state.get(version_key) not in versions:
@@ -780,8 +831,25 @@ def render_video_player(record):
     )
     path = processed_path if version == "Processed" else original_path
     try:
+        if path.suffix.lower() == ".avi":
+            st.info(
+                "This recording used AVI fallback because WebM was not "
+                "available on this system. If your browser cannot play it "
+                "inline, the file is still saved and readable on disk."
+            )
         st.video(path.read_bytes(), format=video_mime_type(path))
         st.caption(str(path))
+        if st.session_state.get("admin_authenticated"):
+            with st.expander("Playback Diagnostics", expanded=False):
+                st.dataframe(
+                    pd.DataFrame(playback_diagnostics(record, path)),
+                    width="stretch",
+                    hide_index=True,
+                )
+                st.caption(
+                    "Supabase upload status: "
+                    f"{record.get('supabase_upload_status') or record.get('sync_status')}"
+                )
         return path
     except OSError as exc:
         st.warning(f"Could not read video file: {exc}")
@@ -1102,6 +1170,10 @@ def dash_cam_page(settings):
     if st.session_state.get("last_record"):
         record = st.session_state.last_record
         st.success(f'Saved {record["filename"]}. {record.get("processing_status", "")}')
+        if record.get("compression_status") == "fallback":
+            st.warning(record.get("compression_message") or "Compression unavailable. Saved compatible fallback video.")
+        if record.get("processed_compression_status") == "fallback":
+            st.warning(record.get("processed_compression_message") or "Processed compression unavailable. Saved compatible fallback video.")
 
 
 def video_matches_query(video, query):
@@ -1143,7 +1215,13 @@ def video_matches_filter(video, selected_filter):
 def upload_processed_video_background(video_id, settings):
     service = VideoService()
     try:
-        service.update_sync_fields(video_id, sync_status="Uploading processed video", sync_error=None)
+        service.update_sync_fields(
+            video_id,
+            sync_status="Uploading processed video",
+            supabase_upload_status="uploading",
+            supabase_upload_error=None,
+            sync_error=None,
+        )
         notifier = NotificationService(notification_settings(settings))
         record = service.load(video_id)
         upload = SupabaseService(
@@ -1160,9 +1238,12 @@ def upload_processed_video_background(video_id, settings):
         service.update_sync_fields(
             video_id,
             sync_status="Synced",
+            supabase_upload_status="uploaded",
+            supabase_upload_error=None,
             synced_at=datetime.now().isoformat(),
             supabase_bucket=upload["bucket"],
             supabase_object_name=upload["object_name"],
+            supabase_processed_path=upload["object_name"],
             supabase_processed_url=upload["public_url"],
             firebase_push_url=settings.get("firebase_push_url", ""),
             firebase_push_result=firebase_result,
@@ -1183,6 +1264,8 @@ def upload_processed_video_background(video_id, settings):
         service.update_sync_fields(
             video_id,
             sync_status="Sync failed",
+            supabase_upload_status="failed",
+            supabase_upload_error=str(exc),
             sync_error=str(exc),
         )
         if settings.get("notify_on_sync", True):
@@ -1196,7 +1279,11 @@ def upload_processed_video_background(video_id, settings):
 
 
 def queue_processed_video_upload(record, settings):
-    processed_path = record.get("processed_video_path")
+    processed_path = (
+        record.get("upload_video_path")
+        or record.get("compressed_processed_path")
+        or record.get("processed_video_path")
+    )
     if not processed_path:
         raise RuntimeError("Only processed videos can be uploaded. Generate the processed video first.")
     if not Path(processed_path).exists():
@@ -1204,13 +1291,76 @@ def queue_processed_video_upload(record, settings):
     if not settings.get("supabase_url") or not settings.get("supabase_anon_key"):
         raise RuntimeError("Configure Supabase URL and anon key before syncing.")
 
-    VideoService().update_sync_fields(record["video_id"], sync_status="Upload queued", sync_error=None)
+    VideoService().update_sync_fields(
+        record["video_id"],
+        sync_status="Upload queued",
+        supabase_upload_status="queued",
+        supabase_upload_error=None,
+        sync_error=None,
+    )
     worker = threading.Thread(
         target=upload_processed_video_background,
         args=(record["video_id"], dict(settings)),
         daemon=True,
     )
     worker.start()
+
+
+def repair_video_playback(record, settings):
+    service = VideoService()
+    record = service.load(record["video_id"])
+    changed = False
+    original_path = first_playable_video_path(record, "Original")
+    processed_path = record.get("processed_video_path")
+    processed_path = Path(processed_path) if processed_path else None
+    if original_path:
+        compressed_original = record.get("compressed_original_path")
+        if not compressed_original or not is_playable_video_path(compressed_original):
+            from core.video_io import compress_video_for_playback
+            from services.video_service import COMPRESSED_VIDEOS_DIR
+
+            target = COMPRESSED_VIDEOS_DIR / original_path.with_suffix(".mp4").name
+            result = compress_video_for_playback(original_path, target)
+            record["compression_status"] = "success" if result["ok"] else "fallback"
+            record["compression_error"] = None if result["ok"] else result.get("error")
+            record["compression_message"] = result["message"]
+            if result["ok"]:
+                record["compressed_original_path"] = str(result["path"])
+                changed = True
+    if processed_path and is_playable_video_path(processed_path):
+        compressed_processed = record.get("compressed_processed_path")
+        if not compressed_processed or not is_playable_video_path(compressed_processed):
+            from core.video_io import compress_video_for_playback
+            from services.video_service import COMPRESSED_PROCESSED_VIDEOS_DIR
+
+            target = COMPRESSED_PROCESSED_VIDEOS_DIR / processed_path.with_suffix(".mp4").name
+            result = compress_video_for_playback(processed_path, target)
+            record["processed_compression_status"] = "success" if result["ok"] else "fallback"
+            record["processed_compression_error"] = None if result["ok"] else result.get("error")
+            record["processed_compression_message"] = result["message"]
+            if result["ok"]:
+                record["compressed_processed_path"] = str(result["path"])
+                record["upload_video_path"] = str(result["path"])
+                changed = True
+        elif compressed_processed:
+            record["upload_video_path"] = compressed_processed
+    playback_path = first_playable_video_path(record, "Processed") or first_playable_video_path(record, "Original")
+    if playback_path:
+        record["playback_video_path"] = str(playback_path)
+        changed = True
+    if changed:
+        service.save(record)
+    if settings.get("supabase_url") and settings.get("supabase_anon_key") and record.get("processed_video_path"):
+        try:
+            queue_processed_video_upload(record, settings)
+        except Exception as exc:
+            service.update_sync_fields(
+                record["video_id"],
+                supabase_upload_status="failed",
+                supabase_upload_error=str(exc),
+                sync_error=str(exc),
+            )
+    return service.load(record["video_id"])
 
 
 def videos_page(service, settings):
@@ -1311,6 +1461,17 @@ def videos_page(service, settings):
             st.caption(f'Firebase link target: {selected["firebase_push_url"]}')
         if selected.get("sync_error"):
             st.error(selected["sync_error"])
+        upload_status = selected.get("supabase_upload_status") or selected.get("sync_status", "not_uploaded")
+        st.caption(f"Supabase upload: {upload_status}")
+        if selected.get("supabase_upload_error"):
+            st.warning(selected["supabase_upload_error"])
+        if st.button("Repair Video Playback", width="stretch"):
+            try:
+                selected = repair_video_playback(selected, settings)
+                st.success("Video playback metadata repaired.")
+                st.rerun()
+            except Exception as exc:
+                st.error(f"Repair failed: {exc}")
         if st.button("Upload processed video", width="stretch"):
             try:
                 queue_processed_video_upload(selected, settings)
@@ -2053,6 +2214,10 @@ def settings_page(settings):
             snapshots = st.toggle("Save snapshots", settings["save_snapshots"])
             annotated = st.toggle("Save processed annotated video", settings["save_annotated_video"])
         with st.expander("Storage Settings", expanded=False):
+            keep_fallback_video = st.toggle(
+                "Debug: keep fallback MP4/AVI after compression",
+                bool(settings.get("keep_fallback_video", False)),
+            )
             st.dataframe(pd.DataFrame(StorageService().status()), width="stretch", hide_index=True)
         with st.expander("Location Tracking", expanded=True):
             location_cols = st.columns(5)
@@ -2130,6 +2295,7 @@ def settings_page(settings):
                 "enable_movement": movement,
                 "save_snapshots": snapshots,
                 "save_annotated_video": annotated,
+                "keep_fallback_video": keep_fallback_video,
                 "location_tracking_enabled": location_tracking_enabled,
                 "location_reverse_geocoding_enabled": location_reverse_geocoding_enabled,
                 "location_save_history": location_save_history,

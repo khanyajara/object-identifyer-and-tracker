@@ -31,7 +31,11 @@ class SupabaseService:
         if not self.configured:
             raise RuntimeError("Configure Supabase URL and anon key before uploading.")
 
-        processed_path = record.get("processed_video_path")
+        processed_path = (
+            record.get("upload_video_path")
+            or record.get("compressed_processed_path")
+            or record.get("processed_video_path")
+        )
         if not processed_path:
             raise RuntimeError("Only processed videos can be uploaded. This recording has no processed video.")
 

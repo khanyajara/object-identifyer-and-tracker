@@ -10,10 +10,14 @@ from pathlib import Path
 import cv2
 
 from core.annotation import annotate_frame
-from core.video_io import finalize_video_file, open_video_writer
+from core.video_io import (
+    compress_video_for_playback,
+    finalize_video_file,
+    open_video_writer,
+)
 from core.vision_pipeline import VisionPipeline
 from services.detection_log_service import DetectionLogService
-from services.video_service import VideoService
+from services.video_service import COMPRESSED_VIDEOS_DIR, VideoService
 
 
 class CameraManager:
@@ -62,10 +66,21 @@ class CameraManager:
         self.log_service = DetectionLogService(
             self.record, settings["save_snapshots"]
         )
-        self.raw_path = Path(self.record["video_path"]).with_suffix(".raw.webm")
-        self.writer, self.video_codec = self._open_writer()
+        requested_video_path = Path(self.record["video_path"])
+        self.raw_path = requested_video_path.with_suffix(".raw")
+        self.writer, self.raw_path, self.video_codec = self._open_writer()
+        final_path = requested_video_path.with_suffix(self.raw_path.suffix)
+        self.record["filename"] = final_path.name
+        self.record["video_path"] = str(final_path)
+        self.record["original_video_path"] = str(final_path)
+        self.record["video_format"] = final_path.suffix.lstrip(".")
         self.record["video_codec"] = self.video_codec
         self.video_service.save(self.record)
+        if final_path.suffix != requested_video_path.suffix:
+            try:
+                requested_video_path.with_suffix(".json").unlink()
+            except OSError:
+                pass
         self.active = True
         self.started = time.monotonic()
         self.frame_number = 0
@@ -389,6 +404,21 @@ class CameraManager:
         final_path = Path(self.record["video_path"])
         if self.raw_path.exists() and self.raw_path.stat().st_size:
             finalize_video_file(self.raw_path, final_path)
+            compressed_target = COMPRESSED_VIDEOS_DIR / final_path.with_suffix(".mp4").name
+            compression = compress_video_for_playback(final_path, compressed_target)
+            self.record["compression_status"] = "success" if compression["ok"] else "fallback"
+            self.record["compression_error"] = None if compression["ok"] else compression.get("error")
+            self.record["compression_message"] = compression["message"]
+            if compression["ok"]:
+                self.record["compressed_original_path"] = str(compression["path"])
+                self.record["playback_video_path"] = str(compression["path"])
+            else:
+                self.record["compressed_original_path"] = None
+                self.record["playback_video_path"] = str(final_path)
+            self.record["video_path"] = str(final_path)
+            self.record["original_video_path"] = str(final_path)
+            self.record["filename"] = final_path.name
+            self.record["video_format"] = final_path.suffix.lstrip(".")
             self.record["recording_status"] = "Complete"
         else:
             self.record["recording_status"] = "No camera frames received"

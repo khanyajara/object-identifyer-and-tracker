@@ -10,6 +10,8 @@ PROJECT_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_DIR / "data"
 VIDEOS_DIR = DATA_DIR / "videos"
 PROCESSED_VIDEOS_DIR = VIDEOS_DIR / "processed"
+COMPRESSED_VIDEOS_DIR = VIDEOS_DIR / "compressed"
+COMPRESSED_PROCESSED_VIDEOS_DIR = PROCESSED_VIDEOS_DIR / "compressed"
 LOGS_DIR = DATA_DIR / "logs"
 SNAPSHOTS_DIR = DATA_DIR / "snapshots"
 EXPORTS_DIR = DATA_DIR / "exports"
@@ -30,6 +32,8 @@ class VideoService:
         for path in (
             VIDEOS_DIR,
             PROCESSED_VIDEOS_DIR,
+            COMPRESSED_VIDEOS_DIR,
+            COMPRESSED_PROCESSED_VIDEOS_DIR,
             LOGS_DIR,
             SNAPSHOTS_DIR,
             EXPORTS_DIR,
@@ -54,6 +58,16 @@ class VideoService:
             "video_path": str(VIDEOS_DIR / filename),
             "original_video_path": str(VIDEOS_DIR / filename),
             "processed_video_path": None,
+            "compressed_original_path": None,
+            "compressed_processed_path": None,
+            "playback_video_path": None,
+            "upload_video_path": None,
+            "compression_status": "not_started",
+            "compression_error": None,
+            "supabase_processed_path": None,
+            "supabase_processed_url": None,
+            "supabase_upload_status": "not_uploaded",
+            "supabase_upload_error": None,
             "started_at": utc_now(),
             "ended_at": None,
             "duration_seconds": 0,
