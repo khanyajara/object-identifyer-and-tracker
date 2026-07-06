@@ -411,12 +411,19 @@ class CameraManager:
             self.record["compression_message"] = compression["message"]
             if compression["ok"]:
                 self.record["compressed_original_path"] = str(compression["path"])
+                self.record["compressed_original_mp4_path"] = str(compression["path"])
                 self.record["playback_video_path"] = str(compression["path"])
+                self.record["playback_source"] = str(compression["path"])
+                self.record["playback_format"] = "mp4"
             else:
                 self.record["compressed_original_path"] = None
                 self.record["playback_video_path"] = str(final_path)
+                self.record["playback_source"] = str(final_path)
+                self.record["playback_format"] = final_path.suffix.lstrip(".")
             self.record["video_path"] = str(final_path)
             self.record["original_video_path"] = str(final_path)
+            if final_path.suffix.lower() == ".mp4":
+                self.record["original_mp4_path"] = str(final_path)
             self.record["filename"] = final_path.name
             self.record["video_format"] = final_path.suffix.lstrip(".")
             self.record["recording_status"] = "Complete"

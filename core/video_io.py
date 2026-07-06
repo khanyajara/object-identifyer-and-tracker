@@ -34,6 +34,71 @@ def video_mime_type(path):
     return "application/octet-stream"
 
 
+def is_remote_video_source(value):
+    return isinstance(value, str) and value.lower().startswith(("http://", "https://"))
+
+
+def _local_video_exists(path):
+    if not path or is_remote_video_source(path):
+        return False
+    path = Path(path)
+    return path.exists() and path.is_file() and path.stat().st_size > 0
+
+
+def get_best_playback_info(video_metadata):
+    candidates = (
+        ("supabase_webm_url", "webm", "supabase"),
+        ("supabase_mp4_url", "mp4", "supabase"),
+        ("compressed_processed_path", "mp4", "local"),
+        ("processed_mp4_path", "mp4", "local"),
+        ("processed_video_path", "mp4", "local"),
+        ("compressed_original_path", "mp4", "local"),
+        ("original_mp4_path", "mp4", "local"),
+        ("original_video_path", "mp4", "local"),
+        ("video_path", "mp4", "local"),
+    )
+    legacy_url_candidates = (
+        ("supabase_processed_url", "mp4", "supabase"),
+        ("playback_video_url", "mp4", "supabase"),
+        ("supabase_url", "mp4", "supabase"),
+    )
+    for key, video_format, source_type in candidates:
+        value = video_metadata.get(key)
+        if source_type == "supabase" and is_remote_video_source(value):
+            return {
+                "source": value,
+                "format": video_format,
+                "source_type": source_type,
+                "metadata_key": key,
+            }
+        if source_type == "local" and _local_video_exists(value):
+            return {
+                "source": str(Path(value)),
+                "format": Path(value).suffix.lower().lstrip(".") or video_format,
+                "source_type": source_type,
+                "metadata_key": key,
+            }
+    for key, video_format, source_type in legacy_url_candidates:
+        value = video_metadata.get(key)
+        if is_remote_video_source(value):
+            return {
+                "source": value,
+                "format": video_format,
+                "source_type": source_type,
+                "metadata_key": key,
+            }
+    return {
+        "source": None,
+        "format": None,
+        "source_type": None,
+        "metadata_key": None,
+    }
+
+
+def get_best_playback_source(video_metadata):
+    return get_best_playback_info(video_metadata)["source"]
+
+
 def create_video_writer(path, fps, size):
     path = Path(path)
     for extension, codec in VIDEO_WRITER_CANDIDATES:

@@ -3,7 +3,7 @@ from urllib.parse import quote
 
 import requests
 
-from core.video_io import video_mime_type
+from core.video_io import convert_to_webm, video_mime_type
 
 
 class SupabaseService:
@@ -34,7 +34,9 @@ class SupabaseService:
         processed_path = (
             record.get("upload_video_path")
             or record.get("compressed_processed_path")
+            or record.get("compressed_mp4_path")
             or record.get("processed_video_path")
+            or record.get("processed_mp4_path")
         )
         if not processed_path:
             raise RuntimeError("Only processed videos can be uploaded. This recording has no processed video.")
@@ -43,24 +45,42 @@ class SupabaseService:
         if not path.exists() or not path.is_file():
             raise RuntimeError(f"Processed video file was not found: {path}")
 
-        object_name = f'processed/{record["video_id"]}/{path.name}'
+        upload_path = path
+        upload_format = path.suffix.lower().lstrip(".")
+        webm_target = path.parent / "upload" / path.with_suffix(".webm").name
+        if path.suffix.lower() == ".mp4":
+            conversion = convert_to_webm(path, webm_target)
+            if conversion.get("ok"):
+                upload_path = Path(conversion["path"])
+                upload_format = "webm"
+
+        object_name = f'processed/{record["video_id"]}/{upload_path.name}'
         bucket_path = quote(self.bucket, safe="")
         object_path = quote(object_name, safe="/")
         upload_url = f'{self.url.rstrip("/")}/storage/v1/object/{bucket_path}/{object_path}'
         headers = {
             "Authorization": f"Bearer {self.anon_key}",
             "apikey": self.anon_key,
-            "Content-Type": video_mime_type(path),
+            "Content-Type": video_mime_type(upload_path),
             "x-upsert": "true",
         }
-        with path.open("rb") as file_obj:
+        with upload_path.open("rb") as file_obj:
             response = requests.post(upload_url, headers=headers, data=file_obj, timeout=120)
         response.raise_for_status()
-        return {
+        payload = {
             "bucket": self.bucket,
             "object_name": object_name,
             "public_url": self.public_url(object_name),
+            "upload_path": str(upload_path),
+            "upload_format": upload_format,
         }
+        if upload_format == "webm":
+            payload["webm_path"] = str(upload_path)
+            payload["webm_url"] = payload["public_url"]
+        elif upload_format == "mp4":
+            payload["mp4_path"] = str(upload_path)
+            payload["mp4_url"] = payload["public_url"]
+        return payload
 
     def public_url(self, object_name):
         bucket_path = quote(self.bucket, safe="")

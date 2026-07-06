@@ -21,7 +21,12 @@ import streamlit as st
 from core.detector import load_yolo_model
 from core.opencv_recorder import CameraManager
 from core.ocr import load_ocr_reader
-from core.video_io import is_playable_video_path, video_mime_type
+from core.video_io import (
+    get_best_playback_info,
+    get_best_playback_source,
+    is_playable_video_path,
+    video_mime_type,
+)
 from services.auth_service import AdminAuthService
 from services.contact_service import ContactService
 from services.firebase_service import FirebaseService
@@ -811,7 +816,10 @@ def is_remote_video_source(value):
 def video_url_candidates(record):
     candidates = []
     for key in (
+        "supabase_webm_url",
+        "supabase_mp4_url",
         "playback_video_url",
+        "playback_source",
         "supabase_processed_url",
         "firebase_video_url",
         "supabase_url",
@@ -853,10 +861,18 @@ def fetch_cloud_playback_url(record, settings):
                 settings.get("supabase_bucket", "videos"),
             ).refresh_video_url(record)
             if result.get("public_url"):
+                url_key = (
+                    "supabase_webm_url"
+                    if result["public_url"].lower().split("?")[0].endswith(".webm")
+                    else "supabase_mp4_url"
+                )
                 updated = service.update_sync_fields(
                     record["video_id"],
                     supabase_processed_url=result["public_url"],
+                    **{url_key: result["public_url"]},
                     playback_video_url=result["public_url"],
+                    playback_source=result["public_url"],
+                    playback_format="webm" if url_key == "supabase_webm_url" else "mp4",
                 )
                 record.update(updated)
                 return result["public_url"]
@@ -874,10 +890,18 @@ def fetch_cloud_playback_url(record, settings):
                 or doc.get("public_url")
             )
             if is_remote_video_source(url):
+                url_key = (
+                    "supabase_webm_url"
+                    if url.lower().split("?")[0].endswith(".webm")
+                    else "supabase_mp4_url"
+                )
                 updated = service.update_sync_fields(
                     record["video_id"],
                     supabase_processed_url=url,
+                    **{url_key: url},
                     playback_video_url=url,
+                    playback_source=url,
+                    playback_format="webm" if url_key == "supabase_webm_url" else "mp4",
                     firebase_document_status="fetched",
                 )
                 record.update(updated)
@@ -945,17 +969,10 @@ def playback_diagnostics(record, selected_path=None):
 
 
 def render_video_player(record, settings=None):
-    processed_path = first_playable_video_path(record, "Processed")
-    original_path = first_playable_video_path(record, "Original")
-    cloud_url = fetch_cloud_playback_url(record, settings)
-    versions = []
-    if processed_path:
-        versions.append("Processed")
-    if cloud_url:
-        versions.append("Cloud Processed")
-    if original_path:
-        versions.append("Original")
-    if not versions:
+    fetch_cloud_playback_url(record, settings)
+    playback_info = get_best_playback_info(record)
+    source = playback_info.get("source")
+    if not source:
         st.warning(
             "Video file unavailable. The metadata exists, but the video is "
             "missing locally and no playback URL could be fetched."
@@ -974,24 +991,10 @@ def render_video_player(record, settings=None):
                     hide_index=True,
                 )
         return None
-    version_key = f'video-version-{record["video_id"]}'
-    if st.session_state.get(version_key) not in versions:
-        st.session_state[version_key] = versions[0]
-    version = st.radio(
-        "Video version",
-        versions,
-        horizontal=True,
-        key=version_key,
-    )
-    source = {
-        "Processed": processed_path,
-        "Cloud Processed": cloud_url,
-        "Original": original_path,
-    }.get(version)
     try:
         if is_remote_video_source(source):
             st.video(source)
-            st.caption(source)
+            st.caption(f'{playback_info.get("format", "video").upper()} cloud playback: {source}')
         else:
             path = Path(source)
             if path.suffix.lower() == ".avi":
@@ -1001,7 +1004,7 @@ def render_video_player(record, settings=None):
                     "inline, the file is still saved and readable on disk."
                 )
             st.video(path.read_bytes(), format=video_mime_type(path))
-            st.caption(str(path))
+            st.caption(f'{playback_info.get("format", path.suffix.lstrip(".")).upper()} local playback: {path}')
         if st.session_state.get("admin_authenticated"):
             with st.expander("Playback Diagnostics", expanded=False):
                 st.dataframe(
@@ -1413,6 +1416,12 @@ def upload_processed_video_background(video_id, settings, task_id=None):
                 "supabase_bucket": upload["bucket"],
                 "supabase_processed_path": upload["object_name"],
                 "supabase_processed_url": upload["public_url"],
+                "supabase_webm_url": upload.get("webm_url") or record.get("supabase_webm_url"),
+                "supabase_mp4_url": upload.get("mp4_url") or record.get("supabase_mp4_url"),
+                "upload_webm_path": upload.get("webm_path") or record.get("upload_webm_path"),
+                "upload_mp4_path": upload.get("mp4_path") or upload.get("upload_path"),
+                "playback_source": upload.get("webm_url") or upload.get("mp4_url") or upload["public_url"],
+                "playback_format": upload.get("upload_format") or Path(upload["object_name"]).suffix.lstrip("."),
             }
         )
         if task_id:
@@ -1432,6 +1441,12 @@ def upload_processed_video_background(video_id, settings, task_id=None):
             supabase_object_name=upload["object_name"],
             supabase_processed_path=upload["object_name"],
             supabase_processed_url=upload["public_url"],
+            supabase_webm_url=upload.get("webm_url"),
+            supabase_mp4_url=upload.get("mp4_url"),
+            upload_webm_path=upload.get("webm_path"),
+            upload_mp4_path=upload.get("mp4_path") or upload.get("upload_path"),
+            playback_source=upload.get("webm_url") or upload.get("mp4_url") or upload["public_url"],
+            playback_format=upload.get("upload_format") or Path(upload["object_name"]).suffix.lstrip("."),
             firebase_document_status=(
                 "synced" if firebase_result.get("configured") else "local_mode"
             ),
@@ -1523,10 +1538,18 @@ def refresh_supabase_video_url(record, settings):
         settings.get("supabase_anon_key", ""),
         settings.get("supabase_bucket", "videos"),
     ).refresh_video_url(record)
+    url_key = (
+        "supabase_webm_url"
+        if result["public_url"].lower().split("?")[0].endswith(".webm")
+        else "supabase_mp4_url"
+    )
     updated = VideoService().update_sync_fields(
         record["video_id"],
         supabase_processed_url=result["public_url"],
         supabase_processed_path=result["object_name"],
+        **{url_key: result["public_url"]},
+        playback_source=result["public_url"],
+        playback_format="webm" if url_key == "supabase_webm_url" else "mp4",
         sync_error=None,
     )
     retry_firebase_sync(updated, settings)
@@ -1581,6 +1604,7 @@ def repair_video_playback(record, settings):
             record["compression_message"] = result["message"]
             if result["ok"]:
                 record["compressed_original_path"] = str(result["path"])
+                record["compressed_original_mp4_path"] = str(result["path"])
                 changed = True
     if processed_path and is_playable_video_path(processed_path):
         compressed_processed = record.get("compressed_processed_path")
@@ -1595,13 +1619,20 @@ def repair_video_playback(record, settings):
             record["processed_compression_message"] = result["message"]
             if result["ok"]:
                 record["compressed_processed_path"] = str(result["path"])
+                record["compressed_mp4_path"] = str(result["path"])
                 record["upload_video_path"] = str(result["path"])
                 changed = True
         elif compressed_processed:
             record["upload_video_path"] = compressed_processed
-    playback_path = first_playable_video_path(record, "Processed") or first_playable_video_path(record, "Original")
-    if playback_path:
-        record["playback_video_path"] = str(playback_path)
+    if record.get("original_video_path"):
+        record["original_mp4_path"] = record.get("original_video_path")
+    if record.get("processed_video_path"):
+        record["processed_mp4_path"] = record.get("processed_video_path")
+    playback_source = get_best_playback_source(record)
+    if playback_source:
+        record["playback_source"] = str(playback_source)
+        record["playback_video_path"] = str(playback_source)
+        record["playback_format"] = get_best_playback_info(record).get("format")
         changed = True
     if changed:
         service.save(record)

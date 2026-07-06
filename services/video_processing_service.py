@@ -56,16 +56,24 @@ class VideoProcessingService:
             record["processed_compression_message"] = compression["message"]
             self._replace_detection_metadata(record, events)
             record["processed_video_path"] = str(output_path)
+            if output_path.suffix.lower() == ".mp4":
+                record["processed_mp4_path"] = str(output_path)
             record["processed_video_format"] = output_path.suffix.lstrip(".")
             record["compressed_processed_path"] = (
+                str(compression["path"]) if compression["ok"] else None
+            )
+            record["compressed_mp4_path"] = (
                 str(compression["path"]) if compression["ok"] else None
             )
             record["playback_video_path"] = (
                 str(compression["path"]) if compression["ok"] else str(output_path)
             )
+            record["playback_source"] = record["playback_video_path"]
+            record["playback_format"] = "mp4" if compression["ok"] else output_path.suffix.lstrip(".")
             record["upload_video_path"] = (
                 str(compression["path"]) if compression["ok"] else str(output_path)
             )
+            record["upload_mp4_path"] = record["upload_video_path"]
             record["processed_frame_count"] = frame_count
             record.pop("processed_temporary_path", None)
             record["processing_status"] = "Processed video saved successfully."
