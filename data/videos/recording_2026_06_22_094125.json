@@ -9121,5 +9121,69 @@
   "firebase_push_result": {
     "configured": false,
     "message": "Firebase push URL not configured; link stored locally only."
-  }
+  },
+  "compression_status": "success",
+  "compression_error": null,
+  "compression_message": "Video compression complete.",
+  "compression_tool": "moviepy",
+  "compressed_original_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\compressed\\recording_2026_06_22_094125.mp4",
+  "processed_compression_status": "success",
+  "processed_compression_error": null,
+  "processed_compression_message": "Video compression complete.",
+  "processed_compression_tool": "moviepy",
+  "compressed_processed_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\compressed\\recording_vid_20260622_094125_121ff7_processed.mp4",
+  "upload_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\compressed\\recording_vid_20260622_094125_121ff7_processed.mp4",
+  "supabase_processed_path": "processed/vid_20260622_094125_121ff7/recording_vid_20260622_094125_121ff7_processed.mp4",
+  "supabase_upload_status": "uploaded",
+  "supabase_upload_error": null,
+  "firebase_document_status": "synced",
+  "firebase_document_result": {
+    "configured": true,
+    "mode": "firestore_rest",
+    "document_id": "vid_20260622_094125_121ff7",
+    "collection": "videos",
+    "document": {
+      "video_id": "vid_20260622_094125_121ff7",
+      "title": "recording_2026_06_22_094125.mp4",
+      "created_at": "2026-06-22T07:41:25.208776+00:00",
+      "updated_at": "2026-07-06T11:17:27.957378+00:00",
+      "source": "roadwatch",
+      "status": "processed_uploaded",
+      "supabase_bucket": "Dash-cam",
+      "supabase_path": "processed/vid_20260622_094125_121ff7/recording_vid_20260622_094125_121ff7_processed.mp4",
+      "supabase_url": "https://qjhfgjyiyryvfzktwfwt.supabase.co/storage/v1/object/public/Dash-cam/processed/vid_20260622_094125_121ff7/recording_vid_20260622_094125_121ff7_processed.mp4",
+      "processed": true,
+      "compressed": true,
+      "duration_seconds": 52.2,
+      "file_size_mb": 0.53,
+      "thumbnail_url": "",
+      "objects_summary": {
+        "people_count_max": 2,
+        "vehicle_count_max": 0,
+        "plates_detected": [],
+        "movement_events": 4,
+        "object_counts": {
+          "person": 5,
+          "dog": 1
+        },
+        "unique_tracking_ids": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "snapshots": 0
+      },
+      "plate_results": [],
+      "movement_events_count": 4,
+      "incident_count": 0,
+      "camera": "streamlit-camera-001",
+      "device_id": "roadwatch_local_01",
+      "upload_status": "uploaded",
+      "visibility": "shared"
+    }
+  },
+  "playback_video_path": "C:\\Users\\khany\\OneDrive\\Desktop\\Personal-projects\\Object-Detection-and-Tracking\\data\\videos\\processed\\compressed\\recording_vid_20260622_094125_121ff7_processed.mp4"
 }

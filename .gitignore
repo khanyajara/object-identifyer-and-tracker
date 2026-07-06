@@ -255,6 +255,7 @@ data/gps/**
 data/contacts/**
 data/profile/**
 data/notifications/**
+data/uploads/**
 
 # Keep empty runtime folders available for fresh clones
 !data/**/

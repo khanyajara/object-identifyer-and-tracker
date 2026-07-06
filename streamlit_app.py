@@ -2,10 +2,18 @@ import base64
 import html
 import json
 import os
+import sys
 import threading
 from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
+
+PROJECT_DIR = Path(__file__).resolve().parent
+if str(PROJECT_DIR) not in sys.path:
+    sys.path.insert(0, str(PROJECT_DIR))
+
+os.environ.setdefault("YOLO_CONFIG_DIR", str(PROJECT_DIR / "Ultralytics"))
+os.environ.setdefault("MPLCONFIGDIR", str(PROJECT_DIR / "Ultralytics"))
 
 import pandas as pd
 import streamlit as st
@@ -24,15 +32,13 @@ from services.report_service import build_summary, videos_dataframe
 from services.storage_service import StorageService
 from services.stolen_vehicle_service import StolenVehicleService
 from services.supabase_service import SupabaseService
+from services.upload_queue_service import UploadQueueService
 from services.vehicle_profile_service import VehicleProfileService
 from services.video_processing_service import VideoProcessingService
 from services.video_service import VideoService
 
 
-PROJECT_DIR = Path(__file__).resolve().parent
 SETTINGS_PATH = PROJECT_DIR / "settings.json"
-os.environ.setdefault("YOLO_CONFIG_DIR", str(PROJECT_DIR / "Ultralytics"))
-os.environ.setdefault("MPLCONFIGDIR", str(PROJECT_DIR / "Ultralytics"))
 
 ENV_SETTING_KEYS = {
     "AI_API_KEY": "ai_api_key",
@@ -44,6 +50,14 @@ ENV_SETTING_KEYS = {
     "VITE_SUPABASE_BUCKET": "supabase_bucket",
     "FIREBASE_PUSH_URL": "firebase_push_url",
     "FIREBASE_API_KEY": "firebase_api_key",
+    "FIREBASE_AUTH_DOMAIN": "firebase_auth_domain",
+    "FIREBASE_PROJECT_ID": "firebase_project_id",
+    "FIREBASE_STORAGE_BUCKET": "firebase_storage_bucket",
+    "FIREBASE_MESSAGING_SENDER_ID": "firebase_messaging_sender_id",
+    "FIREBASE_APP_ID": "firebase_app_id",
+    "FIREBASE_CLIENT_EMAIL": "firebase_client_email",
+    "FIREBASE_PRIVATE_KEY": "firebase_private_key",
+    "FIREBASE_VIDEO_COLLECTION": "firebase_video_collection",
     "ROADWATCH_DEVICE_ID": "device_id",
     "ROADWATCH_NOTIFICATION_WEBHOOK_URL": "notification_webhook_url",
     "ROADWATCH_SMTP_HOST": "notification_smtp_host",
@@ -116,6 +130,14 @@ DEFAULTS = {
     "supabase_bucket": "videos",
     "firebase_push_url": "",
     "firebase_api_key": "",
+    "firebase_auth_domain": "",
+    "firebase_project_id": "",
+    "firebase_storage_bucket": "",
+    "firebase_messaging_sender_id": "",
+    "firebase_app_id": "",
+    "firebase_client_email": "",
+    "firebase_private_key": "",
+    "firebase_video_collection": "videos",
     "notifications_enabled": True,
     "notification_in_app_enabled": True,
     "notification_webhook_enabled": False,
@@ -246,6 +268,20 @@ def notification_settings(settings):
         "notify_on_processing": settings.get("notify_on_processing", True),
         "notify_on_sync": settings.get("notify_on_sync", True),
     }
+
+
+def firebase_service_from_settings(settings):
+    return FirebaseService(
+        settings.get("firebase_push_url", ""),
+        settings.get("firebase_api_key", ""),
+        settings.get("firebase_project_id", ""),
+        settings.get("firebase_client_email", ""),
+        settings.get("firebase_private_key", ""),
+        settings.get("firebase_video_collection", "videos"),
+        auth_domain=settings.get("firebase_auth_domain", ""),
+        storage_bucket=settings.get("firebase_storage_bucket", ""),
+        app_id=settings.get("firebase_app_id", ""),
+    )
 
 
 def ensure_location_tracking(settings):
@@ -529,6 +565,20 @@ def system_top_bar(settings):
     )
 
 
+def upload_status_widget():
+    active = UploadQueueService().active_tasks()
+    if not active:
+        return
+    with st.sidebar.expander("Upload Queue", expanded=True):
+        for task in active[:5]:
+            message = task.get("message") or "Upload in progress"
+            progress = max(0, min(100, int(task.get("progress", 0))))
+            st.caption(message)
+            st.progress(progress, text=f"{task.get('status', 'pending')} · {progress}%")
+            if task.get("error"):
+                st.warning("Upload failed. Use retry from the Videos page.")
+
+
 def sidebar_brand(active_page):
     st.sidebar.markdown(
         f"""
@@ -754,6 +804,90 @@ def first_playable_video_path(record, version):
     return None
 
 
+def is_remote_video_source(value):
+    return isinstance(value, str) and value.lower().startswith(("http://", "https://"))
+
+
+def video_url_candidates(record):
+    candidates = []
+    for key in (
+        "playback_video_url",
+        "supabase_processed_url",
+        "firebase_video_url",
+        "supabase_url",
+        "public_url",
+        "download_url",
+        "url",
+    ):
+        value = record.get(key)
+        if is_remote_video_source(value):
+            candidates.append(value)
+    for key in ("firebase_document_result", "firebase_push_result"):
+        document = (record.get(key) or {}).get("document", {})
+        for nested_key in ("supabase_url", "playback_video_url", "public_url"):
+            value = document.get(nested_key)
+            if is_remote_video_source(value):
+                candidates.append(value)
+    unique = []
+    seen = set()
+    for url in candidates:
+        if url not in seen:
+            unique.append(url)
+            seen.add(url)
+    return unique
+
+
+def fetch_cloud_playback_url(record, settings):
+    existing = video_url_candidates(record)
+    if existing:
+        return existing[0]
+    if not settings:
+        return None
+
+    service = VideoService()
+    try:
+        if record.get("supabase_processed_path"):
+            result = SupabaseService(
+                settings.get("supabase_url", ""),
+                settings.get("supabase_anon_key", ""),
+                settings.get("supabase_bucket", "videos"),
+            ).refresh_video_url(record)
+            if result.get("public_url"):
+                updated = service.update_sync_fields(
+                    record["video_id"],
+                    supabase_processed_url=result["public_url"],
+                    playback_video_url=result["public_url"],
+                )
+                record.update(updated)
+                return result["public_url"]
+    except Exception as exc:
+        st.session_state[f'cloud-url-error-{record["video_id"]}'] = str(exc)
+
+    try:
+        firebase = firebase_service_from_settings(settings)
+        for doc in firebase.fetch_video_documents(limit=200):
+            if doc.get("video_id") != record.get("video_id"):
+                continue
+            url = (
+                doc.get("supabase_url")
+                or doc.get("playback_video_url")
+                or doc.get("public_url")
+            )
+            if is_remote_video_source(url):
+                updated = service.update_sync_fields(
+                    record["video_id"],
+                    supabase_processed_url=url,
+                    playback_video_url=url,
+                    firebase_document_status="fetched",
+                )
+                record.update(updated)
+                return url
+    except Exception as exc:
+        st.session_state[f'firebase-url-error-{record["video_id"]}'] = str(exc)
+
+    return None
+
+
 def playback_diagnostics(record, selected_path=None):
     metadata_path = PROJECT_DIR / "data" / "logs" / f'{record["video_id"]}.json'
     rows = [
@@ -793,25 +927,45 @@ def playback_diagnostics(record, selected_path=None):
             "exists": bool(record.get("supabase_processed_url")),
             "size_bytes": "",
             "playable": record.get("supabase_upload_status") == "uploaded",
-            "selected": False,
+            "selected": selected_path == record.get("supabase_processed_url") if selected_path else False,
         }
     )
+    for url in video_url_candidates(record):
+        rows.append(
+            {
+                "version": "Cloud URL",
+                "path": url,
+                "exists": True,
+                "size_bytes": "",
+                "playable": True,
+                "selected": selected_path == url if selected_path else False,
+            }
+        )
     return rows
 
 
-def render_video_player(record):
+def render_video_player(record, settings=None):
     processed_path = first_playable_video_path(record, "Processed")
     original_path = first_playable_video_path(record, "Original")
+    cloud_url = fetch_cloud_playback_url(record, settings)
     versions = []
     if processed_path:
         versions.append("Processed")
+    if cloud_url:
+        versions.append("Cloud Processed")
     if original_path:
         versions.append("Original")
     if not versions:
         st.warning(
             "Video file unavailable. The metadata exists, but the video is "
-            "missing or unreadable on disk."
+            "missing locally and no playback URL could be fetched."
         )
+        cloud_error = st.session_state.get(f'cloud-url-error-{record["video_id"]}')
+        firebase_error = st.session_state.get(f'firebase-url-error-{record["video_id"]}')
+        if cloud_error:
+            st.caption(f"Supabase URL fetch: {cloud_error}")
+        if firebase_error:
+            st.caption(f"Firebase URL fetch: {firebase_error}")
         if st.session_state.get("admin_authenticated"):
             with st.expander("Playback Diagnostics", expanded=False):
                 st.dataframe(
@@ -829,20 +983,29 @@ def render_video_player(record):
         horizontal=True,
         key=version_key,
     )
-    path = processed_path if version == "Processed" else original_path
+    source = {
+        "Processed": processed_path,
+        "Cloud Processed": cloud_url,
+        "Original": original_path,
+    }.get(version)
     try:
-        if path.suffix.lower() == ".avi":
-            st.info(
-                "This recording used AVI fallback because WebM was not "
-                "available on this system. If your browser cannot play it "
-                "inline, the file is still saved and readable on disk."
-            )
-        st.video(path.read_bytes(), format=video_mime_type(path))
-        st.caption(str(path))
+        if is_remote_video_source(source):
+            st.video(source)
+            st.caption(source)
+        else:
+            path = Path(source)
+            if path.suffix.lower() == ".avi":
+                st.info(
+                    "This recording used AVI fallback because WebM was not "
+                    "available on this system. If your browser cannot play it "
+                    "inline, the file is still saved and readable on disk."
+                )
+            st.video(path.read_bytes(), format=video_mime_type(path))
+            st.caption(str(path))
         if st.session_state.get("admin_authenticated"):
             with st.expander("Playback Diagnostics", expanded=False):
                 st.dataframe(
-                    pd.DataFrame(playback_diagnostics(record, path)),
+                    pd.DataFrame(playback_diagnostics(record, source)),
                     width="stretch",
                     hide_index=True,
                 )
@@ -850,9 +1013,17 @@ def render_video_player(record):
                     "Supabase upload status: "
                     f"{record.get('supabase_upload_status') or record.get('sync_status')}"
                 )
-        return path
+        return source
     except OSError as exc:
         st.warning(f"Could not read video file: {exc}")
+        return None
+    except Exception as exc:
+        st.warning(f"Could not load video playback source: {exc}")
+        if is_remote_video_source(source):
+            st.info(
+                "The cloud URL was fetched, but the browser could not play it. "
+                "Use the open-link button or repair the video metadata."
+            )
         return None
 
 
@@ -1212,9 +1383,12 @@ def video_matches_filter(video, selected_filter):
     return True
 
 
-def upload_processed_video_background(video_id, settings):
+def upload_processed_video_background(video_id, settings, task_id=None):
     service = VideoService()
+    queue = UploadQueueService()
     try:
+        if task_id:
+            queue.update_task(task_id, "compressing", 10, "Checking compressed processed video...")
         service.update_sync_fields(
             video_id,
             sync_status="Uploading processed video",
@@ -1224,16 +1398,29 @@ def upload_processed_video_background(video_id, settings):
         )
         notifier = NotificationService(notification_settings(settings))
         record = service.load(video_id)
+        if task_id:
+            queue.update_task(task_id, "uploading_supabase", 30, "Uploading processed video...")
         upload = SupabaseService(
             settings.get("supabase_url", ""),
             settings.get("supabase_anon_key", ""),
             settings.get("supabase_bucket", "videos"),
         ).upload_processed_video(record)
 
-        firebase_result = FirebaseService(
-            settings.get("firebase_push_url", ""),
-            settings.get("firebase_api_key", ""),
-        ).push_video_link(record, upload["public_url"])
+        if task_id:
+            queue.update_task(task_id, "fetching_url", 55, "Fetching Supabase playback URL...")
+        record.update(
+            {
+                "supabase_bucket": upload["bucket"],
+                "supabase_processed_path": upload["object_name"],
+                "supabase_processed_url": upload["public_url"],
+            }
+        )
+        if task_id:
+            queue.update_task(task_id, "syncing_firebase", 75, "Saving Firebase video document...")
+        firebase_result = firebase_service_from_settings(settings).push_video_link(
+            record,
+            upload["public_url"],
+        )
 
         service.update_sync_fields(
             video_id,
@@ -1245,10 +1432,16 @@ def upload_processed_video_background(video_id, settings):
             supabase_object_name=upload["object_name"],
             supabase_processed_path=upload["object_name"],
             supabase_processed_url=upload["public_url"],
+            firebase_document_status=(
+                "synced" if firebase_result.get("configured") else "local_mode"
+            ),
+            firebase_document_result=firebase_result,
             firebase_push_url=settings.get("firebase_push_url", ""),
             firebase_push_result=firebase_result,
             sync_error=None,
         )
+        if task_id:
+            queue.update_task(task_id, "complete", 100, "Upload complete")
         if settings.get("notify_on_sync", True):
             notifier.notify(
                 "Processed video uploaded",
@@ -1261,6 +1454,8 @@ def upload_processed_video_background(video_id, settings):
                 },
             )
     except Exception as exc:
+        if task_id:
+            queue.update_task(task_id, "failed", 100, "Upload failed", str(exc))
         service.update_sync_fields(
             video_id,
             sync_status="Sync failed",
@@ -1291,6 +1486,10 @@ def queue_processed_video_upload(record, settings):
     if not settings.get("supabase_url") or not settings.get("supabase_anon_key"):
         raise RuntimeError("Configure Supabase URL and anon key before syncing.")
 
+    task = UploadQueueService().create_task(
+        record["video_id"],
+        "Uploading processed video...",
+    )
     VideoService().update_sync_fields(
         record["video_id"],
         sync_status="Upload queued",
@@ -1300,10 +1499,66 @@ def queue_processed_video_upload(record, settings):
     )
     worker = threading.Thread(
         target=upload_processed_video_background,
-        args=(record["video_id"], dict(settings)),
+        args=(record["video_id"], dict(settings), task["task_id"]),
         daemon=True,
     )
     worker.start()
+    return task
+
+
+def retry_firebase_sync(record, settings):
+    result = firebase_service_from_settings(settings).retry_failed_metadata_upload(record)
+    VideoService().update_sync_fields(
+        record["video_id"],
+        firebase_document_status="synced" if result.get("configured") else "local_mode",
+        firebase_document_result=result,
+        sync_error=None,
+    )
+    return result
+
+
+def refresh_supabase_video_url(record, settings):
+    result = SupabaseService(
+        settings.get("supabase_url", ""),
+        settings.get("supabase_anon_key", ""),
+        settings.get("supabase_bucket", "videos"),
+    ).refresh_video_url(record)
+    updated = VideoService().update_sync_fields(
+        record["video_id"],
+        supabase_processed_url=result["public_url"],
+        supabase_processed_path=result["object_name"],
+        sync_error=None,
+    )
+    retry_firebase_sync(updated, settings)
+    return result
+
+
+def sync_supabase_videos_to_firebase(settings, prefix="processed"):
+    supabase = SupabaseService(
+        settings.get("supabase_url", ""),
+        settings.get("supabase_anon_key", ""),
+        settings.get("supabase_bucket", "videos"),
+    )
+    firebase = firebase_service_from_settings(settings)
+    firebase_status = firebase.status()
+    if not supabase.configured:
+        raise RuntimeError("Supabase is not configured.")
+    if not firebase_status.get("configured"):
+        raise RuntimeError(firebase_status.get("message") or "Firebase is not configured.")
+    objects = supabase.list_video_objects(prefix)
+    results = []
+    for item in objects:
+        results.append(
+            firebase.create_or_update_supabase_video_object(
+                item,
+                settings.get("device_id", "roadwatch_local_01"),
+            )
+        )
+    return {
+        "count": len(results),
+        "objects": len(objects),
+        "results": results,
+    }
 
 
 def repair_video_playback(record, settings):
@@ -1363,15 +1618,88 @@ def repair_video_playback(record, settings):
     return service.load(record["video_id"])
 
 
+def cloud_video_matches_query(video, query):
+    if not query:
+        return True
+    haystack = " ".join(
+        str(video.get(field, ""))
+        for field in (
+            "video_id",
+            "title",
+            "created_at",
+            "device_id",
+            "status",
+            "supabase_path",
+            "supabase_url",
+        )
+    )
+    haystack += " " + " ".join(video.get("plate_results", []) or [])
+    haystack += " " + " ".join((video.get("objects_summary", {}) or {}).keys())
+    return query.lower() in haystack.lower()
+
+
+def render_cloud_videos(settings):
+    firebase = firebase_service_from_settings(settings)
+    status = firebase.status()
+    if not status["configured"] or status.get("mode") != "firestore":
+        st.info(status.get("message") or "Firebase sync unavailable. Local mode active.")
+        return
+    try:
+        docs = firebase.fetch_video_documents(limit=80)
+    except Exception as exc:
+        st.warning(f"Firebase sync unavailable. Local mode active. {exc}")
+        return
+    if not docs:
+        st.info("No cloud video documents found in Firebase yet.")
+        return
+    query = st.text_input("Search cloud videos")
+    docs = [doc for doc in docs if cloud_video_matches_query(doc, query)]
+    if not docs:
+        st.warning("No cloud videos match that search.")
+        return
+    cards_html(
+        [
+            ("Cloud videos", len(docs), "Fetched from Firebase"),
+            ("Uploaded", sum(1 for item in docs if item.get("upload_status") == "uploaded"), "Supabase backed"),
+            ("With plates", sum(1 for item in docs if item.get("plate_results")), "Plate results"),
+            ("Incidents", sum(int(item.get("incident_count", 0) or 0) for item in docs), "Linked count"),
+        ]
+    )
+    for row_start in range(0, min(len(docs), 6), 2):
+        cols = st.columns(2)
+        for col, doc in zip(cols, docs[row_start:row_start + 2]):
+            with col:
+                with st.container(border=True):
+                    st.markdown(f"#### {doc.get('title') or doc.get('video_id')}")
+                    st.caption(f"Source: Supabase/Firebase | {doc.get('created_at', '')[:19]}")
+                    badge_text = "processed" if doc.get("processed") else "not processed"
+                    st.write(f"**Status:** {doc.get('status', badge_text)}")
+                    st.write(f"**Upload:** {doc.get('upload_status', 'unknown')}")
+                    st.write(f"**Objects:** {sum((doc.get('objects_summary') or {}).get('object_counts', {}).values()) if isinstance((doc.get('objects_summary') or {}).get('object_counts'), dict) else 0}")
+                    st.write(f"**Plates:** {', '.join(doc.get('plate_results', []) or []) or 'None'}")
+                    if int(doc.get("incident_count", 0) or 0):
+                        st.warning(f"{doc.get('incident_count')} incident(s)")
+                    url = doc.get("supabase_url")
+                    if url:
+                        st.video(url)
+                        st.link_button("Open Supabase video", url, width="stretch")
+                    else:
+                        st.warning("Cloud record has no playable Supabase URL.")
+
+
 def videos_page(service, settings):
     header(
         "Evidence library",
         "Videos",
         "Search recordings, inspect processed evidence, and review captured objects.",
     )
+    source = st.radio("Video source", ["Local Videos", "Cloud Videos"], horizontal=True)
+    if source == "Cloud Videos":
+        render_cloud_videos(settings)
+        return
     videos = service.list_videos()
     if not videos:
-        st.info("No recordings yet.")
+        st.info("No local recordings yet.")
         return
     video_stats = video_analysis(videos)
     latest_name = video_stats["latest"].get("filename", "None")
@@ -1441,7 +1769,7 @@ def videos_page(service, settings):
     st.markdown('<div class="video-card">', unsafe_allow_html=True)
     top = st.columns([2, 1])
     with top[0]:
-        render_video_player(selected)
+        render_video_player(selected, settings)
         if selected.get("processing_error"):
             st.warning("Processed video unavailable: " + selected["processing_error"])
     with top[1]:
@@ -1476,6 +1804,21 @@ def videos_page(service, settings):
             try:
                 queue_processed_video_upload(selected, settings)
                 st.success("Processed video upload queued. You can keep using the app while it runs.")
+                st.rerun()
+            except Exception as exc:
+                st.error(str(exc))
+        retry_cols = st.columns(2)
+        if retry_cols[0].button("Retry Firebase Sync", width="stretch"):
+            try:
+                retry_firebase_sync(selected, settings)
+                st.success("Firebase metadata sync retried.")
+                st.rerun()
+            except Exception as exc:
+                st.error(str(exc))
+        if retry_cols[1].button("Refresh Supabase URL", width="stretch"):
+            try:
+                refresh_supabase_video_url(selected, settings)
+                st.success("Supabase URL refreshed.")
                 st.rerun()
             except Exception as exc:
                 st.error(str(exc))
@@ -1865,7 +2208,7 @@ def stolen_vehicle_page(service, settings=None, admin_mode=False):
                         "case_reference": case_reference,
                         "contact_number": contact_number,
                         "notes": notes,
-                        "status": "Draft",
+                        "status": "Awaiting Images" if continue_next else "Draft",
                         "device_id": device_id,
                     }
                 )
@@ -2256,6 +2599,13 @@ def settings_page(settings):
             supabase_bucket = st.text_input("Supabase bucket placeholder", settings.get("supabase_bucket", "videos"))
             firebase_push_url = st.text_input("Firebase push URL", settings.get("firebase_push_url", ""))
             firebase_api_key = st.text_input("Firebase API key placeholder", settings.get("firebase_api_key", ""), type="password")
+            firebase_auth_domain = st.text_input("Firebase auth domain", settings.get("firebase_auth_domain", ""))
+            firebase_project_id = st.text_input("Firebase project ID", settings.get("firebase_project_id", ""))
+            firebase_storage_bucket = st.text_input("Firebase storage bucket", settings.get("firebase_storage_bucket", ""))
+            firebase_app_id = st.text_input("Firebase app ID", settings.get("firebase_app_id", ""))
+            firebase_client_email = st.text_input("Firebase client email", settings.get("firebase_client_email", ""))
+            firebase_private_key = st.text_area("Firebase private key", settings.get("firebase_private_key", ""), height=90)
+            firebase_video_collection = st.text_input("Firebase video collection", settings.get("firebase_video_collection", "videos"))
         with st.expander("Notification Settings", expanded=True):
             notification_cols = st.columns(4)
             notifications_enabled = notification_cols[0].toggle("Enable notifications", settings.get("notifications_enabled", True))
@@ -2309,6 +2659,13 @@ def settings_page(settings):
                 "supabase_bucket": supabase_bucket,
                 "firebase_push_url": firebase_push_url,
                 "firebase_api_key": firebase_api_key,
+                "firebase_auth_domain": firebase_auth_domain,
+                "firebase_project_id": firebase_project_id,
+                "firebase_storage_bucket": firebase_storage_bucket,
+                "firebase_app_id": firebase_app_id,
+                "firebase_client_email": firebase_client_email,
+                "firebase_private_key": firebase_private_key,
+                "firebase_video_collection": firebase_video_collection,
                 "notifications_enabled": notifications_enabled,
                 "notification_in_app_enabled": notification_in_app_enabled,
                 "notification_webhook_enabled": notification_webhook_enabled,
@@ -2352,6 +2709,17 @@ def settings_page(settings):
         settings.get("supabase_bucket", "videos"),
     )
     st.info(supabase.status()["message"])
+    firebase_status = firebase_service_from_settings(settings).status()
+    st.info(firebase_status["message"])
+    with st.expander("Cloud Video Sync", expanded=False):
+        st.caption("Imports existing Supabase Storage videos into Firebase video documents. No video files are uploaded to Firebase.")
+        prefix = st.text_input("Supabase prefix to import", value="processed")
+        if st.button("Sync Existing Supabase Videos To Firebase", width="stretch"):
+            try:
+                result = sync_supabase_videos_to_firebase(settings, prefix)
+                st.success(f"Synced {result['count']} Supabase video document(s) to Firebase.")
+            except Exception as exc:
+                st.error(str(exc))
     notifier = NotificationService(notification_settings(settings))
     with st.expander("Notification Center", expanded=False):
         st.metric("Unread notifications", notifier.unread_count())
@@ -2578,6 +2946,7 @@ def main():
             st.session_state.main_navigation = "Admin Login"
             st.rerun()
     system_top_bar(settings)
+    upload_status_widget()
     {
         "Admin Login": admin_login_page,
         "Admin Dashboard": lambda: admin_dashboard_page(service, settings),

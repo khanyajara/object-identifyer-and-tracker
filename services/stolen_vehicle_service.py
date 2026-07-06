@@ -84,6 +84,21 @@ class StolenVehicleService:
         payload["missing_required_fields"] = self.missing_required_fields(payload)
         if payload.get("status") not in REPORT_STATUSES:
             payload["status"] = self.next_incomplete_status(payload)
+        if payload.get("status") == "Awaiting Images":
+            detail_missing = [
+                field for field in REQUIRED_DETAIL_FIELDS
+                if not str(payload.get(field, "")).strip()
+            ]
+            if detail_missing:
+                payload["status"] = "Draft"
+        if payload.get("status") == "Awaiting Ownership Documents" and (
+            not payload.get("image_paths")
+            or any(
+                not str(payload.get(field, "")).strip()
+                for field in REQUIRED_DETAIL_FIELDS
+            )
+        ):
+            payload["status"] = self.next_draft_status(payload)
         reports = [item for item in reports if item.get("report_id") != report_id]
         reports.append(payload)
         self.store.write(reports)
@@ -95,6 +110,12 @@ class StolenVehicleService:
             raise ValueError(f"Unknown stolen vehicle report: {report_id}")
         if status not in REPORT_STATUSES:
             raise ValueError(f"Unsupported stolen vehicle status: {status}")
+        if status == "Active Alert" and not self.can_activate(report):
+            missing = ", ".join(self.missing_required_fields(report))
+            raise ValueError(
+                "Cannot mark report as Active Alert until required "
+                f"details, images, and ownership documents are complete: {missing}"
+            )
         report["status"] = status
         report["updated_at"] = utc_now()
         if reason:
@@ -143,7 +164,7 @@ class StolenVehicleService:
         if saved:
             existing = list(report.get(key, []))
             report[key] = existing + saved
-            report["status"] = self.next_incomplete_status(report)
+            report["status"] = self.next_draft_status(report)
             report["updated_at"] = utc_now()
             self.save_report(report)
         return saved
@@ -180,14 +201,46 @@ class StolenVehicleService:
             "Rejected",
             "Located",
             "Closed",
-        } else "Submitted"
+        } else "Draft"
+
+    def next_draft_status(self, report):
+        detail_missing = [
+            field for field in REQUIRED_DETAIL_FIELDS
+            if not str(report.get(field, "")).strip()
+        ]
+        if detail_missing:
+            return "Draft"
+        if not report.get("image_paths"):
+            return "Awaiting Images"
+        if not report.get("document_paths"):
+            return "Awaiting Ownership Documents"
+        return "Draft"
 
     def search(self, query):
         query = query.upper().strip()
-        return [
-            item for item in self.list_reports()
-            if query in item.get("plate_number", "").upper()
-        ] if query else self.list_reports()
+        if not query:
+            return self.list_reports()
+        results = []
+        for item in self.list_reports():
+            haystack = " ".join(
+                str(item.get(field, ""))
+                for field in (
+                    "report_id",
+                    "plate_number",
+                    "make",
+                    "model",
+                    "year",
+                    "colour",
+                    "vin",
+                    "last_seen_location",
+                    "case_reference",
+                    "contact_number",
+                    "status",
+                )
+            ).upper()
+            if query in haystack:
+                results.append(item)
+        return results
 
     def match_videos(self, videos):
         reports = {
