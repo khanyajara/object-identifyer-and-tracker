@@ -66,3 +66,7 @@ class UploadQueueService:
             task for task in self.list_tasks()
             if task.get("status") not in {"complete", "failed"}
         ]
+
+    def retry_task(self, video_id, message="Retrying upload"):
+        """Create a new queued attempt while preserving the history of the failure."""
+        return self.create_task(video_id, message)

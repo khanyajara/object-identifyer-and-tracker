@@ -60,6 +60,14 @@ class ApiAuthorizationTests(unittest.TestCase):
 
 
 class VideoPipelineSupportTests(unittest.TestCase):
+    def test_cloud_upload_requires_compressed_mp4(self):
+        from services.supabase_service import SupabaseService
+
+        with self.assertRaises(RuntimeError):
+            SupabaseService("https://example.test", "key").upload_processed_video(
+                {"processed_video_path": "video.webm"}
+            )
+
     def test_cleanup_removes_only_failed_export_artifacts(self):
         from services.compression_service import CompressionService
         from services.video_service import EXPORTS_DIR

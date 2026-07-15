@@ -3,7 +3,7 @@ from urllib.parse import quote
 
 import requests
 
-from core.video_io import convert_to_webm, video_mime_type
+from core.video_io import video_mime_type
 
 
 class SupabaseService:
@@ -45,14 +45,10 @@ class SupabaseService:
         if not path.exists() or not path.is_file():
             raise RuntimeError(f"Processed video file was not found: {path}")
 
+        if path.suffix.lower() != ".mp4":
+            raise RuntimeError("Cloud uploads require the compressed MP4 playback file.")
         upload_path = path
-        upload_format = path.suffix.lower().lstrip(".")
-        webm_target = path.parent / "upload" / path.with_suffix(".webm").name
-        if path.suffix.lower() == ".mp4":
-            conversion = convert_to_webm(path, webm_target)
-            if conversion.get("ok"):
-                upload_path = Path(conversion["path"])
-                upload_format = "webm"
+        upload_format = "mp4"
 
         object_name = f'processed/{record["video_id"]}/{upload_path.name}'
         bucket_path = quote(self.bucket, safe="")
@@ -74,12 +70,8 @@ class SupabaseService:
             "upload_path": str(upload_path),
             "upload_format": upload_format,
         }
-        if upload_format == "webm":
-            payload["webm_path"] = str(upload_path)
-            payload["webm_url"] = payload["public_url"]
-        elif upload_format == "mp4":
-            payload["mp4_path"] = str(upload_path)
-            payload["mp4_url"] = payload["public_url"]
+        payload["mp4_path"] = str(upload_path)
+        payload["mp4_url"] = payload["public_url"]
         return payload
 
     def public_url(self, object_name):

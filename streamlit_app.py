@@ -16,6 +16,7 @@ os.environ.setdefault("YOLO_CONFIG_DIR", str(PROJECT_DIR / "Ultralytics"))
 os.environ.setdefault("MPLCONFIGDIR", str(PROJECT_DIR / "Ultralytics"))
 
 import pandas as pd
+
 import streamlit as st
 
 from core.detector import load_yolo_model
@@ -1521,6 +1522,24 @@ def queue_processed_video_upload(record, settings):
     return task
 
 
+def retry_processed_video_upload(record, settings):
+    task = UploadQueueService().retry_task(record["video_id"], "Retrying processed video upload...")
+    VideoService().update_sync_fields(
+        record["video_id"],
+        sync_status="Upload retry queued",
+        supabase_upload_status="queued",
+        supabase_upload_error=None,
+        sync_error=None,
+    )
+    worker = threading.Thread(
+        target=upload_processed_video_background,
+        args=(record["video_id"], dict(settings), task["task_id"]),
+        daemon=True,
+    )
+    worker.start()
+    return task
+
+
 def retry_firebase_sync(record, settings):
     result = firebase_service_from_settings(settings).retry_failed_metadata_upload(record)
     VideoService().update_sync_fields(
@@ -1835,6 +1854,15 @@ def videos_page(service, settings):
             try:
                 queue_processed_video_upload(selected, settings)
                 st.success("Processed video upload queued. You can keep using the app while it runs.")
+                st.rerun()
+            except Exception as exc:
+                st.error(str(exc))
+        if selected.get("supabase_upload_status") == "failed" and st.button(
+            "Retry failed upload", width="stretch"
+        ):
+            try:
+                retry_processed_video_upload(selected, settings)
+                st.success("Upload retry queued. You can keep using the app while it runs.")
                 st.rerun()
             except Exception as exc:
                 st.error(str(exc))

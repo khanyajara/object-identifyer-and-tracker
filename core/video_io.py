@@ -47,8 +47,8 @@ def _local_video_exists(path):
 
 def get_best_playback_info(video_metadata):
     candidates = (
-        ("supabase_webm_url", "webm", "supabase"),
         ("supabase_mp4_url", "mp4", "supabase"),
+        ("supabase_webm_url", "webm", "supabase"),
         ("compressed_processed_path", "mp4", "local"),
         ("processed_mp4_path", "mp4", "local"),
         ("processed_video_path", "mp4", "local"),
