@@ -2772,7 +2772,8 @@ def admin_login_page():
         "Admin tools are separate from the normal dashcam flow.",
     )
     auth = AdminAuthService()
-    st.warning("Development credentials detected. Change before production deployment.")
+    if not auth.list_admins():
+        st.error("No administrator account is configured. Set ROADWATCH_ADMIN_ACCOUNTS in .env.")
     with st.form("admin-login"):
         username = st.text_input("Admin username")
         password = st.text_input("Admin password", type="password")
