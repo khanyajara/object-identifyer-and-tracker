@@ -2871,6 +2871,15 @@ def admin_dashboard_page(service, settings):
             st.info("No recordings yet.")
     with st.expander("Advanced: system storage folders", expanded=False):
         st.dataframe(pd.DataFrame(storage_rows), width="stretch", hide_index=True)
+    with st.expander("Cache cleanup preview", expanded=False):
+        storage = StorageService()
+        preview = storage.cleanup_cache(max_items=25, dry_run=True)
+        st.caption("Only compressed copies and thumbnails are eligible. Original and processed evidence are never deleted.")
+        st.dataframe(pd.DataFrame(preview["preview"]), width="stretch", hide_index=True)
+        if st.button("Clean non-protected cache", width="stretch"):
+            result = storage.cleanup_cache(max_items=25, dry_run=False)
+            st.success(f'Removed {len(result["removed"])} non-protected cache file(s).')
+            st.rerun()
 
 
 def reports_page(service):

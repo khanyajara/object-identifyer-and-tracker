@@ -60,6 +60,13 @@ class ApiAuthorizationTests(unittest.TestCase):
 
 
 class VideoPipelineSupportTests(unittest.TestCase):
+    def test_storage_cleanup_never_marks_original_or_processed_evidence_for_removal(self):
+        from services.storage_service import StorageService
+
+        preview = StorageService().cleanup_cache(max_items=5, dry_run=True)
+        self.assertTrue(all("original_video_path" != row["kind"] for row in preview["preview"]))
+        self.assertTrue(all("processed_video_path" != row["kind"] for row in preview["preview"]))
+
     def test_cloud_upload_requires_compressed_mp4(self):
         from services.supabase_service import SupabaseService
 
