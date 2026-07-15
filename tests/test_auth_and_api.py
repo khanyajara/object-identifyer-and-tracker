@@ -1,5 +1,6 @@
 import os
 import unittest
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 
@@ -56,6 +57,29 @@ class ApiAuthorizationTests(unittest.TestCase):
             self.client.post("/videos/sync", headers=headers, json={"video_id": "test"}).status_code,
             200,
         )
+
+
+class VideoPipelineSupportTests(unittest.TestCase):
+    def test_cleanup_removes_only_failed_export_artifacts(self):
+        from services.compression_service import CompressionService
+        from services.video_service import EXPORTS_DIR
+
+        result = CompressionService().cleanup_failed_exports(EXPORTS_DIR, dry_run=True)
+        self.assertEqual(result["removed"], [])
+        self.assertTrue((EXPORTS_DIR / ".gitkeep").exists())
+
+    def test_metadata_repair_restores_mp4_fields(self):
+        from services.video_service import VIDEOS_DIR, VideoService
+
+        original = next(VIDEOS_DIR.glob("*.mp4"), None)
+        if original is None:
+            self.skipTest("No local MP4 recording fixture is available.")
+        repaired, changed = VideoService.repair_metadata(
+            {"original_video_path": str(original), "video_format": "webm"}
+        )
+        self.assertTrue(changed)
+        self.assertEqual(repaired["video_format"], "mp4")
+        self.assertEqual(repaired["original_mp4_path"], str(original))
 
 
 if __name__ == "__main__":

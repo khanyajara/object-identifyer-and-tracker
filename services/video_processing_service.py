@@ -3,17 +3,14 @@ from pathlib import Path
 
 import cv2
 
-from core.video_io import (
-    DEFAULT_VIDEO_EXTENSION,
-    compress_video_for_playback,
-    finalize_video_file,
-    open_video_writer,
-)
+from core.video_io import DEFAULT_VIDEO_EXTENSION, finalize_video_file, open_video_writer
 from core.vision_pipeline import VisionPipeline
+from services.compression_service import CompressionService
 from services.detection_log_service import DetectionLogService
 from services.video_service import (
     COMPRESSED_PROCESSED_VIDEOS_DIR,
     PROCESSED_VIDEOS_DIR,
+    THUMBNAILS_DIR,
     VideoService,
 )
 
@@ -46,7 +43,9 @@ class VideoProcessingService:
                 COMPRESSED_PROCESSED_VIDEOS_DIR
                 / output_path.with_suffix(".mp4").name
             )
-            compression = compress_video_for_playback(output_path, compressed_target)
+            compression = CompressionService().compress_for_playback(
+                output_path, compressed_target
+            )
             record["processed_compression_status"] = (
                 "success" if compression["ok"] else "fallback"
             )
@@ -74,6 +73,15 @@ class VideoProcessingService:
                 str(compression["path"]) if compression["ok"] else str(output_path)
             )
             record["upload_mp4_path"] = record["upload_video_path"]
+            thumbnail = CompressionService().create_thumbnail(
+                record["playback_video_path"],
+                THUMBNAILS_DIR / f'{record["video_id"]}.jpg',
+            )
+            record["thumbnail_path"] = (
+                str(thumbnail["path"]) if thumbnail["ok"] else None
+            )
+            record["thumbnail_status"] = "created" if thumbnail["ok"] else "failed"
+            record["thumbnail_error"] = thumbnail.get("error")
             record["processed_frame_count"] = frame_count
             record.pop("processed_temporary_path", None)
             record["processing_status"] = "Processed video saved successfully."

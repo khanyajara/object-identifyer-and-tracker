@@ -9,8 +9,8 @@ DEFAULT_VIDEO_EXTENSION = ".mp4"
 SUPPORTED_VIDEO_EXTENSIONS = (".webm", ".avi", ".mp4")
 VIDEO_WRITER_CANDIDATES = (
     (".mp4", "mp4v"),
-    (".avi", "XVID"),
-    (".avi", "MJPG"),
+    (".mp4", "avc1"),
+    (".mp4", "H264"),
 )
 MP4_CODECS = ("avc1", "H264", "mp4v")
 
@@ -120,6 +120,7 @@ def open_video_writer(path, fps, size):
 
 
 def open_webm_writer(path, fps, size):
+    # Kept for integrations that still import the old name. New recordings are MP4.
     return create_video_writer(path, fps, size)
 
 

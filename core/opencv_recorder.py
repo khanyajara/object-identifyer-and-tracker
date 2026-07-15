@@ -10,12 +10,9 @@ from pathlib import Path
 import cv2
 
 from core.annotation import annotate_frame
-from core.video_io import (
-    compress_video_for_playback,
-    finalize_video_file,
-    open_video_writer,
-)
+from core.video_io import finalize_video_file, open_video_writer
 from core.vision_pipeline import VisionPipeline
+from services.compression_service import CompressionService
 from services.detection_log_service import DetectionLogService
 from services.video_service import COMPRESSED_VIDEOS_DIR, VideoService
 
@@ -405,7 +402,9 @@ class CameraManager:
         if self.raw_path.exists() and self.raw_path.stat().st_size:
             finalize_video_file(self.raw_path, final_path)
             compressed_target = COMPRESSED_VIDEOS_DIR / final_path.with_suffix(".mp4").name
-            compression = compress_video_for_playback(final_path, compressed_target)
+            compression = CompressionService().compress_for_playback(
+                final_path, compressed_target
+            )
             self.record["compression_status"] = "success" if compression["ok"] else "fallback"
             self.record["compression_error"] = None if compression["ok"] else compression.get("error")
             self.record["compression_message"] = compression["message"]
@@ -420,6 +419,17 @@ class CameraManager:
                 self.record["playback_video_path"] = str(final_path)
                 self.record["playback_source"] = str(final_path)
                 self.record["playback_format"] = final_path.suffix.lstrip(".")
+            thumbnail = CompressionService().create_thumbnail(
+                self.record["playback_video_path"],
+                COMPRESSED_VIDEOS_DIR.parent
+                / "thumbnails"
+                / f'{self.record["video_id"]}.jpg',
+            )
+            self.record["thumbnail_path"] = (
+                str(thumbnail["path"]) if thumbnail["ok"] else None
+            )
+            self.record["thumbnail_status"] = "created" if thumbnail["ok"] else "failed"
+            self.record["thumbnail_error"] = thumbnail.get("error")
             self.record["video_path"] = str(final_path)
             self.record["original_video_path"] = str(final_path)
             if final_path.suffix.lower() == ".mp4":

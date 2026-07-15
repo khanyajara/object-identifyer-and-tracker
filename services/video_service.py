@@ -12,6 +12,7 @@ VIDEOS_DIR = DATA_DIR / "videos"
 PROCESSED_VIDEOS_DIR = VIDEOS_DIR / "processed"
 COMPRESSED_VIDEOS_DIR = VIDEOS_DIR / "compressed"
 COMPRESSED_PROCESSED_VIDEOS_DIR = PROCESSED_VIDEOS_DIR / "compressed"
+THUMBNAILS_DIR = VIDEOS_DIR / "thumbnails"
 LOGS_DIR = DATA_DIR / "logs"
 SNAPSHOTS_DIR = DATA_DIR / "snapshots"
 EXPORTS_DIR = DATA_DIR / "exports"
@@ -34,6 +35,7 @@ class VideoService:
             PROCESSED_VIDEOS_DIR,
             COMPRESSED_VIDEOS_DIR,
             COMPRESSED_PROCESSED_VIDEOS_DIR,
+            THUMBNAILS_DIR,
             LOGS_DIR,
             SNAPSHOTS_DIR,
             EXPORTS_DIR,
@@ -67,6 +69,8 @@ class VideoService:
             "playback_video_path": None,
             "playback_source": None,
             "playback_format": None,
+            "thumbnail_path": None,
+            "thumbnail_status": "not_started",
             "upload_video_path": None,
             "upload_webm_path": None,
             "upload_mp4_path": None,
@@ -154,3 +158,31 @@ class VideoService:
         record.update(fields)
         self.save(record)
         return record
+
+    @staticmethod
+    def repair_metadata(record):
+        """Restore derived MP4 fields when referenced local files still exist."""
+        changed = False
+        for primary_key, mp4_key, format_key in (
+            ("original_video_path", "original_mp4_path", "video_format"),
+            ("processed_video_path", "processed_mp4_path", "processed_video_format"),
+        ):
+            value = record.get(primary_key)
+            if not value:
+                continue
+            path = Path(value)
+            if not path.is_file() or not path.stat().st_size:
+                continue
+            suffix = path.suffix.lower().lstrip(".")
+            if record.get(format_key) != suffix:
+                record[format_key] = suffix
+                changed = True
+            if suffix == "mp4" and record.get(mp4_key) != str(path):
+                record[mp4_key] = str(path)
+                changed = True
+        thumbnail = record.get("thumbnail_path")
+        if thumbnail and not Path(thumbnail).is_file():
+            record["thumbnail_path"] = None
+            record["thumbnail_status"] = "missing"
+            changed = True
+        return record, changed
