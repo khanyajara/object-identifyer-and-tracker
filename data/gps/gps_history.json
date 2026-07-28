@@ -1,1 +1,101 @@
-[]
+[
+  {
+    "device_id": "roadwatch_local_01",
+    "timestamp": "2026-07-27T13:13:17.783195+00:00",
+    "latitude": -28.715789526601537,
+    "longitude": 24.73469065471292,
+    "address": null,
+    "speed_kmh": 0,
+    "accuracy_m": 116,
+    "source": "Browser",
+    "video_id": null
+  },
+  {
+    "device_id": "roadwatch_local_01",
+    "timestamp": "2026-07-27T09:21:42.183122+00:00",
+    "latitude": -28.741826,
+    "longitude": 24.763033,
+    "address": null,
+    "speed_kmh": 0,
+    "accuracy_m": 196,
+    "source": "Browser",
+    "video_id": null
+  },
+  {
+    "device_id": "roadwatch_local_01",
+    "timestamp": "2026-07-27T08:35:26.523360+00:00",
+    "latitude": -28.715789526601537,
+    "longitude": 24.73469065471292,
+    "address": null,
+    "speed_kmh": 0,
+    "accuracy_m": 116,
+    "source": "Browser",
+    "video_id": null
+  },
+  {
+    "device_id": "roadwatch_local_01",
+    "timestamp": "2026-07-24T08:34:12.845260+00:00",
+    "latitude": -28.71578524128923,
+    "longitude": 24.734733337494674,
+    "address": null,
+    "speed_kmh": 0,
+    "accuracy_m": 120,
+    "source": "Browser",
+    "video_id": null
+  },
+  {
+    "device_id": "roadwatch_local_01",
+    "timestamp": "2026-07-19T17:37:47.895995+00:00",
+    "latitude": -25.750854194941386,
+    "longitude": 28.23704494756323,
+    "address": null,
+    "speed_kmh": 0,
+    "accuracy_m": 55,
+    "source": "Browser",
+    "video_id": "vid_20260719_193745_881e4c"
+  },
+  {
+    "device_id": "roadwatch_local_01",
+    "timestamp": "2026-07-19T17:36:55.755894+00:00",
+    "latitude": -25.750854194941386,
+    "longitude": 28.23704494756323,
+    "address": null,
+    "speed_kmh": 0,
+    "accuracy_m": 55,
+    "source": "Browser",
+    "video_id": null
+  },
+  {
+    "device_id": "roadwatch_local_01",
+    "timestamp": "2026-07-15T09:17:12.554295+00:00",
+    "latitude": -28.71595967481656,
+    "longitude": 24.734106684485226,
+    "address": null,
+    "speed_kmh": 0,
+    "accuracy_m": 86,
+    "source": "Browser",
+    "video_id": null
+  },
+  {
+    "device_id": "roadwatch_local_01",
+    "timestamp": "2026-07-15T08:43:05.578956+00:00",
+    "latitude": -28.715981733701987,
+    "longitude": 24.733979858335996,
+    "address": null,
+    "speed_kmh": 0,
+    "accuracy_m": 90,
+    "source": "Browser",
+    "video_id": null
+  },
+  {
+    "device_id": "roadwatch_local_01",
+    "timestamp": "2026-07-27T13:18:39.665885+00:00",
+    "latitude": -28.741826,
+    "longitude": 24.763033,
+    "address": null,
+    "speed_kmh": 0,
+    "accuracy_m": 196,
+    "source": "Browser",
+    "video_id": null
+  }
+]

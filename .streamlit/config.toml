@@ -1,0 +1,16 @@
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "viewer"
+
+[server]
+headless = true
+maxUploadSize = 500
+
+[theme]
+base = "dark"
+primaryColor = "#22d3ee"
+backgroundColor = "#020617"
+secondaryBackgroundColor = "#082f49"
+textColor = "#dffcff"

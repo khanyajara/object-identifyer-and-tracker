@@ -12,3 +12,4 @@ firebase-admin==7.5.0
 moviepy==2.2.1
 PyJWT==2.13.0
 bcrypt==4.2.1
+streamlit-js-eval==0.1.7

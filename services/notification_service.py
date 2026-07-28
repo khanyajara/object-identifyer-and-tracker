@@ -25,6 +25,7 @@ DEFAULT_NOTIFICATION_SETTINGS = {
     "notify_on_processing": True,
     "notify_on_sync": True,
 }
+SENSITIVE_NOTIFICATION_SETTING_KEYS = {"smtp_password", "webhook_url"}
 
 
 class NotificationService:
@@ -51,7 +52,12 @@ class NotificationService:
             **DEFAULT_NOTIFICATION_SETTINGS,
             **settings,
         }
-        return self.settings_store.write(self.settings)
+        persistent_settings = {
+            key: value
+            for key, value in self.settings.items()
+            if key not in SENSITIVE_NOTIFICATION_SETTING_KEYS
+        }
+        return self.settings_store.write(persistent_settings)
 
     def list_notifications(self, limit=20, unread_only=False):
         notifications = sorted(

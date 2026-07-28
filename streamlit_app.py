@@ -16,8 +16,10 @@ os.environ.setdefault("YOLO_CONFIG_DIR", str(PROJECT_DIR / "Ultralytics"))
 os.environ.setdefault("MPLCONFIGDIR", str(PROJECT_DIR / "Ultralytics"))
 
 import pandas as pd
+import requests
 
 import streamlit as st
+from streamlit_js_eval import get_geolocation
 
 from core.detector import load_yolo_model
 from core.opencv_recorder import CameraManager
@@ -47,6 +49,8 @@ from services.video_service import VideoService
 SETTINGS_PATH = PROJECT_DIR / "settings.json"
 
 ENV_SETTING_KEYS = {
+    "VISION_SYNC_URL": "sync_url",
+    "VISION_SYNC_API_KEY": "sync_api_key",
     "AI_API_KEY": "ai_api_key",
     "SUPABASE_URL": "supabase_url",
     "SUPABASE_ANON_KEY": "supabase_anon_key",
@@ -77,6 +81,18 @@ ENV_SETTING_KEYS = {
     "ROADWATCH_HIGH_ACCURACY_LOCATION": "location_high_accuracy",
     "ROADWATCH_SHOW_CURRENT_ADDRESS": "location_show_address",
     "KEEP_FALLBACK_VIDEO": "keep_fallback_video",
+}
+
+# These values must only come from environment variables or Streamlit Secrets.
+# They are intentionally never written to settings.json.
+SENSITIVE_SETTING_KEYS = {
+    "sync_api_key",
+    "ai_api_key",
+    "supabase_anon_key",
+    "firebase_api_key",
+    "firebase_private_key",
+    "notification_webhook_url",
+    "notification_smtp_password",
 }
 
 
@@ -182,14 +198,24 @@ def load_settings():
         env_settings[setting_key] = value
     if SETTINGS_PATH.exists():
         try:
-            return {**DEFAULTS, **json.loads(SETTINGS_PATH.read_text("utf-8")), **env_settings}
+            stored_settings = json.loads(SETTINGS_PATH.read_text("utf-8"))
+            for key in SENSITIVE_SETTING_KEYS:
+                stored_settings.pop(key, None)
+            return {**DEFAULTS, **stored_settings, **env_settings}
         except (OSError, json.JSONDecodeError):
             pass
     return {**DEFAULTS, **env_settings}
 
 
 def save_settings(settings):
-    SETTINGS_PATH.write_text(json.dumps(settings, indent=2), encoding="utf-8")
+    persistent_settings = {
+        key: value
+        for key, value in settings.items()
+        if key not in SENSITIVE_SETTING_KEYS
+    }
+    temporary = SETTINGS_PATH.with_suffix(".json.tmp")
+    temporary.write_text(json.dumps(persistent_settings, indent=2), encoding="utf-8")
+    temporary.replace(SETTINGS_PATH)
 
 
 def privacy_permission_gate(settings):
@@ -305,6 +331,32 @@ def ensure_location_tracking(settings):
 def location_status(settings):
     tracker = ensure_location_tracking(settings)
     return tracker.status()
+
+
+def capture_browser_location(settings, video_id=None):
+    """Request browser geolocation and persist valid coordinates."""
+    location = get_geolocation()
+    if not isinstance(location, dict):
+        return None
+    coords = location.get("coords") or location
+    latitude, longitude = coords.get("latitude"), coords.get("longitude")
+    if latitude is None or longitude is None:
+        return None
+    gps = GPSService()
+    address = None
+    if settings.get("location_reverse_geocoding", False):
+        try:
+            address = gps.reverse_geocode(latitude, longitude)
+        except requests.RequestException:
+            address = None
+    return gps.add_browser_point(
+        latitude,
+        longitude,
+        video_id=video_id,
+        address=address,
+        device_id=settings.get("device_id", "roadwatch_local_01"),
+        accuracy_m=coords.get("accuracy"),
+    )
 
 
 def link_location_to_video(video_id):
@@ -524,15 +576,15 @@ def styles():
 
 def header(eyebrow, title, copy):
     st.markdown(
-        f'<div class="eyebrow">{eyebrow}</div><div class="hero">{title}</div>'
-        f'<p class="muted">{copy}</p>',
+        f'<div class="eyebrow">{esc(eyebrow)}</div><div class="hero">{esc(title)}</div>'
+        f'<p class="muted">{esc(copy)}</p>',
         unsafe_allow_html=True,
     )
 
 
 def badge(text, tone="blue"):
     st.markdown(
-        f'<span class="badge badge-{tone}">{text}</span>',
+        f'<span class="badge badge-{esc(tone)}">{esc(text)}</span>',
         unsafe_allow_html=True,
     )
 
@@ -617,9 +669,9 @@ def sidebar_status(settings):
 
 def cards_html(items):
     cards = "".join(
-        f'<div class="metric-card"><div class="metric-label">{label}</div>'
-        f'<div class="metric-value">{value}</div>'
-        f'<div class="muted" style="font-size:.78rem">{hint}</div></div>'
+        f'<div class="metric-card"><div class="metric-label">{esc(label)}</div>'
+        f'<div class="metric-value">{esc(value)}</div>'
+        f'<div class="muted" style="font-size:.78rem">{esc(hint)}</div></div>'
         for label, value, hint in items
     )
     st.markdown(f'<div class="metric-grid">{cards}</div>', unsafe_allow_html=True)
@@ -1088,6 +1140,10 @@ def stop_and_process(camera_manager, settings):
 
 def dash_cam_page(settings):
     camera_manager, active = get_camera_state(settings)
+    capture_browser_location(
+        settings,
+        camera_manager.record.get("video_id") if active else None,
+    )
     gps = location_status(settings)
     storage_rows = StorageService().status()
     videos = VideoService().list_videos()
@@ -2371,7 +2427,7 @@ def gps_page(service, settings=None):
     header(
         "Location trail",
         "GPS History",
-        "Desktop-safe GPS history with local/mock fallback.",
+        "Browser GPS history linked to recordings.",
     )
     gps_service = GPSService()
     status = location_status(settings)
@@ -2389,29 +2445,9 @@ def gps_page(service, settings=None):
     )
     if status["status"] != "Active":
         st.info("Location unavailable. Please enable GPS permissions.")
-    with st.form("mock-gps"):
-        c1, c2, c3 = st.columns(3)
-        lat = c1.number_input("Latitude", value=0.0, format="%.6f")
-        lon = c2.number_input("Longitude", value=0.0, format="%.6f")
-        speed = c3.number_input("Speed km/h", value=0.0, min_value=0.0)
-        accuracy = st.number_input("GPS accuracy meters", value=25.0, min_value=0.0)
-        address = st.text_input("Location/address", value="")
-        videos = service.list_videos()
-        labels = {"No linked video": None}
-        labels.update({f'{item["filename"]} | {item["video_id"]}': item["video_id"] for item in videos})
-        linked = st.selectbox("Link to video", list(labels))
-        if st.form_submit_button("Add mock GPS point"):
-            gps_service.add_point(
-                lat,
-                lon,
-                speed,
-                video_id=labels[linked],
-                address=address or None,
-                device_id=settings.get("device_id", "roadwatch_local_01"),
-                accuracy_m=accuracy,
-                source="Mock",
-            )
-            st.success("GPS point saved.")
+    captured = capture_browser_location(settings, status.get("video_id"))
+    if captured:
+        st.success("Browser GPS point saved.")
     points = gps_service.list_points()
     clean_dataframe("Advanced: full GPS history", points, "No GPS points saved yet.")
 
@@ -2650,20 +2686,21 @@ def settings_page(settings):
                 f"{live_location.get('message')}"
             )
         with st.expander("Sync/API Settings", expanded=False):
+            st.caption("Secrets are read from .env or Streamlit Secrets and are not saved in the browser settings form.")
             sync_url = st.text_input("Sync URL", settings["sync_url"])
-            sync_key = st.text_input("Sync API key placeholder", settings["sync_api_key"], type="password")
-            ai_api_key = st.text_input("AI API key placeholder", settings.get("ai_api_key", ""), type="password")
+            sync_key = settings["sync_api_key"]
+            ai_api_key = settings.get("ai_api_key", "")
             supabase_url = st.text_input("Supabase URL placeholder", settings.get("supabase_url", ""))
-            supabase_key = st.text_input("Supabase anon key placeholder", settings.get("supabase_anon_key", ""), type="password")
+            supabase_key = settings.get("supabase_anon_key", "")
             supabase_bucket = st.text_input("Supabase bucket placeholder", settings.get("supabase_bucket", "videos"))
             firebase_push_url = st.text_input("Firebase push URL", settings.get("firebase_push_url", ""))
-            firebase_api_key = st.text_input("Firebase API key placeholder", settings.get("firebase_api_key", ""), type="password")
+            firebase_api_key = settings.get("firebase_api_key", "")
             firebase_auth_domain = st.text_input("Firebase auth domain", settings.get("firebase_auth_domain", ""))
             firebase_project_id = st.text_input("Firebase project ID", settings.get("firebase_project_id", ""))
             firebase_storage_bucket = st.text_input("Firebase storage bucket", settings.get("firebase_storage_bucket", ""))
             firebase_app_id = st.text_input("Firebase app ID", settings.get("firebase_app_id", ""))
             firebase_client_email = st.text_input("Firebase client email", settings.get("firebase_client_email", ""))
-            firebase_private_key = st.text_area("Firebase private key", settings.get("firebase_private_key", ""), height=90)
+            firebase_private_key = settings.get("firebase_private_key", "")
             firebase_video_collection = st.text_input("Firebase video collection", settings.get("firebase_video_collection", "videos"))
         with st.expander("Notification Settings", expanded=True):
             notification_cols = st.columns(4)
@@ -2676,7 +2713,7 @@ def settings_page(settings):
             notify_on_incident = trigger_cols[1].checkbox("Incident alerts", settings.get("notify_on_incident", True))
             notify_on_processing = trigger_cols[2].checkbox("Processing alerts", settings.get("notify_on_processing", True))
             notify_on_sync = trigger_cols[3].checkbox("Sync alerts", settings.get("notify_on_sync", True))
-            notification_webhook_url = st.text_input("Notification webhook URL", settings.get("notification_webhook_url", ""))
+            notification_webhook_url = settings.get("notification_webhook_url", "")
             email_cols = st.columns(2)
             notification_email_from = email_cols[0].text_input("Email from", settings.get("notification_email_from", ""))
             notification_email_to = email_cols[1].text_input("Email to", settings.get("notification_email_to", ""))
@@ -2684,7 +2721,8 @@ def settings_page(settings):
             notification_smtp_host = smtp_cols[0].text_input("SMTP host", settings.get("notification_smtp_host", ""))
             notification_smtp_port = smtp_cols[1].number_input("SMTP port", 1, 65535, int(settings.get("notification_smtp_port", 587)))
             notification_smtp_username = smtp_cols[2].text_input("SMTP username", settings.get("notification_smtp_username", ""))
-            notification_smtp_password = smtp_cols[3].text_input("SMTP password", settings.get("notification_smtp_password", ""), type="password")
+            smtp_cols[3].caption("SMTP password: configured through environment only")
+            notification_smtp_password = settings.get("notification_smtp_password", "")
         if st.form_submit_button("Save settings", type="primary"):
             updated = {
                 **settings,
@@ -2815,8 +2853,6 @@ def admin_login_page():
                 st.rerun()
             else:
                 st.error("Invalid admin password.")
-    with st.expander("Development admin accounts", expanded=False):
-        st.dataframe(pd.DataFrame(auth.list_admins()), width="stretch", hide_index=True)
 
 
 def admin_dashboard_page(service, settings):
@@ -2930,9 +2966,6 @@ def admin_management_page():
             ("Permissions", "Local", "No remote roles yet"),
         ]
     )
-    with st.expander("Advanced: admin setup note", expanded=False):
-        st.info("Normal users do not have a login page. Admin mode is intentionally separate and locally gated.")
-        st.dataframe(pd.DataFrame(auth.list_admins()), width="stretch", hide_index=True)
 
 
 def roadwatch_home_page(service, settings):

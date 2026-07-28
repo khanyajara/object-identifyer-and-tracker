@@ -1,0 +1,7 @@
+diff --git a/streamlit_app.py b/streamlit_app.py
+--- a/streamlit_app.py
++++ b/streamlit_app.py
+@@ -2775,1 +2775,2 @@ def admin_login_page():
+-    st.warning("Development credentials detected. Change before production deployment.")
++    if not auth.list_admins():
++        st.error("No administrator account is configured. Set ROADWATCH_ADMIN_ACCOUNTS in .env.")

@@ -1,0 +1,39 @@
+diff --git a/streamlit_app.py b/streamlit_app.py
+--- a/streamlit_app.py
++++ b/streamlit_app.py
+@@ -1587,18 +1587,18 @@ def sync_supabase_videos_to_firebase(settings, prefix="processed"):
+ def repair_video_playback(record, settings):
+     service = VideoService()
+     record = service.load(record["video_id"])
+-    changed = False
++    record, changed = service.repair_metadata(record)
+     original_path = first_playable_video_path(record, "Original")
+     processed_path = record.get("processed_video_path")
+     processed_path = Path(processed_path) if processed_path else None
+     if original_path:
+         compressed_original = record.get("compressed_original_path")
+         if not compressed_original or not is_playable_video_path(compressed_original):
+-            from core.video_io import compress_video_for_playback
++            from services.compression_service import CompressionService
+             from services.video_service import COMPRESSED_VIDEOS_DIR
+ 
+             target = COMPRESSED_VIDEOS_DIR / original_path.with_suffix(".mp4").name
+-            result = compress_video_for_playback(original_path, target)
++            result = CompressionService().compress_for_playback(original_path, target)
+             record["compression_status"] = "success" if result["ok"] else "fallback"
+             record["compression_error"] = None if result["ok"] else result.get("error")
+             record["compression_message"] = result["message"]
+@@ -1609,11 +1609,11 @@ def repair_video_playback(record, settings):
+     if processed_path and is_playable_video_path(processed_path):
+         compressed_processed = record.get("compressed_processed_path")
+         if not compressed_processed or not is_playable_video_path(compressed_processed):
+-            from core.video_io import compress_video_for_playback
++            from services.compression_service import CompressionService
+             from services.video_service import COMPRESSED_PROCESSED_VIDEOS_DIR
+ 
+             target = COMPRESSED_PROCESSED_VIDEOS_DIR / processed_path.with_suffix(".mp4").name
+-            result = compress_video_for_playback(processed_path, target)
++            result = CompressionService().compress_for_playback(processed_path, target)
+             record["processed_compression_status"] = "success" if result["ok"] else "fallback"
+             record["processed_compression_error"] = None if result["ok"] else result.get("error")
+             record["processed_compression_message"] = result["message"]

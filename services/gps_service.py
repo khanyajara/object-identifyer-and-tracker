@@ -2,6 +2,8 @@ import threading
 import time
 from datetime import datetime, timezone
 
+import requests
+
 from services.local_json_service import DATA_DIR, LocalJsonStore
 
 
@@ -61,7 +63,7 @@ class GPSService:
         address=None,
         device_id="roadwatch_local_01",
         accuracy_m=None,
-        source="Mock",
+        source="Browser",
     ):
         points = self.list_points()
         point = {
@@ -79,7 +81,12 @@ class GPSService:
         self.store.write(points)
         return point
 
-    def add_mock_point(self, latitude, longitude, speed_kmh=0, video_id=None, address=None, device_id="roadwatch_local_01"):
+    def add_browser_point(self, latitude, longitude, speed_kmh=0, video_id=None, address=None, device_id="roadwatch_local_01", accuracy_m=None):
+        if not -90 <= float(latitude) <= 90 or not -180 <= float(longitude) <= 180:
+            raise ValueError("Browser geolocation returned invalid coordinates.")
+        latest = self.latest()
+        if latest and latest.get("latitude") == latitude and latest.get("longitude") == longitude and latest.get("video_id") == video_id:
+            return latest
         return self.add_point(
             latitude,
             longitude,
@@ -87,9 +94,19 @@ class GPSService:
             video_id,
             address,
             device_id,
-            accuracy_m=25,
-            source="Mock",
+            accuracy_m=accuracy_m,
+            source="Browser",
         )
+
+    def reverse_geocode(self, latitude, longitude):
+        response = requests.get(
+            "https://nominatim.openstreetmap.org/reverse",
+            params={"lat": latitude, "lon": longitude, "format": "jsonv2"},
+            headers={"User-Agent": "RoadwatchVisionRecorder/1.0"},
+            timeout=10,
+        )
+        response.raise_for_status()
+        return response.json().get("display_name")
 
 
 class LocationTrackingService:

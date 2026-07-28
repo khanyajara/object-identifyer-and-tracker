@@ -58,8 +58,23 @@ class ApiAuthorizationTests(unittest.TestCase):
             200,
         )
 
+    def test_video_id_cannot_escape_the_video_log_directory(self):
+        service = AdminAuthService()
+        token = service.issue_access_token(service.authenticate("phase1admin", self.password))
+        response = self.client.get(
+            "/videos/..%2F..%2Fsettings",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertIn(response.status_code, {404, 422})
+
 
 class VideoPipelineSupportTests(unittest.TestCase):
+    def test_browser_gps_rejects_invalid_coordinates(self):
+        from services.gps_service import GPSService
+
+        with self.assertRaises(ValueError):
+            GPSService().add_browser_point(91, 0)
+
     def test_storage_cleanup_never_marks_original_or_processed_evidence_for_removal(self):
         from services.storage_service import StorageService
 
@@ -82,6 +97,43 @@ class VideoPipelineSupportTests(unittest.TestCase):
         result = CompressionService().cleanup_failed_exports(EXPORTS_DIR, dry_run=True)
         self.assertEqual(result["removed"], [])
         self.assertTrue((EXPORTS_DIR / ".gitkeep").exists())
+
+    def test_json_store_returns_an_independent_default_value(self):
+        from services.local_json_service import LocalJsonStore
+
+        from services.video_service import EXPORTS_DIR
+
+        path = EXPORTS_DIR / ".default_isolation.json"
+        path.unlink(missing_ok=True)
+        try:
+            store = LocalJsonStore(path, {"items": []})
+            first = store.read()
+            first["items"].append("mutated")
+            self.assertEqual(store.read(), {"items": []})
+        finally:
+            path.unlink(missing_ok=True)
+
+    def test_settings_writes_do_not_persist_credentials(self):
+        import streamlit_app
+        from services.video_service import EXPORTS_DIR
+
+        original_path = streamlit_app.SETTINGS_PATH
+        test_path = EXPORTS_DIR / ".settings_security_test.json"
+        streamlit_app.SETTINGS_PATH = test_path
+        try:
+            streamlit_app.save_settings(
+                {
+                    "camera_index": 0,
+                    "supabase_anon_key": "must-not-be-written",
+                    "notification_smtp_password": "must-not-be-written",
+                }
+            )
+            content = test_path.read_text(encoding="utf-8")
+            self.assertNotIn("must-not-be-written", content)
+            self.assertIn('"camera_index": 0', content)
+        finally:
+            streamlit_app.SETTINGS_PATH = original_path
+            test_path.unlink(missing_ok=True)
 
     def test_metadata_repair_restores_mp4_fields(self):
         from services.video_service import VIDEOS_DIR, VideoService

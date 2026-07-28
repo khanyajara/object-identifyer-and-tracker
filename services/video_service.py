@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
@@ -22,6 +23,7 @@ GPS_DIR = DATA_DIR / "gps"
 CONTACTS_DIR = DATA_DIR / "contacts"
 PROFILE_DIR = DATA_DIR / "profile"
 NOTIFICATIONS_DIR = DATA_DIR / "notifications"
+VIDEO_ID_PATTERN = re.compile(r"^vid_\d{8}_\d{6}_[a-f0-9]{6}$")
 
 
 def utc_now():
@@ -132,6 +134,7 @@ class VideoService:
                 pass
 
     def load(self, video_id):
+        self._validate_video_id(video_id)
         return json.loads(
             (LOGS_DIR / f"{video_id}.json").read_text(encoding="utf-8")
         )
@@ -158,6 +161,11 @@ class VideoService:
         record.update(fields)
         self.save(record)
         return record
+
+    @staticmethod
+    def _validate_video_id(video_id):
+        if not isinstance(video_id, str) or not VIDEO_ID_PATTERN.fullmatch(video_id):
+            raise ValueError("Invalid video ID.")
 
     @staticmethod
     def repair_metadata(record):
