@@ -1,6 +1,149 @@
 [
   {
     "device_id": "roadwatch_local_01",
+    "timestamp": "2026-08-06T07:53:08.316501+00:00",
+    "latitude": -28.715463,
+    "longitude": 24.734677,
+    "address": null,
+    "speed_kmh": 0,
+    "accuracy_m": 131,
+    "source": "Browser",
+    "video_id": null
+  },
+  {
+    "device_id": "roadwatch_local_01",
+    "timestamp": "2026-08-05T09:39:37.731485+00:00",
+    "latitude": -28.715463,
+    "longitude": 24.734677,
+    "address": null,
+    "speed_kmh": 0,
+    "accuracy_m": 131,
+    "source": "Browser",
+    "video_id": "vid_20260805_113930_front_a2e85c"
+  },
+  {
+    "device_id": "roadwatch_local_01",
+    "timestamp": "2026-08-05T09:38:32.332459+00:00",
+    "latitude": -28.715463,
+    "longitude": 24.734677,
+    "address": null,
+    "speed_kmh": 0,
+    "accuracy_m": 131,
+    "source": "Browser",
+    "video_id": null
+  },
+  {
+    "device_id": "roadwatch_local_01",
+    "timestamp": "2026-08-05T09:29:28.074886+00:00",
+    "latitude": -28.715463,
+    "longitude": 24.734676,
+    "address": null,
+    "speed_kmh": 0,
+    "accuracy_m": 131,
+    "source": "Browser",
+    "video_id": "vid_20260805_112920_front_2b38f4"
+  },
+  {
+    "device_id": "roadwatch_local_01",
+    "timestamp": "2026-08-05T09:29:16.223929+00:00",
+    "latitude": -28.715463,
+    "longitude": 24.734676,
+    "address": null,
+    "speed_kmh": 0,
+    "accuracy_m": 131,
+    "source": "Browser",
+    "video_id": null
+  },
+  {
+    "device_id": "roadwatch_local_01",
+    "timestamp": "2026-08-05T09:28:33.760198+00:00",
+    "latitude": -28.71566,
+    "longitude": 24.734705,
+    "address": null,
+    "speed_kmh": 0,
+    "accuracy_m": 212,
+    "source": "Browser",
+    "video_id": null
+  },
+  {
+    "device_id": "roadwatch_local_01",
+    "timestamp": "2026-08-05T09:12:43.449808+00:00",
+    "latitude": -28.71566,
+    "longitude": 24.734705,
+    "address": null,
+    "speed_kmh": 0,
+    "accuracy_m": 212,
+    "source": "Browser",
+    "video_id": "vid_20260805_111242_a1ae98"
+  },
+  {
+    "device_id": "roadwatch_local_01",
+    "timestamp": "2026-08-05T09:12:38.700892+00:00",
+    "latitude": -28.71566,
+    "longitude": 24.734705,
+    "address": null,
+    "speed_kmh": 0,
+    "accuracy_m": 212,
+    "source": "Browser",
+    "video_id": null
+  },
+  {
+    "device_id": "roadwatch_local_01",
+    "timestamp": "2026-08-05T08:18:56.321436+00:00",
+    "latitude": -28.715463,
+    "longitude": 24.734677,
+    "address": null,
+    "speed_kmh": 0,
+    "accuracy_m": 131,
+    "source": "Browser",
+    "video_id": "vid_20260805_101855_bdfaac"
+  },
+  {
+    "device_id": "roadwatch_local_01",
+    "timestamp": "2026-08-05T08:18:45.292040+00:00",
+    "latitude": -28.715463,
+    "longitude": 24.734677,
+    "address": null,
+    "speed_kmh": 0,
+    "accuracy_m": 131,
+    "source": "Browser",
+    "video_id": null
+  },
+  {
+    "device_id": "roadwatch_local_01",
+    "timestamp": "2026-08-05T07:54:18.825224+00:00",
+    "latitude": -28.715463,
+    "longitude": 24.734678,
+    "address": null,
+    "speed_kmh": 0,
+    "accuracy_m": 178,
+    "source": "Browser",
+    "video_id": "vid_20260805_095417_c5699b"
+  },
+  {
+    "device_id": "roadwatch_local_01",
+    "timestamp": "2026-08-05T07:53:40.496140+00:00",
+    "latitude": -28.715463,
+    "longitude": 24.734678,
+    "address": null,
+    "speed_kmh": 0,
+    "accuracy_m": 178,
+    "source": "Browser",
+    "video_id": null
+  },
+  {
+    "device_id": "roadwatch_local_01",
+    "timestamp": "2026-07-27T13:18:39.665885+00:00",
+    "latitude": -28.741826,
+    "longitude": 24.763033,
+    "address": null,
+    "speed_kmh": 0,
+    "accuracy_m": 196,
+    "source": "Browser",
+    "video_id": null
+  },
+  {
+    "device_id": "roadwatch_local_01",
     "timestamp": "2026-07-27T13:13:17.783195+00:00",
     "latitude": -28.715789526601537,
     "longitude": 24.73469065471292,
@@ -89,13 +232,13 @@
   },
   {
     "device_id": "roadwatch_local_01",
-    "timestamp": "2026-07-27T13:18:39.665885+00:00",
-    "latitude": -28.741826,
-    "longitude": 24.763033,
+    "timestamp": "2026-08-06T07:53:26.362869+00:00",
+    "latitude": -28.715463,
+    "longitude": 24.734677,
     "address": null,
     "speed_kmh": 0,
-    "accuracy_m": 196,
+    "accuracy_m": 131,
     "source": "Browser",
-    "video_id": null
+    "video_id": "vid_20260806_095318_front_adec00"
   }
 ]

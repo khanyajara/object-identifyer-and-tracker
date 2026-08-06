@@ -4,7 +4,8 @@ import json
 import os
 import sys
 import threading
-from collections import Counter, defaultdict
+import time
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
@@ -22,21 +23,24 @@ import streamlit as st
 from streamlit_js_eval import get_geolocation
 
 from core.detector import load_yolo_model
+from core.dual_camera import DualCameraManager
 from core.opencv_recorder import CameraManager
 from core.ocr import load_ocr_reader
+from core.vision_pipeline import VisionPipeline
 from core.video_io import (
     get_best_playback_info,
     get_best_playback_source,
     is_playable_video_path,
     video_mime_type,
 )
+from services import dual_session_service, dual_video_processing
 from services.auth_service import AdminAuthService
 from services.contact_service import ContactService
 from services.firebase_service import FirebaseService
 from services.gps_service import GPSService, LocationTrackingService
 from services.incident_service import INCIDENT_TYPES, IncidentService
 from services.notification_service import NotificationService
-from services.report_service import build_summary, videos_dataframe
+from services.report_service import videos_dataframe
 from services.storage_service import StorageService
 from services.stolen_vehicle_service import StolenVehicleService
 from services.supabase_service import SupabaseService
@@ -81,6 +85,13 @@ ENV_SETTING_KEYS = {
     "ROADWATCH_HIGH_ACCURACY_LOCATION": "location_high_accuracy",
     "ROADWATCH_SHOW_CURRENT_ADDRESS": "location_show_address",
     "KEEP_FALLBACK_VIDEO": "keep_fallback_video",
+    "DUAL_CAMERA_ENABLED": "dual_camera_enabled",
+    "FRONT_CAMERA_INDEX": "front_camera_index",
+    "REAR_CAMERA_INDEX": "rear_camera_index",
+    "FRONT_CAMERA_LABEL": "front_camera_label",
+    "REAR_CAMERA_LABEL": "rear_camera_label",
+    "REAR_CAMERA_MIRROR": "rear_camera_mirror",
+    "REAR_CAMERA_AI_ENABLED": "rear_camera_ai_enabled",
 }
 
 # These values must only come from environment variables or Streamlit Secrets.
@@ -133,6 +144,13 @@ DEFAULTS = {
     "ai_frame_width": 640,
     "ai_frame_height": 360,
     "ai_process_interval_seconds": 0.5,
+    "dual_camera_enabled": False,
+    "front_camera_index": 0,
+    "rear_camera_index": 1,
+    "front_camera_label": "Front Road",
+    "rear_camera_label": "Rear / Cabin",
+    "rear_camera_mirror": False,
+    "rear_camera_ai_enabled": True,
     "log_flush_interval_seconds": 5,
     "model_name": "yolov8n.pt",
     "confidence": 0.45,
@@ -381,6 +399,148 @@ def cached_ocr():
     return load_ocr_reader()
 
 
+def is_dual_camera_enabled(settings):
+    if isinstance(settings.get("dual_camera_enabled"), bool):
+        return settings["dual_camera_enabled"]
+    return str(os.getenv("DUAL_CAMERA_ENABLED", "false")).strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
+class DualCameraUIManager:
+    def __init__(self, settings, model=None, ocr_reader=None):
+        self.settings = settings
+        self.pipeline = VisionPipeline(
+            settings["model_name"],
+            settings["confidence"],
+            settings["yolo_image_size"],
+            settings["enable_tracking"],
+            settings["enable_ocr"],
+            settings["ocr_interval_seconds"],
+            model,
+            ocr_reader,
+        )
+        self.manager = DualCameraManager.from_settings(settings)
+        self.manager.pipeline = self.pipeline
+        self.started = 0.0
+        self.record = {
+            "video_id": None,
+            "session_id": None,
+            "filename": None,
+            "processing_status": "Waiting for recording to finish",
+            "recording_status": "Recording",
+        }
+        self.session = None
+
+    @property
+    def active(self):
+        return bool(self.manager.is_recording)
+
+    @property
+    def elapsed(self):
+        return time.monotonic() - self.started if self.started else 0.0
+
+    def start(self):
+        self.session = self.manager.start_recording()
+        self.started = time.monotonic()
+        self.record["session_id"] = self.session.get("session_id")
+        self.record["video_id"] = self.session.get("primary_video_id") or (
+            self.session.get("video_ids", [None])[0]
+        )
+        self.record["filename"] = f'dual_{self.record["session_id"]}.json'
+        self.record["original_video_path"] = (
+            next(
+                (
+                    camera.get("video_path")
+                    for camera in self.session.get("cameras", [])
+                    if camera.get("video_path")
+                ),
+                None,
+            )
+        )
+        return self.session
+
+    def get_dashboard_state(self):
+        frame = self.manager.composite_preview(height=360)
+        status = self.manager.status()
+        self.manager.process_live_ai(limit=1)
+        metrics = {
+            "camera_fps": max((v.get("live_fps", 0) for v in status.values()), default=0.0),
+            "ai_fps": self.manager.ai_metrics.get("ai_fps", 0.0),
+            "processing_time_ms": self.manager.ai_metrics.get("processing_time_ms", 0.0),
+            "active_resolution": ", ".join(
+                {v.get("resolution", "?") for v in status.values()}
+            ),
+            "camera_index": ", ".join(
+                str(v.get("camera_index", "?")) for v in status.values()
+            ),
+        }
+        errors = [v.get("error") for v in status.values() if v.get("error")]
+        error = "; ".join(errors) if errors else None
+        return frame, self.manager.latest_event, metrics, error
+
+    def stop(self):
+        self.session = self.manager.stop_recording()
+        self.record["session_id"] = self.session.get("session_id")
+        self.record["video_id"] = self.session.get("primary_video_id")
+        self.record["filename"] = f'dual_{self.record["session_id"]}.json'
+        self.record["recording_status"] = "Complete"
+        return self.record
+
+
+def stop_and_process_dual(camera_manager, settings):
+    processing_status = st.status("Processing dual camera session...", expanded=True)
+    camera_manager.stop()
+    st.session_state.camera_manager = None
+    unlink_location_from_video()
+    session = dual_video_processing.process_session(
+        camera_manager.session,
+        pipeline=camera_manager.pipeline,
+        make_composite=True,
+        save=True,
+        progress=None,
+    )
+    st.session_state.last_record = {
+        "video_id": session.get("primary_video_id"),
+        "session_id": session.get("session_id"),
+        "filename": f'dual_{session.get("session_id")}.json',
+        "processing_status": session.get("processing_status"),
+    }
+    if session.get("composite_video_path"):
+        if settings.get("notify_on_processing", True):
+            NotificationService(notification_settings(settings)).notify(
+                "Dual camera processing complete",
+                f"Dual session {session.get('session_id')} processed successfully.",
+                level="success",
+                category="processing",
+                payload={"video_id": session.get("primary_video_id")},
+            )
+        processing_status.update(
+            label="Dual camera composite ready.",
+            state="complete",
+            expanded=False,
+        )
+    else:
+        if settings.get("notify_on_processing", True):
+            NotificationService(notification_settings(settings)).notify(
+                "Dual camera processing failed",
+                session.get("processing_error") or "The original video was preserved.",
+                level="error",
+                category="processing",
+                payload={"video_id": session.get("primary_video_id")},
+            )
+        processing_status.update(
+            label="Dual camera processing failed.",
+            state="error",
+            expanded=True,
+        )
+        st.error(session.get("processing_error"))
+    return session
+
+
 def styles():
     st.markdown(
         """
@@ -595,7 +755,6 @@ def esc(value):
 
 def system_top_bar(settings):
     camera_manager = st.session_state.get("camera_manager")
-    auth = AdminAuthService()
     recording = bool(camera_manager and camera_manager.active)
     elapsed = format_duration(camera_manager.elapsed) if recording else "00:00"
     now = datetime.now().strftime("%H:%M:%S")
@@ -637,7 +796,8 @@ def upload_status_widget():
                 st.warning("Upload failed. Use retry from the Videos page.")
 
 
-def sidebar_brand(active_page):
+def sidebar_brand(_active_page):
+    del _active_page
     st.sidebar.markdown(
         f"""
         <div class="rw-sidebar-brand">
@@ -1083,7 +1243,8 @@ def render_video_player(record, settings=None):
         return None
 
 
-def get_camera_state(settings):
+def get_camera_state(_settings):
+    del _settings
     if "camera_manager" not in st.session_state:
         st.session_state.camera_manager = None
     camera_manager = st.session_state.camera_manager
@@ -1092,6 +1253,9 @@ def get_camera_state(settings):
 
 
 def stop_and_process(camera_manager, settings):
+    if isinstance(camera_manager, DualCameraUIManager):
+        return stop_and_process_dual(camera_manager, settings)
+
     processing_status = st.status("Processing detection overlays...", expanded=True)
     record = camera_manager.stop()
     st.session_state.camera_manager = None
@@ -1164,11 +1328,19 @@ def dash_cam_page(settings):
     with controls[0]:
         if st.button("Start Recording", type="primary", disabled=active, width="stretch"):
             try:
-                camera_manager = CameraManager(
-                    settings,
-                    cached_model(settings["model_name"]),
-                    cached_ocr() if settings["enable_ocr"] else None,
-                )
+                if is_dual_camera_enabled(settings):
+                    camera_manager = DualCameraUIManager(
+                        settings,
+                        cached_model(settings["model_name"]),
+                        cached_ocr() if settings["enable_ocr"] else None,
+                    )
+                    camera_manager.start()
+                else:
+                    camera_manager = CameraManager(
+                        settings,
+                        cached_model(settings["model_name"]),
+                        cached_ocr() if settings["enable_ocr"] else None,
+                    )
                 st.session_state.camera_manager = camera_manager
                 st.session_state.last_record = None
                 link_location_to_video(camera_manager.record.get("video_id"))
@@ -1893,6 +2065,12 @@ def videos_page(service, settings):
             st.link_button("Open Supabase processed video", selected["supabase_processed_url"], width="stretch")
         if selected.get("firebase_push_url"):
             st.caption(f'Firebase link target: {selected["firebase_push_url"]}')
+        partner_camera = dual_session_service.get_partner_video(selected.get("video_id"))
+        if partner_camera:
+            st.info(
+                f"Partner angle available: {partner_camera.get('camera_role', 'secondary').title()} "
+                f"video {partner_camera.get('video_id')}"
+            )
         if selected.get("sync_error"):
             st.error(selected["sync_error"])
         upload_status = selected.get("supabase_upload_status") or selected.get("sync_status", "not_uploaded")
@@ -2422,7 +2600,8 @@ def stolen_vehicle_page(service, settings=None, admin_mode=False):
             st.info("No stolen vehicle reports yet.")
 
 
-def gps_page(service, settings=None):
+def gps_page(_service, settings=None):
+    del _service
     settings = settings or load_settings()
     header(
         "Location trail",
