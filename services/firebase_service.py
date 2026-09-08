@@ -83,7 +83,9 @@ class FirebaseService:
         file_size_mb = 0
         if processed_path and Path(processed_path).exists():
             file_size_mb = round(Path(processed_path).stat().st_size / (1024 * 1024), 2)
+        from services.driver_monitoring.runtime import identity_metadata
         return {
+            **identity_metadata(record),
             "video_id": record.get("video_id"),
             "title": record.get("filename") or record.get("video_id"),
             "created_at": record.get("started_at") or utc_now(),

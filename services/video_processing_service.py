@@ -170,6 +170,8 @@ class VideoProcessingService:
                 writer.release()
 
     def _replace_detection_metadata(self, record, events):
+        from services.driver_monitoring.metadata import preserve_event_identity
+        preserve_event_identity(events, record.get("detections", []), float(record.get("fps") or 30))
         log_service = DetectionLogService(record, save_snapshots=False)
         log_service.replace_all([(event, None) for event in events])
 

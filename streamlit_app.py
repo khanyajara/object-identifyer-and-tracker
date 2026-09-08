@@ -30,6 +30,7 @@ from core.vision_pipeline import VisionPipeline
 from core.video_io import (
     get_best_playback_info,
     get_best_playback_source,
+    is_remote_video_source,
     is_playable_video_path,
     video_mime_type,
 )
@@ -39,8 +40,10 @@ from services.contact_service import ContactService
 from services.firebase_service import FirebaseService
 from services.gps_service import GPSService, LocationTrackingService
 from services.incident_service import INCIDENT_TYPES, IncidentService
+from services.driver_monitoring.runtime import bind_recording, ensure_background
+from services.driver_monitoring.ui import driver_status, drivers_page
 from services.notification_service import NotificationService
-from services.report_service import videos_dataframe
+from services.report_service import format_duration, videos_dataframe
 from services.storage_service import StorageService
 from services.stolen_vehicle_service import StolenVehicleService
 from services.supabase_service import SupabaseService
@@ -898,11 +901,6 @@ def clean_dataframe(title, rows, empty_message, expanded=False):
             st.info(empty_message)
 
 
-def format_duration(seconds):
-    seconds = int(seconds or 0)
-    return f"{seconds // 60:02d}:{seconds % 60:02d}"
-
-
 def latest_event_from_record(record):
     detections = record.get("detections", [])
     return detections[-1] if detections else {}
@@ -1020,10 +1018,6 @@ def first_playable_video_path(record, version):
         if is_playable_video_path(path):
             return path
     return None
-
-
-def is_remote_video_source(value):
-    return isinstance(value, str) and value.lower().startswith(("http://", "https://"))
 
 
 def video_url_candidates(record):
@@ -1324,6 +1318,7 @@ def dash_cam_page(settings):
         unsafe_allow_html=True,
     )
 
+    driver_status()
     controls = st.columns([1.2, 1.2, 1.2, 4])
     with controls[0]:
         if st.button("Start Recording", type="primary", disabled=active, width="stretch"):
@@ -1342,6 +1337,7 @@ def dash_cam_page(settings):
                         cached_ocr() if settings["enable_ocr"] else None,
                     )
                 st.session_state.camera_manager = camera_manager
+                bind_recording(camera_manager, settings, gps)
                 st.session_state.last_record = None
                 link_location_to_video(camera_manager.record.get("video_id"))
                 active = True
@@ -2251,7 +2247,8 @@ def incidents_page(service):
             sev = st.selectbox("Severity", ["low", "medium", "high"], index=1)
             desc = st.text_area("Description")
             if st.form_submit_button("Create incident", type="primary"):
-                incident_service.create_manual(labels[linked], desc, sev)
+                driver_context = next((item for item in videos if item.get("video_id") == labels[linked]), {})
+                incident_service.create_manual(labels[linked], desc, sev, driver_context=driver_context)
                 settings = load_settings()
                 if settings.get("notify_on_incident", True):
                     NotificationService(notification_settings(settings)).notify(
@@ -3173,6 +3170,7 @@ def main():
     settings = load_settings()
     if not privacy_permission_gate(settings):
         return
+    ensure_background(settings, st.session_state.get("camera_manager"))
     ensure_location_tracking(settings)
     service = VideoService()
     sidebar_brand("Dash Cam")
@@ -3191,6 +3189,7 @@ def main():
     ]
     admin_pages = [
         "Admin Dashboard",
+        "Drivers",
         "Users / Devices",
         "Live Recorder",
         "All Videos",
@@ -3231,6 +3230,7 @@ def main():
     {
         "Admin Login": admin_login_page,
         "Admin Dashboard": lambda: admin_dashboard_page(service, settings),
+        "Drivers": lambda: drivers_page(settings),
         "Users / Devices": admin_management_page,
         "Roadwatch": lambda: roadwatch_home_page(service, settings),
         "Live Dash Cam": lambda: dash_cam_page(settings),

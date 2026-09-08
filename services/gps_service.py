@@ -76,6 +76,9 @@ class GPSService:
             "source": source,
             "video_id": video_id,
         }
+        if video_id:
+            from services.driver_monitoring.runtime import identity_metadata
+            point.update(identity_metadata())
         points.append(point)
         self.store.write(points)
         return point

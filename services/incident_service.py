@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from services.local_json_service import DATA_DIR, LocalJsonStore
+from services.driver_monitoring.runtime import identity_metadata
 
 
 INCIDENT_TYPES = [
@@ -12,6 +13,7 @@ INCIDENT_TYPES = [
     "possible stolen vehicle match",
     "AI processing error",
     "manual incident",
+    "driver fatigue",
 ]
 
 
@@ -22,8 +24,14 @@ class IncidentService:
         )
 
     def list_incidents(self):
+        from services.driver_monitoring.fatigue_event_store import FatigueEventStore
+        try:
+            generated = {item["incident_id"]: item for item in FatigueEventStore().incidents()}
+        except Exception:
+            generated = {}
+        generated.update({item["incident_id"]: item for item in self.store.read()})
         return sorted(
-            self.store.read(),
+            generated.values(),
             key=lambda item: item.get("timestamp", ""),
             reverse=True,
         )
@@ -31,9 +39,10 @@ class IncidentService:
     def save_all(self, incidents):
         return self.store.write(incidents)
 
-    def create_manual(self, video_id, description, severity="medium"):
+    def create_manual(self, video_id, description, severity="medium", driver_context=None):
         incidents = self.list_incidents()
         incident = {
+            **identity_metadata(driver_context),
             "incident_id": f"inc_manual_{uuid4().hex[:8]}",
             "linked_video_id": video_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -173,6 +182,7 @@ class IncidentService:
             f"_{frame}_{plate_key}"
         )
         return {
+            **identity_metadata(event if "driver_identity_status" in event else video),
             "incident_id": incident_id,
             "linked_video_id": video.get("video_id"),
             "timestamp": event.get("timestamp") or video.get("started_at"),

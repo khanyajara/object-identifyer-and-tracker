@@ -353,6 +353,8 @@ class CameraChannel:
         self._stop_event = threading.Event()
         self._frame_lock = threading.Lock()
         self._write_lock = threading.Lock()
+        self._lifecycle_lock = threading.RLock()
+        self.keep_capture_alive = False
 
         self._latest_frame: Optional[np.ndarray] = None
         self._latest_index: int = -1
@@ -396,6 +398,12 @@ class CameraChannel:
         return self._thread is not None and self._thread.is_alive()
 
     def open(self) -> bool:
+        with self._lifecycle_lock:
+            return self._open_locked()
+
+    def _open_locked(self) -> bool:
+        if self._stop_event.is_set() and self.is_live:
+            return False  # a native read is still shutting down; never overlap it
         if not self.config.enabled:
             self.status = STATUS_DISABLED
             return False
@@ -482,6 +490,12 @@ class CameraChannel:
 
     def start(self, video_path: Optional[str] = None, video_id: Optional[str] = None) -> bool:
         """Start the capture thread. Passing video_path also starts recording."""
+        with self._lifecycle_lock:
+            return self._start_locked(video_path, video_id)
+
+    def _start_locked(self, video_path=None, video_id=None):
+        if self.is_live and (not video_path or self._recording):
+            return True
         if not self.config.enabled:
             return False
         if not self.open():
@@ -496,20 +510,29 @@ class CameraChannel:
                 self.error = "No usable video codec (tried VP9 then VP8). Recording preview only."
                 LOGGER.error("[%s] %s", self.role, self.error)
             else:
-                self._writer = writer
-                self.codec = codec
-                self.video_path = video_path
-                self.filename = os.path.basename(video_path)
-                self.video_id = video_id
-                self._recording = True
-                self.status = STATUS_RECORDING
+                with self._write_lock:
+                    self._writer = writer
+                    self.codec = codec
+                    self.video_path = video_path
+                    self.filename = os.path.basename(video_path)
+                    self.video_id = video_id
+                    self.frames_read = self.frames_written = 0
+                    self.frames_dropped_for_ai = self.read_failures = 0
+                    self._fps_window = []
+                    self._record_started_at = time.time()
+                    self._record_stopped_at = 0.0
+                    self._recording = True
+                    self.status = STATUS_RECORDING
 
+        if self.is_live:
+            return True  # writer attached; the existing capture thread stays alive
         self.frames_read = 0
         self.frames_written = 0
         self.frames_dropped_for_ai = 0
         self.read_failures = 0
         self._fps_window = []
         self._record_started_at = time.time()
+        self._record_stopped_at = 0.0
         self._stop_event.clear()
         self._thread = threading.Thread(
             target=self._capture_loop, name=f"camera-{self.role}", daemon=True
@@ -521,6 +544,22 @@ class CameraChannel:
         if self.config.rotate in (90, 270):
             return (self.actual_height, self.actual_width)
         return (self.actual_width, self.actual_height)
+
+    def ensure_capture(self) -> bool:
+        """Background recovery that shares the recorder's lifecycle lock and writer."""
+        with self._lifecycle_lock:
+            if self.is_live:
+                return not self._stop_event.is_set()
+            if self._capture is not None:
+                self._capture.release()
+                self._capture = None
+            if not self.open():
+                return False
+            self._stop_event.clear()
+            self.status = STATUS_RECORDING if self._recording else STATUS_LIVE
+            self._thread = threading.Thread(target=self._capture_loop, name=f"camera-{self.role}", daemon=True)
+            self._thread.start()
+            return True
 
     # -- capture loop ------------------------------------------------------
 
@@ -559,6 +598,8 @@ class CameraChannel:
             if self._recording and self._writer is not None:
                 try:
                     with self._write_lock:
+                        if not self._recording or self._writer is None:
+                            continue
                         expected = self._output_size()
                         if (frame.shape[1], frame.shape[0]) != expected:
                             frame_to_write = cv2.resize(frame, expected)
@@ -578,7 +619,7 @@ class CameraChannel:
                 self._latest_ts = now
 
             # 3. Offer a sampled copy to AI. Never block, never queue up.
-            if self.config.ai_enabled and (now - self._last_ai_push) >= self.config.ai_sample_interval:
+            if self.config.ai_enabled and (not self.keep_capture_alive or self._recording) and (now - self._last_ai_push) >= self.config.ai_sample_interval:
                 self._last_ai_push = now
                 item = (self.role, frame.copy(), self.frames_read, now)
                 try:
@@ -676,19 +717,27 @@ class CameraChannel:
 
     # -- shutdown ----------------------------------------------------------
 
-    def stop_recording(self) -> dict:
+    def stop_recording(self, keep_capture=None) -> dict:
+        with self._lifecycle_lock:
+            return self._stop_recording_locked(keep_capture)
+
+    def _stop_recording_locked(self, keep_capture=None) -> dict:
         """Stop the thread and finalize this channel's video file."""
-        self._stop_event.set()
-        thread = self._thread
-        if thread is not None and thread.is_alive():
-            thread.join(timeout=5.0)
-        self._thread = None
+        keep_capture = self.keep_capture_alive if keep_capture is None else keep_capture
+        if not keep_capture:
+            self._stop_event.set()
+            thread = self._thread
+            if thread is not None and thread.is_alive():
+                thread.join(timeout=5.0)
+            if thread is None or not thread.is_alive():
+                self._thread = None
         self._record_stopped_at = time.time()
 
         duration = max(0.001, self._record_stopped_at - self._record_started_at)
         true_fps = round(self.frames_written / duration, 2) if self.frames_written else 0.0
 
         with self._write_lock:
+            self._recording = False
             if self._writer is not None:
                 try:
                     self._writer.release()
@@ -723,14 +772,25 @@ class CameraChannel:
         )
         return result
 
-    def release(self) -> None:
-        self.stop_recording()
+    def release(self, force=False) -> None:
+        with self._lifecycle_lock:
+            self._release_locked(force)
+
+    def _release_locked(self, force=False):
+        if self.keep_capture_alive and not force:
+            self.stop_recording()
+            return
+        self.stop_recording(keep_capture=False)
         if self._capture is not None:
             try:
                 self._capture.release()
             except Exception:  # pragma: no cover
                 pass
         self._capture = None
+        if self._thread is not None:
+            self._thread.join(timeout=2)
+            if not self._thread.is_alive():
+                self._thread = None
         with self._frame_lock:
             self._latest_frame = None
         self.status = STATUS_DISABLED if not self.config.enabled else STATUS_IDLE
@@ -753,7 +813,8 @@ class DualCameraManager:
         self.video_dir = video_dir
         self.channels: Dict[str, CameraChannel] = {}
         for config in configs:
-            self.channels[config.role] = CameraChannel(config)
+            from services.driver_monitoring.runtime import shared_driver_channel
+            self.channels[config.role] = shared_driver_channel(config) or CameraChannel(config)
 
         self.session_id: Optional[str] = None
         self.started_at: Optional[str] = None
@@ -861,6 +922,9 @@ class DualCameraManager:
         if self._recording:
             return self.session_summary()
 
+        from services.driver_monitoring.runtime import identity_metadata
+        self._driver_start_metadata = identity_metadata()
+        self._driver_observations = {}
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         readable = datetime.now().strftime("%Y_%m_%d_%H%M%S")
         short = _new_short_id()
@@ -889,6 +953,7 @@ class DualCameraManager:
         if not started_any:
             LOGGER.error("Session %s could not start any camera", self.session_id)
         session = self.stop_recording() if not started_any else {
+            **self._driver_start_metadata,
             "session_id": self.session_id,
             "session_type": "dual",
             "started_at": self.started_at,
@@ -905,10 +970,14 @@ class DualCameraManager:
             "video_ids": [ch.video_id for ch in self.channels.values() if ch.video_id],
             "recording": self._recording,
         }
+        from services.driver_monitoring.runtime import recording_context
+        recording_context(session.get("primary_video_id"))
         return session
 
     def stop_recording(self) -> dict:
         """Stop both channels and return the finalized session record."""
+        from services.driver_monitoring.runtime import recording_context
+        recording_context()
         if not self.session_id:
             return {}
 
@@ -930,6 +999,8 @@ class DualCameraManager:
             offsets[cam["role"]] = round(max(0.0, cam.get("started_at_epoch", base) - base), 3)
 
         session = {
+            **getattr(self, "_driver_start_metadata", {}),
+            "driver_observations": getattr(self, "_driver_observations", {}),
             "session_id": self.session_id,
             "session_type": "dual" if len(camera_results) > 1 else "single",
             "started_at": self.started_at,
@@ -983,6 +1054,8 @@ class DualCameraManager:
         return compose_side_by_side(front, rear, height=height, left_label=front_label, right_label=rear_label)
 
     def _handle_ai_frame(self, role: str, frame: np.ndarray, frame_number: int, timestamp: float):
+        from services.driver_monitoring.runtime import identity_metadata
+        driver_context = identity_metadata()
         if self.pipeline is None:
             return frame, {"frame_number": frame_number, "camera_role": role, "objects": [], "movement_detected": False}
         started = time.monotonic()
@@ -994,11 +1067,19 @@ class DualCameraManager:
             annotated = frame
             event = {"frame_number": frame_number, "camera_role": role, "objects": [], "movement_detected": False, "error": str(exc)}
         event = dict(event or {})
+        event.update(driver_context)
         event.setdefault("frame_number", frame_number)
         event.setdefault("camera_role", role)
         event.setdefault("objects", [])
         event.setdefault("movement_detected", False)
         with self._ai_lock:
+            if self.is_recording and hasattr(self, "_driver_observations"):
+                samples = self._driver_observations.setdefault(role, [])
+                context = identity_metadata(event)
+                if samples and all(samples[-1].get(key) == value for key, value in context.items()) and timestamp - samples[-1]["observed_at"] <= 1:
+                    samples[-1].update(end_frame=frame_number, observed_at=timestamp)
+                else:
+                    samples.append({**context, "frame_number": frame_number, "end_frame": frame_number, "observed_at": timestamp})
             self.latest_event = event
             self.latest_annotated_frame = annotated
             self.ai_metrics["processed_frames"] += 1

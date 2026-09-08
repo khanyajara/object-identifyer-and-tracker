@@ -1,0 +1,24 @@
+{
+  "python": "3.14.3",
+  "opencv": "4.13.0",
+  "checks": {
+    "yunet_asset": true,
+    "sface_asset": false,
+    "landmarker_asset": false,
+    "yunet_native_load": true,
+    "yunet_native_forward": true,
+    "sface_native_load": false,
+    "landmarker_native_load": false,
+    "recognition_threshold_configured": false,
+    "eye_threshold_configured": false,
+    "mouth_threshold_configured": false,
+    "neutral_pitch_configured": false,
+    "camera_source_configured": false
+  },
+  "real_camera_validated": false,
+  "recognition_accuracy_validated": false,
+  "fatigue_accuracy_validated": false,
+  "yunet_sha256": "8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4",
+  "yunet_blank_frame_mean_ms": 36.238,
+  "ready_for_camera_acceptance": false
+}

@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import quote
 
@@ -7,10 +8,23 @@ from core.video_io import video_mime_type
 
 
 class SupabaseService:
-    def __init__(self, url="", anon_key="", bucket="videos"):
+    def __init__(
+        self,
+        url="",
+        anon_key="",
+        bucket="videos",
+        bucket_public=True,
+        signed_url_expiry_seconds=3600,
+    ):
         self.url = url
         self.anon_key = anon_key
         self.bucket = bucket
+        self.bucket_public = bool(bucket_public)
+        try:
+            expiry = int(signed_url_expiry_seconds)
+        except (TypeError, ValueError):
+            expiry = 3600
+        self.signed_url_expiry_seconds = max(1, expiry)
 
     @property
     def configured(self):
@@ -79,13 +93,57 @@ class SupabaseService:
         object_path = quote(object_name, safe="/")
         return f'{self.url.rstrip("/")}/storage/v1/object/public/{bucket_path}/{object_path}'
 
+    def create_playback_url(self, object_name, expires_in=None):
+        """Return a public URL or create a temporary URL for a private bucket."""
+        if not self.configured:
+            raise RuntimeError("Configure Supabase URL and anon key before creating playback URLs.")
+        if not object_name or not str(object_name).strip("/"):
+            raise ValueError("A Supabase object path is required.")
+
+        now = datetime.now(timezone.utc)
+        if self.bucket_public:
+            return {
+                "url": self.public_url(object_name),
+                "created_at": now.isoformat(),
+                "expires_at": None,
+            }
+
+        try:
+            ttl = int(expires_in or self.signed_url_expiry_seconds)
+        except (TypeError, ValueError):
+            ttl = self.signed_url_expiry_seconds
+        ttl = max(1, ttl)
+        bucket_path = quote(self.bucket, safe="")
+        object_path = quote(str(object_name).strip("/"), safe="/")
+        url = f'{self.url.rstrip("/")}/storage/v1/object/sign/{bucket_path}/{object_path}'
+        headers = {
+            "Authorization": f"Bearer {self.anon_key}",
+            "apikey": self.anon_key,
+            "Content-Type": "application/json",
+        }
+        response = requests.post(url, headers=headers, json={"expiresIn": ttl}, timeout=30)
+        response.raise_for_status()
+        payload = response.json()
+        signed_path = payload.get("signedURL") or payload.get("signedUrl")
+        if not signed_path:
+            raise RuntimeError("Supabase did not return a signed playback URL.")
+        signed_url = signed_path if str(signed_path).startswith("http") else f'{self.url.rstrip("/")}/storage/v1{signed_path}'
+        return {
+            "url": signed_url,
+            "created_at": now.isoformat(),
+            "expires_at": (now + timedelta(seconds=ttl)).isoformat(),
+        }
+
     def refresh_video_url(self, record):
         object_name = record.get("supabase_processed_path") or record.get("supabase_object_name")
         if not object_name:
             raise RuntimeError("No Supabase object path is stored for this video.")
+        playback = self.create_playback_url(object_name)
         return {
             "object_name": object_name,
-            "public_url": self.public_url(object_name),
+            "public_url": playback["url"],
+            "created_at": playback.get("created_at"),
+            "expires_at": playback.get("expires_at"),
         }
 
     def list_objects(self, prefix="processed", limit=1000, offset=0):

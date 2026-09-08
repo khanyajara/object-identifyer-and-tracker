@@ -15,6 +15,7 @@ from core.vision_pipeline import VisionPipeline
 from services.compression_service import CompressionService
 from services.detection_log_service import DetectionLogService
 from services.video_service import COMPRESSED_VIDEOS_DIR, VideoService
+from services.driver_monitoring.runtime import identity_metadata
 
 
 class CameraManager:
@@ -228,7 +229,7 @@ class CameraManager:
             ai_frame = cv2.resize(
                 frame, (ai_width, ai_height), interpolation=cv2.INTER_AREA
             )
-            item = (number, ai_frame, frame)
+            item = (number, ai_frame, frame, identity_metadata())
             with self._state_lock:
                 self._metrics["ai_sampled_frames"] += 1
             self._offer_latest(item)
@@ -270,7 +271,7 @@ class CameraManager:
         started, count = time.monotonic(), 0
         while not self._stop.is_set() or not self._ai_queue.empty():
             try:
-                number, ai_frame, original_frame = self._ai_queue.get(
+                number, ai_frame, original_frame, driver_context = self._ai_queue.get(
                     timeout=0.2
                 )
             except queue.Empty:
@@ -282,6 +283,7 @@ class CameraManager:
                 )
                 event = self._scale_event(event, original_frame, ai_frame)
                 event["video_id"] = self.record["video_id"]
+                event.update(driver_context)
                 event["timestamp"] = datetime.now(timezone.utc).isoformat()
                 for item in event.get("objects", []):
                     item["video_id"] = self.record["video_id"]
@@ -380,6 +382,8 @@ class CameraManager:
         if not self.active:
             return self.record
         self.active = False
+        from services.driver_monitoring.runtime import recording_context
+        recording_context()
         self._stop.set()
         self._capture_thread.join(timeout=2)
         self.cap.release()

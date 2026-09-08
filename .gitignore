@@ -226,6 +226,8 @@ Desktop.ini
 settings.json
 
 # AI model weights and local model caches
+models/**/*.onnx
+models/**/*.task
 Ultralytics/
 *.pt
 *.pth
@@ -250,6 +252,7 @@ data/videos/**
 data/snapshots/**
 data/exports/**
 data/incidents/**
+data/fatigue_events/**
 data/stolen_vehicles/**
 data/gps/**
 data/contacts/**

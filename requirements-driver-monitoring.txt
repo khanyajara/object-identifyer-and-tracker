@@ -1,0 +1,7 @@
+# Optional add-on AFTER requirements.txt. Install with --no-deps to retain
+# opencv-python==4.13.0.92; MediaPipe otherwise installs a conflicting cv2 wheel.
+# numpy, certifi, matplotlib and cffi are already provided by the base environment.
+mediapipe==1.0.1
+absl-py==2.5.0
+flatbuffers==25.12.19
+sounddevice==0.5.6

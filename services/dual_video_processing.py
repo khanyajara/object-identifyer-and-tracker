@@ -398,6 +398,9 @@ def process_session(
     for camera in session.get("cameras", []):
         updated = process_camera(session, camera, pipeline=pipeline, progress=progress)
         detections_by_role[updated.get("role", "camera")] = updated.pop("detections", []) or []
+        from services.driver_monitoring.metadata import preserve_event_identity
+        preserve_event_identity(detections_by_role[updated.get("role", "camera")],
+            session.get("driver_observations", {}).get(updated.get("role"), []), float(camera.get("true_fps") or 20))
         processed_cameras.append(updated)
 
     session = dict(session)

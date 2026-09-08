@@ -1,0 +1,79 @@
+{
+  "duration_seconds": 180.14,
+  "mode": "synthetic capture, models and database; no native inference or network",
+  "baseline_threads": 22,
+  "peak_threads": 25,
+  "threads_after_shutdown": 16,
+  "queue_peak": 1,
+  "warm_rss_min_mib": 348.27,
+  "warm_rss_max_mib": 348.33,
+  "warm_rss_growth_mib": 0.04,
+  "mean_cpu_one_core_percent": 4.72,
+  "final_identity_status": "verified",
+  "rerun_simulations": 348,
+  "fatigue_enabled": true,
+  "counters": {
+    "camera_opens": 1,
+    "camera_releases": 1,
+    "detector_initializations": 1,
+    "recognizer_initializations": 1,
+    "landmark_initializations": 1,
+    "database_reads": 1,
+    "database_writes": 1,
+    "fatigue_event_writes": 8
+  },
+  "runtime": {
+    "offered_frames": 1643,
+    "dropped_frames": 290,
+    "processed_frames": 1351,
+    "stale_frames": 0,
+    "worker_recoveries": 0,
+    "camera_retries": 1,
+    "pending_frames": 1,
+    "frame_queue_capacity": 1,
+    "pending_fatigue_events": 0,
+    "fatigue_storage_failed": false,
+    "fatigue": {
+      "status": "monitoring",
+      "severity": "none",
+      "score": 0,
+      "reasons": [],
+      "perclos": 0.09603696997413257,
+      "observed_seconds": 60.0,
+      "closure_seconds": 0,
+      "blink_count": 0,
+      "last_blink_seconds": null,
+      "yawn_count": 0,
+      "nod_count": 0,
+      "sampled_at_monotonic": 251544.7917966544
+    },
+    "inference_timings_ms": {
+      "detection_ms": 0.0,
+      "recognition_ms": 100.34,
+      "landmarks_ms": 130.2
+    },
+    "background_threads": 2,
+    "index_refreshes": 1,
+    "scheduler": {
+      "detection": {
+        "enabled": true,
+        "priority": 100,
+        "target_interval": 0.2,
+        "last_inference": 251544.7917966544
+      },
+      "recognition": {
+        "enabled": true,
+        "priority": 80,
+        "target_interval": 7,
+        "last_inference": 251539.28752984997
+      },
+      "landmarks": {
+        "enabled": true,
+        "priority": 50,
+        "target_interval": 0.1,
+        "last_inference": 251544.7917966544
+      }
+    }
+  },
+  "passed": true
+}

@@ -94,7 +94,9 @@ def build_video_metadata(
                 label = obj.get("label", "unknown")
                 objects_summary[label] = objects_summary.get(label, 0) + 1
 
+    from services.driver_monitoring.runtime import identity_metadata
     return {
+        **identity_metadata(session),
         "video_id": camera.get("video_id"),
         "filename": camera.get("filename"),
         "video_format": "webm",

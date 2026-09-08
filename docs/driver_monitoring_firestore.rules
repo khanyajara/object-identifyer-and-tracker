@@ -1,0 +1,10 @@
+// Merge these matches into the EXISTING /databases/{database}/documents block.
+// This is a snippet, not a replacement for the project's deployed rules.
+// Remove/exclude any overlapping broad allow rule: Firestore allows are ORed.
+// Only the restricted server service account accesses these collections.
+match /driver_biometrics/{document=**} {
+  allow read, write: if false;
+}
+match /drivers/{document=**} {
+  allow read, write: if false;
+}

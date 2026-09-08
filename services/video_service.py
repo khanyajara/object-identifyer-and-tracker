@@ -5,6 +5,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from core.video_io import DEFAULT_VIDEO_EXTENSION
+from services.driver_monitoring.runtime import identity_metadata
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
@@ -55,6 +56,7 @@ class VideoService:
         video_id = f"vid_{now:%Y%m%d_%H%M%S}_{uuid4().hex[:6]}"
         filename = f"recording_{now:%Y_%m_%d_%H%M%S}{DEFAULT_VIDEO_EXTENSION}"
         record = {
+            **identity_metadata(),
             "video_id": video_id,
             "device_id": device_id,
             "filename": filename,
@@ -106,6 +108,8 @@ class VideoService:
             "detections": [],
         }
         self.save(record)
+        from services.driver_monitoring.runtime import recording_context
+        recording_context(video_id)
         return record
 
     def save(self, record):

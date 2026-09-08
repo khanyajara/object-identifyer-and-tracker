@@ -527,3 +527,11 @@ Process AI without blocking recording.
 Save detections under the video they belong to.
 Generate annotated saved video after recording stops.
 ```
+# Driver monitoring
+
+Roadwatch includes an optional, isolated YuNet/SFace/MediaPipe cabin subsystem.
+See [driver monitoring setup, security, resource report and manual checklist](docs/driver_monitoring.md).
+Recognition is off until the model files, private driver storage and calibrated
+threshold are configured; road recording continues independently.
+
+Driver fatigue now reuses background driver landmarks for temporal warnings and linked local incidents. See [fatigue monitoring and deployment validation](docs/fatigue_monitoring.md). Alerts require administrator calibration; native-camera acceptance remains pending.
