@@ -12,7 +12,6 @@ VIDEO_WRITER_CANDIDATES = (
     (".mp4", "avc1"),
     (".mp4", "H264"),
 )
-MP4_CODECS = ("avc1", "H264", "mp4v")
 
 
 def _load_moviepy_clip():
@@ -119,25 +118,6 @@ def open_video_writer(path, fps, size):
     return create_video_writer(path, fps, size)
 
 
-def open_webm_writer(path, fps, size):
-    # Kept for integrations that still import the old name. New recordings are MP4.
-    return create_video_writer(path, fps, size)
-
-
-def open_mp4_writer(path, fps, size):
-    for codec in MP4_CODECS:
-        writer = cv2.VideoWriter(
-            str(path),
-            cv2.VideoWriter_fourcc(*codec),
-            fps,
-            size,
-        )
-        if writer.isOpened():
-            return writer, codec
-        writer.release()
-    raise RuntimeError("Could not create a browser-playable MP4 writer.")
-
-
 def finalize_video_file(source_path, target_path):
     source_path = Path(source_path)
     target_path = Path(target_path)
@@ -151,63 +131,6 @@ def finalize_video_file(source_path, target_path):
             source_path.unlink()
         except OSError:
             pass
-
-
-def convert_to_webm(source_path, target_path):
-    source_path = Path(source_path)
-    target_path = Path(target_path).with_suffix(".webm")
-    moviepy_result = _convert_to_webm_with_moviepy(source_path, target_path)
-    if moviepy_result["ok"]:
-        return moviepy_result
-
-    ffmpeg = shutil.which("ffmpeg")
-    if not ffmpeg:
-        return {
-            "ok": False,
-            "path": source_path,
-            "message": "WebM conversion unavailable. Saved compatible fallback video.",
-            "error": moviepy_result.get("error") or "ffmpeg not found on PATH",
-        }
-    target_path.parent.mkdir(parents=True, exist_ok=True)
-    command = [
-        ffmpeg,
-        "-y",
-        "-i",
-        str(source_path),
-        "-c:v",
-        "libvpx",
-        "-b:v",
-        "2M",
-        "-an",
-        str(target_path),
-    ]
-    try:
-        result = subprocess.run(
-            command,
-            capture_output=True,
-            text=True,
-            timeout=300,
-            check=False,
-        )
-    except (OSError, subprocess.TimeoutExpired) as exc:
-        return {
-            "ok": False,
-            "path": source_path,
-            "message": f"WebM conversion unavailable. Saved compatible fallback video. {exc}",
-        }
-    if result.returncode != 0 or not target_path.exists() or not target_path.stat().st_size:
-        return {
-            "ok": False,
-            "path": source_path,
-            "message": "WebM conversion unavailable. Saved compatible fallback video.",
-            "ffmpeg_error": (result.stderr or result.stdout or "").strip()[-800:],
-        }
-    return {
-        "ok": True,
-        "path": target_path,
-        "message": "WebM conversion complete.",
-        "tool": "ffmpeg",
-    }
 
 
 def compress_video_for_playback(source_path, target_path):
@@ -295,15 +218,6 @@ def _compress_with_moviepy(source_path, target_path):
     )
 
 
-def _convert_to_webm_with_moviepy(source_path, target_path):
-    return _write_moviepy_video(
-        source_path,
-        target_path,
-        codecs=("libvpx",),
-        success_message="WebM conversion complete.",
-    )
-
-
 def _write_moviepy_video(source_path, target_path, codecs, success_message):
     source_path = Path(source_path)
     target_path = Path(target_path)
@@ -387,13 +301,6 @@ def _write_moviepy_video(source_path, target_path, codecs, success_message):
         "message": "MoviePy compression failed. Using saved fallback video.",
         "error": last_error,
     }
-
-
-def remove_file_quietly(path):
-    try:
-        Path(path).unlink()
-    except OSError:
-        pass
 
 
 def is_playable_video_path(path):

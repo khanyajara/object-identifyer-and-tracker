@@ -37,14 +37,18 @@ import queue
 import threading
 import time
 import uuid
+from copy import deepcopy
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Dict, List, Optional, Sequence, Tuple
 
 from core.vision_pipeline import VisionPipeline
+from core.camera_sources import windows_camera_devices, droidcam_index
 
 import cv2
 import numpy as np
+
+from core.time_utils import utc_now
 
 LOGGER = logging.getLogger("roadwatch.dual_camera")
 
@@ -62,10 +66,6 @@ STATUS_RECORDING = "recording"
 STATUS_DEGRADED = "degraded"
 STATUS_FAILED = "failed"
 STATUS_DISABLED = "disabled"
-
-
-def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
 
 
 def _default_backend() -> int:
@@ -208,6 +208,32 @@ def camera_configs_from_settings(settings: Optional[dict] = None) -> List[Camera
         ai_sample_interval=ai_interval * 2,
     )
 
+    computer_rear = str(get("REAR_CAMERA_SOURCE", "")).lower() == "computer"
+    if computer_rear:
+        # An explicit computer-camera assignment must survive an inconclusive
+        # DirectShow format listing. CameraChannel.open verifies actual frames.
+        devices = windows_camera_devices() or []
+        computer = next((index for index, name, _ in devices
+                         if not any(word in name.lower() for word in ("droidcam", "virtual", "obs"))), None)
+        if computer is not None:
+            rear.index = computer
+        elif devices:
+            rear.enabled = False
+        rear.label = "Computer camera · Rear / Cabin"
+        rear.ai_enabled = True
+        fallback = droidcam_index()
+        if fallback is not None and (not rear.enabled or fallback != rear.index):
+            front.index = fallback
+            front.label = "DroidCam"
+        if rear.enabled and front.index == rear.index:
+            front.enabled = False
+    if not computer_rear and as_bool("DROIDCAM_FALLBACK_ENABLED", True):
+        devices = windows_camera_devices()
+        fallback = droidcam_index() if devices is not None else None
+        if fallback is not None and (sum(usable for _, _, usable in devices) < 2 or front.index == rear.index):
+            front.index = fallback
+            front.label = "DroidCam"
+            rear.enabled = False
     return [front, rear]
 
 
@@ -355,6 +381,7 @@ class CameraChannel:
         self._write_lock = threading.Lock()
         self._lifecycle_lock = threading.RLock()
         self.keep_capture_alive = False
+        self.preview_ai_enabled = False
 
         self._latest_frame: Optional[np.ndarray] = None
         self._latest_index: int = -1
@@ -619,7 +646,7 @@ class CameraChannel:
                 self._latest_ts = now
 
             # 3. Offer a sampled copy to AI. Never block, never queue up.
-            if self.config.ai_enabled and (not self.keep_capture_alive or self._recording) and (now - self._last_ai_push) >= self.config.ai_sample_interval:
+            if self.config.ai_enabled and (not self.keep_capture_alive or self._recording or self.preview_ai_enabled) and (now - self._last_ai_push) >= self.config.ai_sample_interval:
                 self._last_ai_push = now
                 item = (self.role, frame.copy(), self.frames_read, now)
                 try:
@@ -723,7 +750,7 @@ class CameraChannel:
 
     def _stop_recording_locked(self, keep_capture=None) -> dict:
         """Stop the thread and finalize this channel's video file."""
-        keep_capture = self.keep_capture_alive if keep_capture is None else keep_capture
+        keep_capture = (self.keep_capture_alive or self.preview_ai_enabled) if keep_capture is None else keep_capture
         if not keep_capture:
             self._stop_event.set()
             thread = self._thread
@@ -826,6 +853,7 @@ class DualCameraManager:
         self.pipeline = pipeline
         self.latest_event: Optional[Dict[str, object]] = None
         self.latest_annotated_frame: Optional[np.ndarray] = None
+        self._preview_results = {}
         self.ai_metrics: Dict[str, float] = {
             "processed_frames": 0.0,
             "processing_time_ms": 0.0,
@@ -836,7 +864,11 @@ class DualCameraManager:
 
     @classmethod
     def from_settings(cls, settings: Optional[dict] = None, video_dir: str = "data/videos") -> "DualCameraManager":
-        return cls(camera_configs_from_settings(settings), video_dir=video_dir)
+        manager = cls(camera_configs_from_settings(settings), video_dir=video_dir)
+        settings = settings or {}
+        value = settings.get("droidcam_fallback_enabled", settings.get("DROIDCAM_FALLBACK_ENABLED", os.getenv("DROIDCAM_FALLBACK_ENABLED", "true")))
+        manager.droidcam_fallback_enabled = str(value).lower() in {"true", "1", "yes", "on"}
+        return manager
 
     # -- properties --------------------------------------------------------
 
@@ -844,16 +876,30 @@ class DualCameraManager:
     def is_recording(self) -> bool:
         return self._recording
 
-    @property
-    def roles(self) -> List[str]:
-        return list(self.channels.keys())
-
-    @property
-    def active_roles(self) -> List[str]:
-        return [role for role, ch in self.channels.items() if ch.is_live]
-
     def channel(self, role: str) -> Optional[CameraChannel]:
         return self.channels.get(role)
+
+    @property
+    def preview_active(self) -> bool:
+        return any(channel.preview_ai_enabled and channel.is_live for channel in self.channels.values())
+
+    def start_preview(self) -> bool:
+        """Open capture and AI sampling without allocating a recording or writer."""
+        self.open()
+        for channel in self.channels.values():
+            if channel.config.enabled:
+                channel.preview_ai_enabled = True
+                channel.start()
+        return self.preview_active
+
+    def close_preview(self) -> None:
+        if self.is_recording:
+            raise RuntimeError("Stop recording before closing the preview.")
+        for channel in self.channels.values():
+            channel.preview_ai_enabled = False
+            channel.release()
+        with self._ai_lock:
+            self._preview_results.clear()
 
     # -- lifecycle ---------------------------------------------------------
 
@@ -864,6 +910,18 @@ class DualCameraManager:
         for role, channel in self.channels.items():
             results[role] = channel.open()
             time.sleep(0.2)
+        if getattr(self, "droidcam_fallback_enabled", False) and sum(results.values()) < 2:
+            source = droidcam_index()
+            front = self.channels.get(FRONT)
+            in_use = any(results.get(role) and channel.config.index == source
+                         for role, channel in self.channels.items() if role != FRONT)
+            if source is not None and front is not None and not in_use and front.config.index != source:
+                from dataclasses import replace
+                fallback = CameraChannel(replace(front.config, index=source, label="DroidCam", backend=_default_backend()))
+                if fallback.open():
+                    front.release()
+                    self.channels[FRONT] = fallback
+                    results[FRONT] = True
         opened = [r for r, ok in results.items() if ok]
         if not opened:
             LOGGER.error("No cameras opened: %s", {r: c.error for r, c in self.channels.items()})
@@ -909,10 +967,6 @@ class DualCameraManager:
             LOGGER.info("[%s] calibrated to %.2f fps under dual load", channel.role, channel.measured_fps)
         return results
 
-    def start_preview(self) -> Dict[str, bool]:
-        """Live view without recording."""
-        return {role: ch.start() for role, ch in self.channels.items() if ch.config.enabled}
-
     def start_recording(self, session_id: Optional[str] = None) -> dict:
         """Start both channels on one shared session.
 
@@ -922,6 +976,9 @@ class DualCameraManager:
         if self._recording:
             return self.session_summary()
 
+        with self._ai_lock:
+            self._preview_results.clear()
+
         from services.driver_monitoring.runtime import identity_metadata
         self._driver_start_metadata = identity_metadata()
         self._driver_observations = {}
@@ -929,7 +986,7 @@ class DualCameraManager:
         readable = datetime.now().strftime("%Y_%m_%d_%H%M%S")
         short = _new_short_id()
         self.session_id = session_id or f"ses_{stamp}_{short}"
-        self.started_at = _utc_now_iso()
+        self.started_at = utc_now()
         self.started_at_epoch = time.time()
         self.stopped_at = None
 
@@ -945,7 +1002,7 @@ class DualCameraManager:
             filename = f"recording_{readable}_{role}.webm"
             path = os.path.join(self.video_dir, filename)
             ok = channel.start(video_path=path, video_id=video_id)
-            started_any = started_any or ok
+            started_any = started_any or (ok and channel.is_recording)
             if not ok:
                 LOGGER.error("[%s] failed to start: %s", role, channel.error)
 
@@ -988,7 +1045,7 @@ class DualCameraManager:
             camera_results.append(channel.stop_recording())
 
         self._recording = False
-        self.stopped_at = _utc_now_iso()
+        self.stopped_at = utc_now()
         duration = round(max(0.0, time.time() - self.started_at_epoch), 2)
 
         # Offset between the two cameras' first written frames, used later to
@@ -1053,6 +1110,40 @@ class DualCameraManager:
             return compose_pip(rear, front, main_label=rear_label, inset_label=front_label)
         return compose_side_by_side(front, rear, height=height, left_label=front_label, right_label=rear_label)
 
+    def detection_preview(self, role: str = FRONT, max_age_seconds: float = 2.0):
+        """Show boxes on their exact source frame, never on the other camera."""
+        if role == "both":
+            front, front_event = self.detection_preview(FRONT, max_age_seconds)
+            rear, rear_event = self.detection_preview(REAR, max_age_seconds)
+            labels = {key: self.channels[key].config.label if key in self.channels else key.title()
+                      for key in (FRONT, REAR)}
+            frame = compose_side_by_side(front, rear, height=480,
+                                        left_label="Main · " + labels[FRONT],
+                                        right_label="Cabin · " + labels[REAR])
+            events = (front_event, rear_event)
+            event = {
+                "camera_role": "both",
+                "objects": [{**item, "camera_role": source["camera_role"]}
+                            for source in events for item in source.get("objects", [])],
+                "plates": [{**item, "camera_role": source["camera_role"]}
+                           for source in events for item in source.get("plates", [])],
+                "people_count": sum(source.get("people_count", 0) for source in events),
+                "vehicle_count": sum(source.get("vehicle_count", 0) for source in events),
+                "movement_detected": any(source.get("movement_detected", False) for source in events),
+                "plate_text": ", ".join(source["plate_text"] for source in events if source.get("plate_text")),
+            }
+            return frame, event
+        channel = self.channels.get(role)
+        label = channel.config.label if channel else role.title()
+        with self._ai_lock:
+            result = self._preview_results.get(role)
+            if result is not None and time.monotonic() - result[2] <= max_age_seconds:
+                return result[0].copy(), deepcopy(result[1])
+        frame = channel.get_preview() if channel else None
+        if frame is None:
+            frame = placeholder_frame(960, 540, label + " offline")
+        return frame, {"camera_role": role, "objects": [], "plates": []}
+
     def _handle_ai_frame(self, role: str, frame: np.ndarray, frame_number: int, timestamp: float):
         from services.driver_monitoring.runtime import identity_metadata
         driver_context = identity_metadata()
@@ -1069,7 +1160,7 @@ class DualCameraManager:
         event = dict(event or {})
         event.update(driver_context)
         event.setdefault("frame_number", frame_number)
-        event.setdefault("camera_role", role)
+        event["camera_role"] = role
         event.setdefault("objects", [])
         event.setdefault("movement_detected", False)
         with self._ai_lock:
@@ -1082,6 +1173,7 @@ class DualCameraManager:
                     samples.append({**context, "frame_number": frame_number, "end_frame": frame_number, "observed_at": timestamp})
             self.latest_event = event
             self.latest_annotated_frame = annotated
+            self._preview_results[role] = (annotated.copy(), deepcopy(event), time.monotonic())
             self.ai_metrics["processed_frames"] += 1
             self.ai_metrics["processing_time_ms"] = (time.monotonic() - started) * 1000
             self.ai_metrics["ai_fps"] = self.ai_metrics["processed_frames"] / max(time.monotonic() - self._ai_started_at, 0.001)
@@ -1114,11 +1206,7 @@ class DualCameraManager:
 
     def process_live_ai(self, limit: int = 2) -> List[dict]:
         results = []
-        for _ in range(limit):
-            item = self.next_ai_frame()
-            if item is None:
-                break
-            role, frame, frame_number, timestamp = item
+        for role, frame, frame_number, timestamp in self.drain_ai_frames(limit):
             _, event = self._handle_ai_frame(role, frame, frame_number, timestamp)
             results.append(event)
         return results
@@ -1130,77 +1218,3 @@ class DualCameraManager:
             "recording": self._recording,
             "cameras": [ch.stats() for ch in self.channels.values()],
         }
-
-    def health_messages(self) -> List[str]:
-        messages = []
-        for _, channel in self.channels.items():
-            if not channel.config.enabled:
-                continue
-            if channel.status in (STATUS_FAILED, STATUS_DEGRADED) and channel.error:
-                messages.append(f"{channel.config.label}: {channel.error}")
-            elif channel.is_recording and channel.live_fps and channel.live_fps < channel.config.target_fps * 0.5:
-                messages.append(
-                    f"{channel.config.label} is capturing at {channel.live_fps} fps against a target of "
-                    f"{channel.config.target_fps}. Lower the resolution or move one camera to another USB controller."
-                )
-        return messages
-
-
-# --------------------------------------------------------------------------
-# Discovery
-# --------------------------------------------------------------------------
-
-
-def probe_cameras(max_index: int = 6, backend: Optional[int] = None) -> List[dict]:
-    """List camera indices that deliver a frame. Used by Settings and tools."""
-    backend = backend if backend is not None else _default_backend()
-    found = []
-    for index in range(max_index):
-        cap = cv2.VideoCapture(index, backend)
-        if cap.isOpened():
-            ok, frame = cap.read()
-            if ok and frame is not None:
-                found.append(
-                    {
-                        "index": index,
-                        "width": int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
-                        "height": int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
-                        "fps": round(float(cap.get(cv2.CAP_PROP_FPS) or 0), 1),
-                    }
-                )
-        cap.release()
-    return found
-
-
-def check_pair(index_a: int, index_b: int, seconds: float = 3.0) -> dict:
-    """Open two cameras at once and measure what each actually delivers.
-
-    Two 720p webcams on one USB 2.0 controller will usually fail here. That is
-    a bandwidth limit, not a bug in the app.
-    """
-    backend = _default_backend()
-    cap_a = cv2.VideoCapture(index_a, backend)
-    cap_b = cv2.VideoCapture(index_b, backend)
-    for cap in (cap_a, cap_b):
-        cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-
-    counts = {index_a: 0, index_b: 0}
-    start = time.time()
-    while time.time() - start < seconds:
-        for index, cap in ((index_a, cap_a), (index_b, cap_b)):
-            ok, frame = cap.read()
-            if ok and frame is not None:
-                counts[index] += 1
-    elapsed = max(0.001, time.time() - start)
-    cap_a.release()
-    cap_b.release()
-
-    return {
-        "index_a": index_a,
-        "index_b": index_b,
-        "fps_a": round(counts[index_a] / elapsed, 1),
-        "fps_b": round(counts[index_b] / elapsed, 1),
-        "usable": counts[index_a] > 10 and counts[index_b] > 10,
-    }

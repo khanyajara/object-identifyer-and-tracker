@@ -1,11 +1,8 @@
-from datetime import datetime, timezone
 from uuid import uuid4
 
 from services.local_json_service import DATA_DIR, LocalJsonStore
 
-
-def utc_now():
-    return datetime.now(timezone.utc).isoformat()
+from core.time_utils import utc_now
 
 
 class UploadQueueService:
@@ -52,12 +49,6 @@ class UploadQueueService:
                 task["error"] = error
                 task["updated_at"] = utc_now()
                 self.store.write(tasks)
-                return task
-        return None
-
-    def latest_for_video(self, video_id):
-        for task in self.list_tasks():
-            if task.get("video_id") == video_id:
                 return task
         return None
 

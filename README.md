@@ -47,6 +47,16 @@ Recording quality is prioritized over AI speed. The camera thread writes frames 
 
 ## Video Files
 
+### Camera preview and DroidCam fallback
+
+Preview defaults to **Both cameras**, with main/DroidCam on the left and cabin/computer webcam on the right. Each panel displays its own annotated detections, with an offline placeholder if its feed is unavailable. Select **Main camera** or **Rear / cabin** for a larger view of one feed. Counts in the combined preview are observations across both cameras, not unique people or vehicles.
+
+Use **Open / Retry Preview** to open cameras and run visible object detection before recording; preview creates no video file. The computer camera can be used before connecting the phone, provided the webcam supplies frames. Connect the DroidCam desktop client and retry preview to open its feed. **Start Recording** reuses the capture connections; **Stop Recording** finalizes the files and keeps preview capture running (the UI refresh pauses during post-processing). **Close Preview** releases preview cameras while preserving an independently running driver-monitoring camera. Phone frames cannot arrive before the DroidCam client connects.
+
+For the current computer setup, local settings select `rear_camera_source=computer`: DroidCam is the main feed and the computer webcam is rear/cabin, with rear object detection enabled. An inconclusive Windows format listing does not disable an explicitly selected computer webcam; actual frame capture determines availability. The single preview has a Main / Rear switch and displays the selected camera's annotated detection frames, including boxes, labels and confidence. Results are kept separately per camera and expire after two seconds so old detections are not displayed indefinitely. Driver monitoring still requires calibrated thresholds before it is ready.
+
+The live dashboard can show both cameras together or one selected camera. Rear-camera object detection and recording continue in the background when a rear source is available; driver monitoring uses only that rear/cabin source. On Windows, connect your phone through the DroidCam desktop client before starting recording. With fewer than two usable cameras, Roadwatch selects the installed DroidCam virtual camera. If a configured camera fails to open, it also attempts DroidCam without opening the same source twice. If DroidCam is unavailable, the remaining working camera is preserved. A single DroidCam feed does not stand in for a separate cabin camera. Restart the app after changing the connected rig so background driver monitoring can select its source again. The automatic fallback can be disabled in Camera Settings.
+
 Each recording keeps both the original and processed video when available.
 
 ```text
@@ -304,7 +314,6 @@ Object-Detection-and-Tracking/
     storage_service.py
     stolen_vehicle_service.py
     supabase_service.py
-    sync_service.py
     vehicle_profile_service.py
     video_processing_service.py
     video_service.py
@@ -451,7 +460,11 @@ VISION_SYNC_URL=
 VISION_SYNC_API_KEY=
 ```
 
-Then use the Sync button on a saved video.
+The legacy standalone sync service has been removed. Verify the current cloud upload workflow before configuring an external integration.
+
+## Missing-person reports
+
+The public **Report Missing Person** page accepts a name, last-seen date/time and location, contact number, optional case reference and description, and a reference photo. Photos are validated, resized and saved locally without original image metadata. The authenticated administrator **Missing Persons** page supports search, status filters and manual review through Submitted, Under Admin Review, Active Alert, Located, Closed or Rejected. Reports and photos live in ignored `data/missing_persons/`; they are not uploaded to cloud storage. This section does not perform face recognition or match reports against camera footage.
 
 ## Troubleshooting
 

@@ -33,10 +33,6 @@ class InferenceScheduler:
     def mark(self, name, now):
         self.tasks[name].last_inference = now
 
-    def delay(self, now):
-        return max(.01, min((max(0, task.last_inference + task.target_interval - now)
-                            for task in self.tasks.values() if task.enabled), default=1))
-
     def snapshot(self):
         return {name: {"enabled": task.enabled, "priority": task.priority,
                        "target_interval": task.target_interval,

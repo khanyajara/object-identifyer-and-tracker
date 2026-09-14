@@ -26,7 +26,7 @@ from core.detector import load_yolo_model
 from core.dual_camera import DualCameraManager
 from core.opencv_recorder import CameraManager
 from core.ocr import load_ocr_reader
-from core.vision_pipeline import VisionPipeline
+from core.vision_pipeline import VEHICLES, VisionPipeline
 from core.video_io import (
     get_best_playback_info,
     get_best_playback_source,
@@ -46,6 +46,7 @@ from services.notification_service import NotificationService
 from services.report_service import format_duration, videos_dataframe
 from services.storage_service import StorageService
 from services.stolen_vehicle_service import StolenVehicleService
+from services.missing_person_ui import missing_person_page
 from services.supabase_service import SupabaseService
 from services.upload_queue_service import UploadQueueService
 from services.vehicle_profile_service import VehicleProfileService
@@ -147,7 +148,8 @@ DEFAULTS = {
     "ai_frame_width": 640,
     "ai_frame_height": 360,
     "ai_process_interval_seconds": 0.5,
-    "dual_camera_enabled": False,
+    "dual_camera_enabled": True,
+    "droidcam_fallback_enabled": True,
     "front_camera_index": 0,
     "rear_camera_index": 1,
     "front_camera_label": "Front Road",
@@ -443,11 +445,25 @@ class DualCameraUIManager:
         return bool(self.manager.is_recording)
 
     @property
+    def preview_active(self):
+        return self.manager.preview_active
+
+    def start_preview(self):
+        if not self.manager.start_preview():
+            raise RuntimeError("No camera is supplying frames. Connect the computer webcam or DroidCam client, then retry Preview.")
+
+    def close_preview(self):
+        self.manager.close_preview()
+
+    @property
     def elapsed(self):
         return time.monotonic() - self.started if self.started else 0.0
 
     def start(self):
+        self.start_preview()
         self.session = self.manager.start_recording()
+        if not self.manager.is_recording:
+            raise RuntimeError("Recording could not start. Check camera and video-writer status; preview may still be available.")
         self.started = time.monotonic()
         self.record["session_id"] = self.session.get("session_id")
         self.record["video_id"] = self.session.get("primary_video_id") or (
@@ -467,9 +483,9 @@ class DualCameraUIManager:
         return self.session
 
     def get_dashboard_state(self):
-        frame = self.manager.composite_preview(height=360)
+        self.manager.process_live_ai(limit=2)
+        frame, event = self.manager.detection_preview(getattr(self, "preview_role", "both"))
         status = self.manager.status()
-        self.manager.process_live_ai(limit=1)
         metrics = {
             "camera_fps": max((v.get("live_fps", 0) for v in status.values()), default=0.0),
             "ai_fps": self.manager.ai_metrics.get("ai_fps", 0.0),
@@ -480,10 +496,14 @@ class DualCameraUIManager:
             "camera_index": ", ".join(
                 str(v.get("camera_index", "?")) for v in status.values()
             ),
+            "camera_status": " · ".join(
+                f"{self.manager.channels[role].config.label}: {v.get('status', 'offline')}"
+                for role, v in status.items() if self.manager.channels[role].config.enabled
+            ),
         }
         errors = [v.get("error") for v in status.values() if v.get("error")]
         error = "; ".join(errors) if errors else None
-        return frame, self.manager.latest_event, metrics, error
+        return frame, event, metrics, error
 
     def stop(self):
         self.session = self.manager.stop_recording()
@@ -497,7 +517,8 @@ class DualCameraUIManager:
 def stop_and_process_dual(camera_manager, settings):
     processing_status = st.status("Processing dual camera session...", expanded=True)
     camera_manager.stop()
-    st.session_state.camera_manager = None
+    camera_manager.record["video_id"] = None
+    st.session_state.camera_manager = camera_manager
     unlink_location_from_video()
     session = dual_video_processing.process_session(
         camera_manager.session,
@@ -1298,6 +1319,7 @@ def stop_and_process(camera_manager, settings):
 
 def dash_cam_page(settings):
     camera_manager, active = get_camera_state(settings)
+    preview_active = bool(isinstance(camera_manager, DualCameraUIManager) and camera_manager.preview_active)
     capture_browser_location(
         settings,
         camera_manager.record.get("video_id") if active else None,
@@ -1319,11 +1341,34 @@ def dash_cam_page(settings):
     )
 
     driver_status()
+    preview_controls = st.columns([1, 1, 3])
+    with preview_controls[0]:
+        if st.button("Open / Retry Preview", disabled=active, width="stretch"):
+            try:
+                if not isinstance(camera_manager, DualCameraUIManager):
+                    camera_manager = DualCameraUIManager(settings, cached_model(settings["model_name"]), cached_ocr() if settings["enable_ocr"] else None)
+                st.session_state.camera_manager = camera_manager
+                camera_manager.start_preview()
+                preview_active = camera_manager.preview_active
+            except Exception as exc:
+                st.error(str(exc))
+    with preview_controls[1]:
+        if st.button("Close Preview", disabled=active or not preview_active, width="stretch"):
+            camera_manager.close_preview()
+            st.session_state.camera_manager = None
+            camera_manager = None
+            preview_active = False
+            st.rerun()
+    with preview_controls[2]:
+        st.caption("Preview runs detection without saving video. Connect DroidCam whenever you are ready, then retry preview.")
+        st.caption("Closing preview does not stop an independently running driver-monitoring camera.")
     controls = st.columns([1.2, 1.2, 1.2, 4])
     with controls[0]:
         if st.button("Start Recording", type="primary", disabled=active, width="stretch"):
             try:
-                if is_dual_camera_enabled(settings):
+                if isinstance(camera_manager, DualCameraUIManager):
+                    camera_manager.start()
+                elif is_dual_camera_enabled(settings):
                     camera_manager = DualCameraUIManager(
                         settings,
                         cached_model(settings["model_name"]),
@@ -1341,6 +1386,7 @@ def dash_cam_page(settings):
                 st.session_state.last_record = None
                 link_location_to_video(camera_manager.record.get("video_id"))
                 active = True
+                preview_active = bool(isinstance(camera_manager, DualCameraUIManager) and camera_manager.preview_active)
             except Exception as exc:
                 st.error(str(exc))
     with controls[1]:
@@ -1348,6 +1394,7 @@ def dash_cam_page(settings):
             if camera_manager:
                 stop_and_process(camera_manager, settings)
             active = False
+            preview_active = bool(isinstance(camera_manager, DualCameraUIManager) and camera_manager.preview_active)
     with controls[2]:
         if st.button("SOS", width="stretch"):
             active_contacts = ContactService().active_count()
@@ -1365,59 +1412,47 @@ def dash_cam_page(settings):
     with controls[3]:
         if active:
             badge("Recording active", "red")
+        elif preview_active:
+            badge("Preview only · Not recording", "blue")
         else:
             badge("Standby", "blue")
 
     main_col, side_col = st.columns([2.15, 1])
     with main_col:
         st.markdown('<div class="panel-title">Live Dash Cam</div>', unsafe_allow_html=True)
+        preview_label = st.radio("Preview camera", ["Both cameras", "Main camera", "Rear / cabin"], horizontal=True, key="camera_preview_layout")
+        if isinstance(camera_manager, DualCameraUIManager):
+            camera_manager.preview_role = {"Both cameras": "both", "Main camera": "front", "Rear / cabin": "rear"}[preview_label]
+        st.caption("Main: DroidCam · Cabin: computer webcam. Each feed shows its own detections. Preview saves no video; Start Recording saves each available camera.")
         frame_placeholder = st.empty()
-        if not active:
+        if not active and not preview_active:
             frame_placeholder.markdown(
                 f"""
                 <div class="camera-frame">
                   <div>
-                    <div style="font-size:2.25rem;font-weight:900;letter-spacing:.08em;color:#eaffff">CAMERA READY</div>
-                    <p class="muted">Press Start Recording to open the OpenCV camera and activate Roadwatch AI overlays.</p>
+                    <div style="font-size:2.25rem;font-weight:900;letter-spacing:.08em;color:#eaffff">READY TO CONNECT</div>
+                    <p class="muted">Open Preview to check your computer camera or connected DroidCam before recording.</p>
                   </div>
                   <div class="hud-readout"><div class="metric-label">Speed</div><div class="hud-speed">{gps["speed_kmh"]}</div><div>KM/H</div></div>
-                  <div class="hud-coords">{gps["latitude"] or "25.2048 S"} , {gps["longitude"] or "28.0473 E"}</div>
+                  <div class="hud-coords">{gps["latitude"] if gps["latitude"] is not None else "Location unavailable"} {gps["longitude"] if gps["longitude"] is not None else ""}</div>
                   <div class="hud-time">{datetime.now().strftime("%H:%M:%S")}<br>{datetime.now().strftime("%d/%m/%Y")}</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
     with side_col:
-        st.markdown(
-            """
-            <div class="panel">
-              <div class="panel-title">Secondary Camera (Rear)</div>
-              <div class="camera-frame" style="min-height:190px;border-radius:16px">
-                <div>
-                  <div class="metric-label">Rear Feed</div>
-                  <div style="font-size:1.25rem;font-weight:900;color:#eaffff">STANDBY MIRROR</div>
-                  <p class="muted">Use this slot for rear-camera stream when configured.</p>
-                </div>
-              </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        st.markdown("#### Live status")
+        st.caption("Object detection runs on every connected camera. Driver monitoring uses the rear/cabin camera.")
         telemetry_box = st.empty()
-        gps_box = st.empty()
+        source_box = st.empty()
 
-    timeline_box = st.empty()
     bottom_metrics_box = st.empty()
     location_box = st.empty()
-    lower_a, lower_b, lower_c, lower_d = st.columns([1.15, 1.15, 1.15, 1])
-    with lower_a:
-        incidents_box = st.empty()
-    with lower_b:
+    detections_col, notifications_col = st.columns(2)
+    with detections_col:
         detections_box = st.empty()
-    with lower_c:
+    with notifications_col:
         notifications_box = st.empty()
-    with lower_d:
-        quick_actions_box = st.empty()
 
     def render_static_hud(event=None, metrics=None, error=None, elapsed="00:00"):
         gps = location_status(settings)
@@ -1442,21 +1477,13 @@ def dash_cam_page(settings):
         people = event.get("people_count", latest_summary.get("people_count_max", 0))
         vehicles = event.get("vehicle_count", latest_summary.get("vehicle_count_max", 0))
         storage_ready = sum(1 for row in storage_rows if row["Exists"])
-        ai_status = "ERROR" if error else ("ONLINE" if active else "STANDBY")
+        ai_status = "ERROR" if error else ("ONLINE" if active or preview_active else "STANDBY")
+        source_box.caption(metrics.get("camera_status") or "Connect your dashcam or DroidCam client to begin.")
         telemetry_box.markdown(
             f"""
-            <div class="metric-grid" style="grid-template-columns:1fr 1fr">
+            <div class="metric-grid" style="grid-template-columns:1fr">
               <div class="metric-card"><div class="metric-label">AI Telemetry</div><div class="list-row"><span>Model</span><span>YOLOv8</span></div><div class="list-row"><span>Tracking</span><span>{'Deep SORT' if settings.get("enable_tracking") else 'Sampled'}</span></div><div class="list-row"><span>OCR</span><span>{'Active' if settings.get("enable_ocr") else 'Off'}</span></div><div class="list-row"><span>Frame Rate</span><span>{metrics.get("camera_fps", 0):.1f} FPS</span></div><div class="list-row"><span>Processing</span><span>{metrics.get("processing_time_ms", 0):.0f} ms</span></div></div>
               <div class="metric-card"><div class="metric-label">GPS Status</div><div class="metric-value" style="font-size:1rem;color:{'#22c55e' if gps["status"] == 'Active' else '#facc15'}">{gps["status"]}</div><div style="margin-top:.8rem;color:#dffcff">{gps.get("latitude") or "Latitude unavailable"}<br>{gps.get("longitude") or "Longitude unavailable"}<br><span class="muted">{esc(gps.get("address") or gps.get("message"))}</span></div><div class="list-row"><span>Source</span><span>{esc(gps.get("source") or "Unavailable")}</span></div><div class="list-row"><span>Accuracy</span><span>{esc(str(gps.get("accuracy_m") or "Unknown"))} m</span></div><div class="metric-spark"></div></div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        gps_box.markdown(
-            f"""
-            <div class="metric-grid" style="grid-template-columns:1fr 1fr">
-              <div class="metric-card"><div class="metric-label">Object Summary</div><div class="list-row"><span>Vehicles</span><span>{vehicles}</span></div><div class="list-row"><span>People</span><span>{people}</span></div><div class="list-row"><span>Other</span><span>{max(len(objects) - people - vehicles, 0)}</span></div></div>
-              <div class="metric-card"><div class="metric-label">Today's Stats</div><div class="list-row"><span>Recordings</span><span>{len(videos)}</span></div><div class="list-row"><span>Incidents</span><span>{latest_summary.get("movement_events", 0)}</span></div><div class="list-row"><span>Distance</span><span>148 km</span></div><div class="list-row"><span>Drive Time</span><span>{elapsed}</span></div></div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -1467,7 +1494,7 @@ def dash_cam_page(settings):
               <div class="metric-card"><div class="metric-label">AI Scanner</div><div class="metric-value" style="font-size:1.05rem;color:#22c55e">{ai_status}</div><div class="muted">Processing frames</div><div class="metric-spark"></div></div>
               <div class="metric-card"><div class="metric-label">Objects Detected</div><div class="metric-value">{len(objects) or sum(latest_summary.get("object_counts", {}).values())}</div><div class="muted">Vehicles {vehicles} / People {people}</div></div>
               <div class="metric-card"><div class="metric-label">Movement</div><div class="metric-value" style="font-size:1rem;color:{'#22c55e' if movement == 'CLEAR' else '#facc15'}">{movement}</div><div class="metric-spark"></div></div>
-              <div class="metric-card"><div class="metric-label">Latest Plate</div><div class="metric-value" style="font-size:1.25rem">{plate}</div><div class="muted">Confidence 92%</div></div>
+              <div class="metric-card"><div class="metric-label">Latest Plate</div><div class="metric-value" style="font-size:1.25rem">{plate}</div><div class="muted">Latest plate scan</div></div>
               <div class="metric-card"><div class="metric-label">Storage</div><div class="metric-value">{int((storage_ready / max(len(storage_rows), 1)) * 100)}%</div><div class="muted">{storage_ready}/{len(storage_rows)} folders ready</div><div class="metric-spark"></div></div>
             </div>
             """,
@@ -1479,26 +1506,6 @@ def dash_cam_page(settings):
               <div class="metric-card"><div class="metric-label">Current Location</div><div class="metric-value" style="font-size:1.05rem">{esc(gps.get("address") or gps.get("message"))}</div><div class="muted">Status: {esc(gps.get("status"))}</div></div>
               <div class="metric-card"><div class="metric-label">Coordinates</div><div class="metric-value" style="font-size:1rem">{esc(gps.get("latitude") or "Unavailable")} / {esc(gps.get("longitude") or "Unavailable")}</div><div class="muted">Speed {gps.get("speed_kmh", 0)} km/h / Accuracy {esc(str(gps.get("accuracy_m") or "Unknown"))} m</div></div>
               <div class="metric-card"><div class="metric-label">Location Updated</div><div class="metric-value" style="font-size:1rem">{esc(gps.get("last_updated") or "Not available")}</div><div class="muted">Source: {esc(gps.get("source") or "Unavailable")} / Video ID: {esc(linked_video_id or "Not recording")}</div></div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        timeline_box.markdown(
-            """
-            <div class="timeline" style="margin-top:.85rem">
-              <div style="display:flex;justify-content:space-between;margin-bottom:.55rem"><span class="panel-title" style="margin:0">Session Timeline</span><span class="muted">Normal / Motion / Incident</span></div>
-              <div class="timeline-track"></div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        incidents_box.markdown(
-            """
-            <div class="panel">
-              <div class="panel-title">Recent Incidents</div>
-              <div class="list-row"><span class="danger">Possible stolen vehicle</span><span>HIGH</span></div>
-              <div class="list-row"><span class="warn">Hard braking detected</span><span>MEDIUM</span></div>
-              <div class="list-row"><span class="cyan">Person detected</span><span>LOW</span></div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -1536,29 +1543,17 @@ def dash_cam_page(settings):
             """,
             unsafe_allow_html=True,
         )
-        quick_actions_box.markdown(
-            """
-            <div class="panel">
-              <div class="panel-title">Quick Actions</div>
-              <div class="list-row"><span>Take snapshot</span><span>Ready</span></div>
-              <div class="list-row"><span>Manual incident</span><span>Ready</span></div>
-              <div class="list-row"><span>Lock current clip</span><span>Ready</span></div>
-              <div class="list-row"><span>Voice note</span><span>Ready</span></div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
 
-    if active:
+    if active or preview_active:
         @st.fragment(run_every=1 / settings["streamlit_preview_fps"])
         def dash_fragment():
             current = st.session_state.get("camera_manager")
-            if not current or not current.active:
+            if not current or not (current.active or getattr(current, "preview_active", False)):
                 return
             frame, event, metrics, error = current.get_dashboard_state()
             if frame is not None:
                 frame_placeholder.image(frame, channels="BGR", width="stretch")
-            elapsed = format_duration(current.elapsed)
+            elapsed = format_duration(current.elapsed) if current.active else "00:00"
             render_static_hud(event, metrics, error, elapsed)
             if error:
                 st.warning(f"AI scanner offline: {error}")
@@ -2273,10 +2268,6 @@ def report_status_badge(status):
     return f'<span class="badge {status_class}">{html.escape(status or "Draft")}</span>'
 
 
-def uploaded_file_names(paths):
-    return [Path(path).name for path in paths or []]
-
-
 def stolen_report_summary(report):
     return {
         "Report ID": report.get("report_id"),
@@ -2734,7 +2725,7 @@ def analytics_page(service):
         movement_by_recording[video.get("filename")] = summary.get("movement_events", 0)
     total_objects = sum(object_counts.values())
     people = object_counts.get("person", 0)
-    vehicles = sum(object_counts.get(label, 0) for label in ["car", "truck", "bus", "motorcycle", "bicycle"])
+    vehicles = sum(object_counts.get(label, 0) for label in VEHICLES)
     high = sum(1 for item in incidents if item.get("severity") == "high")
     processing_errors = sum(1 for item in videos if item.get("processing_error"))
     avg_duration = (
@@ -2814,6 +2805,9 @@ def settings_page(settings):
             height = c3.number_input("Height", 240, 1080, settings["camera_height"], 120)
             fps = c4.number_input("Target FPS", 7, 30, settings["target_camera_fps"])
             preview_fps = st.slider("Preview FPS", 1, 15, int(settings["streamlit_preview_fps"]))
+            st.caption("Front and rear cameras both run object detection. Only the main camera is shown in the live preview.")
+            droidcam_fallback = st.toggle("Use DroidCam when two cameras are unavailable", bool(settings.get("droidcam_fallback_enabled", True)))
+            st.caption("Connect your phone through the DroidCam desktop client before starting recording.")
         with st.expander("AI Settings", expanded=True):
             mode = st.selectbox(
                 "Performance mode",
@@ -2909,6 +2903,7 @@ def settings_page(settings):
                 "camera_height": int(height),
                 "target_camera_fps": int(fps),
                 "streamlit_preview_fps": int(preview_fps),
+                "droidcam_fallback_enabled": droidcam_fallback,
                 "performance_mode": mode,
                 **PERFORMANCE_MODES[mode],
                 "ai_process_interval_seconds": interval,
@@ -3183,6 +3178,7 @@ def main():
         "Roadwatch",
         "Videos",
         "Report Stolen Vehicle",
+        "Report Missing Person",
         "Emergency Contacts",
         "Vehicle Profile",
         "Settings",
@@ -3195,6 +3191,7 @@ def main():
         "All Videos",
         "Incidents",
         "Stolen Vehicles",
+        "Missing Persons",
         "GPS Tracking",
         "Emergency Contacts",
         "Vehicle Profiles",
@@ -3238,6 +3235,8 @@ def main():
         "Videos": lambda: videos_page(service, settings),
         "All Videos": lambda: videos_page(service, settings),
         "Report Stolen Vehicle": lambda: stolen_vehicle_page(service, settings, admin_mode=False),
+        "Report Missing Person": lambda: missing_person_page(admin_mode=False),
+        "Missing Persons": lambda: missing_person_page(admin_mode=True),
         "Incidents": lambda: incidents_page(service),
         "Stolen Vehicles": lambda: stolen_vehicle_page(service, settings, admin_mode=True),
         "GPS Tracking": lambda: gps_page(service, settings),

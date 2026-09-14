@@ -1,13 +1,10 @@
 import threading
-from datetime import datetime, timezone
 
 import requests
 
 from services.local_json_service import DATA_DIR, LocalJsonStore
 
-
-def utc_now():
-    return datetime.now(timezone.utc).isoformat()
+from core.time_utils import utc_now
 
 
 class GPSService:

@@ -3,22 +3,25 @@
   "opencv": "4.13.0",
   "checks": {
     "yunet_asset": true,
-    "sface_asset": false,
-    "landmarker_asset": false,
+    "sface_asset": true,
+    "landmarker_asset": true,
     "yunet_native_load": true,
     "yunet_native_forward": true,
-    "sface_native_load": false,
-    "landmarker_native_load": false,
+    "sface_native_load": true,
+    "landmarker_native_load": true,
     "recognition_threshold_configured": false,
     "eye_threshold_configured": false,
     "mouth_threshold_configured": false,
     "neutral_pitch_configured": false,
-    "camera_source_configured": false
+    "camera_source_configured": true
   },
   "real_camera_validated": false,
   "recognition_accuracy_validated": false,
   "fatigue_accuracy_validated": false,
   "yunet_sha256": "8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4",
-  "yunet_blank_frame_mean_ms": 36.238,
+  "sface_sha256": "0ba9fbfa01b5270c96627c4ef784da859931e02f04419c829e83484087c34e79",
+  "landmarker_sha256": "64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff",
+  "yunet_blank_frame_mean_ms": 30.818,
+  "mediapipe": "1.0.1",
   "ready_for_camera_acceptance": false
 }

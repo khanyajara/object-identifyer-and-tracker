@@ -254,6 +254,7 @@ data/exports/**
 data/incidents/**
 data/fatigue_events/**
 data/stolen_vehicles/**
+data/missing_persons/**
 data/gps/**
 data/contacts/**
 data/profile/**

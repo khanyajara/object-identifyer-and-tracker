@@ -1,12 +1,9 @@
-from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import quote
 
 import requests
 
-
-def utc_now():
-    return datetime.now(timezone.utc).isoformat()
+from core.time_utils import utc_now
 
 
 class FirebaseService:

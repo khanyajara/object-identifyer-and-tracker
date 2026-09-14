@@ -1,6 +1,5 @@
 import tempfile
 import unittest
-from pathlib import Path
 from unittest.mock import Mock, patch
 
 from services.driver_monitoring.fatigue_detection_service import FatigueConfig, FatigueDetectionService

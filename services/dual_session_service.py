@@ -26,17 +26,14 @@ from __future__ import annotations
 import json
 import logging
 import os
-from datetime import datetime, timezone
 from typing import Dict, List, Optional
+
+from core.time_utils import utc_now
 
 LOGGER = logging.getLogger("roadwatch.dual_session")
 
 SESSIONS_DIR = os.path.join("data", "logs", "sessions")
 LOGS_DIR = os.path.join("data", "logs")
-
-
-def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
 
 
 def _ensure_dirs() -> None:
@@ -134,8 +131,8 @@ def save_session(
     """Write the session record and one metadata file per camera."""
     detections_by_role = detections_by_role or {}
     session = dict(session)
-    session.setdefault("created_at", _utc_now_iso())
-    session["updated_at"] = _utc_now_iso()
+    session.setdefault("created_at", utc_now())
+    session["updated_at"] = utc_now()
 
     written = []
     for camera in session.get("cameras", []):
@@ -155,56 +152,6 @@ def save_session(
     }
     _atomic_write(session_path(session["session_id"]), session)
     LOGGER.info("Saved session %s with %s camera(s)", session["session_id"], len(written))
-    return session
-
-
-def update_session(session_id: str, **fields) -> Optional[dict]:
-    """Patch a stored session, e.g. after post-processing finishes."""
-    session = load_session(session_id)
-    if session is None:
-        return None
-    session.update(fields)
-    session["updated_at"] = _utc_now_iso()
-    _atomic_write(session_path(session_id), session)
-    return session
-
-
-def update_camera(session_id: str, role: str, **fields) -> Optional[dict]:
-    """Patch one camera inside a session and mirror it into that camera's
-    video metadata file."""
-    session = load_session(session_id)
-    if session is None:
-        return None
-
-    for camera in session.get("cameras", []):
-        if camera.get("role") != role:
-            continue
-        camera.update(fields)
-        meta_path = camera.get("metadata_path") or video_metadata_path(camera)
-        if os.path.exists(meta_path):
-            try:
-                with open(meta_path, "r", encoding="utf-8") as handle:
-                    metadata = json.load(handle)
-                metadata.update(
-                    {
-                        key: value
-                        for key, value in fields.items()
-                        if key
-                        in (
-                            "processed_video_path",
-                            "processing_status",
-                            "processing_error",
-                            "detections",
-                            "objects_summary",
-                        )
-                    }
-                )
-                _atomic_write(meta_path, metadata)
-            except (OSError, json.JSONDecodeError) as exc:
-                LOGGER.warning("Could not update %s: %s", meta_path, exc)
-
-    session["updated_at"] = _utc_now_iso()
-    _atomic_write(session_path(session_id), session)
     return session
 
 
@@ -256,23 +203,3 @@ def get_partner_video(video_id: str) -> Optional[dict]:
         if camera.get("video_id") and camera["video_id"] != video_id:
             return camera
     return None
-
-
-def session_summary_rows(limit: Optional[int] = None) -> List[dict]:
-    """Flat rows for the Videos and Analytics tables."""
-    rows = []
-    for session in list_sessions(limit):
-        cameras = session.get("cameras", [])
-        rows.append(
-            {
-                "session_id": session.get("session_id"),
-                "started_at": session.get("started_at"),
-                "duration_seconds": session.get("duration_seconds"),
-                "cameras": len(cameras),
-                "angles": ", ".join(c.get("role", "?") for c in cameras),
-                "detections": sum((session.get("detection_counts") or {}).values()),
-                "composite": bool(session.get("composite_video_path")),
-                "status": session.get("processing_status", "recorded"),
-            }
-        )
-    return rows

@@ -1,12 +1,10 @@
 import os
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 from services.firebase_service import FirebaseService
 
-
-def utc_now():
-    return datetime.now(timezone.utc).isoformat()
+from core.time_utils import utc_now
 
 
 def normalize_video(document, document_id=None):
@@ -85,12 +83,6 @@ class FirebaseVideoService:
         self.firebase._client().collection(self.firebase.video_collection).document(video_id).set(
             {"last_accessed_at": utc_now(), "view_count": firestore.Increment(1)}, merge=True
         )
-
-    def update_fields(self, video_id, fields):
-        self.firebase._client().collection(self.firebase.video_collection).document(video_id).set(
-            {**fields, "updated_at": utc_now()}, merge=True
-        )
-
 
 def _default_service():
     firebase = FirebaseService(

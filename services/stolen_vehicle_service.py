@@ -1,9 +1,10 @@
 import re
-from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
 from services.local_json_service import DATA_DIR, LocalJsonStore
+
+from core.time_utils import utc_now
 
 
 REPORT_STATUSES = [
@@ -33,10 +34,6 @@ IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 DOCUMENT_EXTENSIONS = {".pdf", ".jpg", ".jpeg", ".png"}
 
 
-def utc_now():
-    return datetime.now(timezone.utc).isoformat()
-
-
 class StolenVehicleService:
     def __init__(self):
         self.base_dir = DATA_DIR / "stolen_vehicles"
@@ -63,9 +60,6 @@ class StolenVehicleService:
             ),
             None,
         )
-
-    def add_report(self, payload):
-        return self.save_report(payload)
 
     def save_report(self, payload):
         reports = self.list_reports()

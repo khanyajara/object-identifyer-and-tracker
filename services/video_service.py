@@ -1,11 +1,13 @@
 import json
 import re
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
 
 from core.video_io import DEFAULT_VIDEO_EXTENSION
 from services.driver_monitoring.runtime import identity_metadata
+
+from core.time_utils import utc_now
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
@@ -25,10 +27,6 @@ CONTACTS_DIR = DATA_DIR / "contacts"
 PROFILE_DIR = DATA_DIR / "profile"
 NOTIFICATIONS_DIR = DATA_DIR / "notifications"
 VIDEO_ID_PATTERN = re.compile(r"^vid_\d{8}_\d{6}_[a-f0-9]{6}$")
-
-
-def utc_now():
-    return datetime.now(timezone.utc).isoformat()
 
 
 class VideoService:
@@ -153,12 +151,6 @@ class VideoService:
         return sorted(
             records, key=lambda item: item.get("started_at", ""), reverse=True
         )
-
-    def mark_synced(self, video_id, status):
-        record = self.load(video_id)
-        record["sync_status"] = status
-        self.save(record)
-        return record
 
     def update_sync_fields(self, video_id, **fields):
         record = self.load(video_id)

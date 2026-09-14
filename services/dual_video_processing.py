@@ -6,9 +6,7 @@ Post-processing for dual camera sessions.
 Runs after recording stops, never during it. Two jobs:
 
 1. Process each camera's original video into an annotated processed video.
-   If the project's own VideoProcessingService is importable it is used, so
-   there is one AI pass implementation, not two. Otherwise a built-in pass
-   runs VisionPipeline frame by frame.
+   The supplied pipeline runs frame by frame for each camera.
 
 2. Build one time-aligned side-by-side video from the two processed videos,
    so an incident can be reviewed as a single clip showing both angles.
@@ -61,11 +59,6 @@ def _video_is_readable(path: Optional[str]) -> bool:
     return ok
 
 
-def video_is_readable(path: Optional[str]) -> bool:
-    """Public alias used by the UI before rendering a player."""
-    return _video_is_readable(path)
-
-
 def processed_path_for(camera: dict) -> str:
     os.makedirs(PROCESSED_DIR, exist_ok=True)
     video_id = camera.get("video_id") or "unknown"
@@ -84,16 +77,6 @@ def composite_path_for(session: dict) -> str:
 # --------------------------------------------------------------------------
 
 
-def _external_service():
-    """Use the project's existing single-video processor when available."""
-    try:
-        from services.video_processing_service import VideoProcessingService  # type: ignore
-
-        return VideoProcessingService()
-    except Exception:  # pragma: no cover - project dependent
-        return None
-
-
 def _built_in_pass(
     camera: dict,
     pipeline,
@@ -101,7 +84,7 @@ def _built_in_pass(
     output_fps: float,
     progress: ProgressCallback,
 ) -> Tuple[bool, List[dict], Optional[str]]:
-    """Frame by frame AI pass used when VideoProcessingService is not present."""
+    """Run the supplied pipeline over the camera recording."""
     source = camera.get("video_path")
     cap = cv2.VideoCapture(source)
     if not cap.isOpened():
@@ -204,34 +187,6 @@ def process_camera(
     output_fps = camera.get("true_fps") or camera.get("measured_fps") or 20.0
     output_path = processed_path_for(camera)
     _report(progress, role, 0.0, "Starting AI pass")
-
-    service = _external_service()
-    if service is not None and hasattr(service, "process_video"):
-        try:
-            outcome = service.process_video(
-                video_path=camera["video_path"],
-                video_id=camera.get("video_id"),
-                output_path=output_path,
-            )
-            detections = []
-            if isinstance(outcome, dict):
-                detections = outcome.get("detections", [])
-                output_path = outcome.get("processed_video_path", output_path)
-            for event in detections:
-                event.setdefault("camera_role", role)
-            result.update(
-                {
-                    "processed_video_path": output_path,
-                    "processing_status": "Processed video saved successfully.",
-                    "processing_error": None,
-                    "detections": detections,
-                }
-            )
-            _report(progress, role, 1.0, "Done")
-            return result
-        except Exception as exc:
-            LOGGER.exception("[%s] VideoProcessingService failed, using built-in pass", role)
-            result["processing_error"] = f"VideoProcessingService failed: {exc}"
 
     ok, detections, error = _built_in_pass(camera, pipeline, output_path, output_fps, progress)
     if ok:

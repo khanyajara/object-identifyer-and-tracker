@@ -1,11 +1,8 @@
 """Public driver session data; never contains biometric embeddings."""
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from uuid import uuid4
 
-
-def utc_now():
-    return datetime.now(timezone.utc).isoformat()
+from core.time_utils import utc_now
 
 
 @dataclass

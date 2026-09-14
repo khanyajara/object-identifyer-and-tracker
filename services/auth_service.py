@@ -97,9 +97,6 @@ class AdminAuthService:
             for admin in self.admins
         ]
 
-    def development_credentials_enabled(self):
-        return False
-
     def issue_access_token(self, account):
         if not account or account.get("role") not in VALID_ROLES:
             raise ValueError("A valid account is required to issue an access token.")

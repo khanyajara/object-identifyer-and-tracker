@@ -44,9 +44,6 @@ class NotificationService:
             **(settings or {}),
         }
 
-    def get_settings(self):
-        return self.settings.copy()
-
     def save_settings(self, settings):
         self.settings = {
             **DEFAULT_NOTIFICATION_SETTINGS,

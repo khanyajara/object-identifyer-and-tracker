@@ -40,22 +40,3 @@ def videos_dataframe(videos):
             }
         )
     return pd.DataFrame(rows)
-
-
-def build_summary(videos):
-    return {
-        "videos": len(videos),
-        "minutes": round(
-            sum(item.get("duration_seconds", 0) for item in videos) / 60, 1
-        ),
-        "detections": sum(len(item.get("detections", [])) for item in videos),
-        "plates": len(
-            {
-                plate
-                for item in videos
-                for plate in item.get("objects_summary", {}).get(
-                    "plates_detected", []
-                )
-            }
-        ),
-    }
