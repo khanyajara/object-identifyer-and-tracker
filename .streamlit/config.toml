@@ -5,6 +5,10 @@ gatherUsageStats = false
 toolbarMode = "viewer"
 
 [server]
+address = "127.0.0.1"
+enableCORS = true
+enableXsrfProtection = true
+enableStaticServing = false
 headless = true
 maxUploadSize = 500
 

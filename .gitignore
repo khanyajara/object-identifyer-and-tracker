@@ -246,6 +246,10 @@ output_processed.mp4
 Object Detection and Tracking Report.pdf
 
 # Roadwatch runtime data generated per local device
+data/calibration/**
+data/driver_training/**
+data/accounts/**
+data/cloud_sync/**
 data/**/*.tmp
 data/logs/**
 data/videos/**

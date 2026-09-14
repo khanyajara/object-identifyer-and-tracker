@@ -31,6 +31,17 @@ class CloudPlaybackService:
     def __init__(self, supabase):
         self.supabase = supabase
 
+    def trusted_url(self, value):
+        try:
+            candidate, expected = urlparse(str(value or "")), urlparse(str(self.supabase.url))
+            return (candidate.scheme == expected.scheme == "https"
+                    and bool(expected.hostname)
+                    and candidate.hostname == expected.hostname
+                    and (candidate.port or 443) == (expected.port or 443)
+                    and candidate.username is None and candidate.password is None)
+        except ValueError:
+            return False
+
     def resolve_playback_url(self, video):
         result = {
             "ok": False,
@@ -50,15 +61,15 @@ class CloudPlaybackService:
         expires = _as_utc(video.get("playback_url_expires_at"))
         cache_safe = expires and expires > datetime.now(timezone.utc) + timedelta(minutes=5)
         try:
-            if cached and _valid_https_url(cached) and (self.supabase.bucket_public or cache_safe):
+            if cached and self.trusted_url(cached) and (self.supabase.bucket_public or cache_safe):
                 url = cached
             else:
                 playback = self.supabase.create_playback_url(object_path)
                 url = playback["url"]
                 result["playback_url_created_at"] = playback.get("created_at")
                 result["playback_url_expires_at"] = playback.get("expires_at")
-            if not _valid_https_url(url):
-                raise RuntimeError("Supabase returned a non-HTTPS playback URL.")
+            if not self.trusted_url(url):
+                raise RuntimeError("Playback URL must belong to the configured HTTPS storage origin.")
             fmt = (video.get("cloud_format") or str(object_path).rsplit(".", 1)[-1]).lower()
             mime = video.get("mime_type") or {"mp4": "video/mp4", "webm": "video/webm"}.get(fmt)
             if not mime or not str(mime).startswith("video/"):
@@ -83,7 +94,7 @@ class CloudPlaybackService:
             try:
                 import requests
                 response = requests.get(
-                    resolved["url"], headers={"Range": "bytes=0-0"}, timeout=30, stream=True
+                    resolved["url"], headers={"Range": "bytes=0-0"}, timeout=30, stream=True, allow_redirects=False
                 )
                 checks["http_success"] = response.status_code in {200, 206}
                 checks["video_content_type"] = response.headers.get("content-type", "").lower().startswith("video/")
@@ -91,6 +102,7 @@ class CloudPlaybackService:
                 if not size.isdigit():
                     size = response.headers.get("content-length", "0")
                 checks["nonzero_file"] = str(size).isdigit() and int(size) > 0
+                response.close()
             except Exception as exc:
                 resolved["error"] = str(exc)
         return {**resolved, "checks": checks, "ok": all(checks.values())}

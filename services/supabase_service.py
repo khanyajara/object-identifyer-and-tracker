@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import quote
+import os
 
 import requests
 
@@ -13,18 +14,26 @@ class SupabaseService:
         url="",
         anon_key="",
         bucket="videos",
-        bucket_public=True,
+        bucket_public=None,
         signed_url_expiry_seconds=3600,
     ):
         self.url = url
         self.anon_key = anon_key
+        if url and url.rstrip("/") == os.getenv("SUPABASE_URL", "").rstrip("/"):
+            self.anon_key = os.getenv("SUPABASE_SECRET_KEY") or os.getenv("SUPABASE_SERVICE_ROLE_KEY") or anon_key
         self.bucket = bucket
-        self.bucket_public = bool(bucket_public)
+        self.bucket_public = (os.getenv("SUPABASE_VIDEO_BUCKET_PUBLIC", "false").lower() == "true") if bucket_public is None else bool(bucket_public)
         try:
             expiry = int(signed_url_expiry_seconds)
         except (TypeError, ValueError):
             expiry = 3600
         self.signed_url_expiry_seconds = max(1, expiry)
+
+    def _headers(self, **extra):
+        headers = {"apikey": self.anon_key, **extra}
+        if not self.anon_key.startswith("sb_"):
+            headers["Authorization"] = "Bearer " + self.anon_key
+        return headers
 
     @property
     def configured(self):
@@ -68,19 +77,14 @@ class SupabaseService:
         bucket_path = quote(self.bucket, safe="")
         object_path = quote(object_name, safe="/")
         upload_url = f'{self.url.rstrip("/")}/storage/v1/object/{bucket_path}/{object_path}'
-        headers = {
-            "Authorization": f"Bearer {self.anon_key}",
-            "apikey": self.anon_key,
-            "Content-Type": video_mime_type(upload_path),
-            "x-upsert": "true",
-        }
+        headers = self._headers(**{"Content-Type": video_mime_type(upload_path), "x-upsert": "true"})
         with upload_path.open("rb") as file_obj:
             response = requests.post(upload_url, headers=headers, data=file_obj, timeout=120)
         response.raise_for_status()
         payload = {
             "bucket": self.bucket,
             "object_name": object_name,
-            "public_url": self.public_url(object_name),
+            "public_url": self.create_playback_url(object_name)["url"],
             "upload_path": str(upload_path),
             "upload_format": upload_format,
         }
@@ -116,11 +120,7 @@ class SupabaseService:
         bucket_path = quote(self.bucket, safe="")
         object_path = quote(str(object_name).strip("/"), safe="/")
         url = f'{self.url.rstrip("/")}/storage/v1/object/sign/{bucket_path}/{object_path}'
-        headers = {
-            "Authorization": f"Bearer {self.anon_key}",
-            "apikey": self.anon_key,
-            "Content-Type": "application/json",
-        }
+        headers = self._headers(**{"Content-Type": "application/json"})
         response = requests.post(url, headers=headers, json={"expiresIn": ttl}, timeout=30)
         response.raise_for_status()
         payload = response.json()
@@ -151,11 +151,7 @@ class SupabaseService:
             raise RuntimeError("Configure Supabase URL and anon key before listing videos.")
         bucket_path = quote(self.bucket, safe="")
         url = f'{self.url.rstrip("/")}/storage/v1/object/list/{bucket_path}'
-        headers = {
-            "Authorization": f"Bearer {self.anon_key}",
-            "apikey": self.anon_key,
-            "Content-Type": "application/json",
-        }
+        headers = self._headers(**{"Content-Type": "application/json"})
         payload = {
             "prefix": prefix.strip("/"),
             "limit": int(limit),

@@ -3,26 +3,43 @@
 import argparse
 import json
 import os
+import threading
+import time
+from collections import deque
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
 import jwt
 
 
-VALID_ROLES = {"viewer", "operator", "admin", "super_admin"}
+VALID_ROLES = {"user", "viewer", "operator", "admin", "super_admin"}
 JWT_ALGORITHM = "HS256"
 JWT_ISSUER = "roadwatch-vision-recorder"
+_LOGIN_ATTEMPTS = deque(maxlen=60)
+_LOGIN_LOCK = threading.Lock()
+
+
+def _allow_login():
+    """Process-wide budget shared by the device UI and API; no unbounded keys."""
+    now = time.monotonic()
+    with _LOGIN_LOCK:
+        while _LOGIN_ATTEMPTS and now - _LOGIN_ATTEMPTS[0] >= 60:
+            _LOGIN_ATTEMPTS.popleft()
+        if len(_LOGIN_ATTEMPTS) >= 60:
+            return False
+        _LOGIN_ATTEMPTS.append(now)
+        return True
 
 
 def hash_password(password):
     """Create a bcrypt hash for one-time administrator provisioning."""
-    if not password or len(password) < 12:
-        raise ValueError("Admin passwords must contain at least 12 characters.")
+    if not password or len(password) < 8 or len(password.encode("utf-8")) > 72:
+        raise ValueError("Use at least 8 characters. No numbers, capitals or symbols are required. Maximum length is 72 UTF-8 bytes.")
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def verify_password(password, password_hash):
-    if not password or not password_hash:
+    if not password or not password_hash or len(password.encode("utf-8")) > 72:
         return False
     try:
         return bcrypt.checkpw(
@@ -83,12 +100,21 @@ class AdminAuthService:
         self.admins = _load_admin_accounts()
 
     def authenticate(self, username, password):
+        if not _allow_login():
+            return None
         username = (username or "").strip()
         for admin in self.admins:
             if admin["username"] == username and verify_password(
                 password, admin["password_hash"]
             ):
                 return {"username": admin["username"], "role": admin["role"]}
+        # Reserved administrative names cannot fall through to self-registered accounts.
+        if any(a["username"].casefold() == username.casefold() for a in self.admins):
+            return None
+        from services.user_account_service import UserAccountService
+        account = UserAccountService().find(username)
+        if account and verify_password(password, account["password_hash"]):
+            return {"username": account["username"], "role": "user"}
         return None
 
     def list_admins(self):
@@ -117,11 +143,19 @@ class AdminAuthService:
                 _jwt_secret(),
                 algorithms=[JWT_ALGORITHM],
                 issuer=JWT_ISSUER,
+                options={"require": ["exp", "iat", "iss", "sub", "role"]},
             )
         except jwt.PyJWTError as exc:
             raise ValueError("Invalid or expired access token.") from exc
         if not claims.get("sub") or claims.get("role") not in VALID_ROLES:
             raise ValueError("Access token is missing a valid subject or role.")
+        if claims["role"] == "user":
+            from services.user_account_service import UserAccountService
+            account = UserAccountService().find(claims["sub"])
+            if not account or any(a["username"].casefold() == claims["sub"].casefold() for a in self.admins):
+                raise ValueError("Account access has been revoked.")
+        elif not any(a["username"] == claims["sub"] and a["role"] == claims["role"] for a in self.admins):
+            raise ValueError("Account access has been revoked.")
         return {"username": claims["sub"], "role": claims["role"]}
 
 
@@ -132,7 +166,7 @@ def _main():
     if args.hash_password:
         import getpass
 
-        password = getpass.getpass("Password (minimum 12 characters): ")
+        password = getpass.getpass("Password (minimum 8 characters): ")
         confirmation = getpass.getpass("Confirm password: ")
         if password != confirmation:
             raise SystemExit("Passwords did not match.")

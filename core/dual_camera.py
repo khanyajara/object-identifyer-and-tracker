@@ -860,6 +860,8 @@ class DualCameraManager:
             "ai_fps": 0.0,
         }
         self._ai_lock = threading.Lock()
+        self._preview_worker_lock = threading.Lock()
+        self._preview_worker = None
         self._ai_started_at = time.monotonic()
 
     @classmethod
@@ -895,6 +897,8 @@ class DualCameraManager:
     def close_preview(self) -> None:
         if self.is_recording:
             raise RuntimeError("Stop recording before closing the preview.")
+        if self._preview_worker is not None:
+            self._preview_worker.join()
         for channel in self.channels.values():
             channel.preview_ai_enabled = False
             channel.release()
@@ -976,6 +980,9 @@ class DualCameraManager:
         if self._recording:
             return self.session_summary()
 
+        if self._preview_worker is not None:
+            self._preview_worker.join()
+
         with self._ai_lock:
             self._preview_results.clear()
 
@@ -1033,6 +1040,8 @@ class DualCameraManager:
 
     def stop_recording(self) -> dict:
         """Stop both channels and return the finalized session record."""
+        if self._preview_worker is not None:
+            self._preview_worker.join()
         from services.driver_monitoring.runtime import recording_context
         recording_context()
         if not self.session_id:
@@ -1074,6 +1083,8 @@ class DualCameraManager:
         return session
 
     def release(self) -> None:
+        if self._preview_worker is not None:
+            self._preview_worker.join()
         for channel in self.channels.values():
             channel.release()
         self._recording = False
@@ -1210,6 +1221,19 @@ class DualCameraManager:
             _, event = self._handle_ai_frame(role, frame, frame_number, timestamp)
             results.append(event)
         return results
+
+    def process_preview_ai_async(self):
+        """At most one inference batch; UI never waits or queues inference jobs."""
+        with self._preview_worker_lock:
+            if self._preview_worker is not None and self._preview_worker.is_alive():
+                return
+            def work():
+                try:
+                    self.process_live_ai(limit=2)
+                except Exception:
+                    LOGGER.exception("Preview inference failed")
+            self._preview_worker = threading.Thread(target=work, name="preview-inference", daemon=True)
+            self._preview_worker.start()
 
     def session_summary(self) -> dict:
         return {

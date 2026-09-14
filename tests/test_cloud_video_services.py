@@ -9,7 +9,7 @@ from services.supabase_service import SupabaseService
 
 class CloudPlaybackTests(unittest.TestCase):
     def test_valid_cached_signed_url_is_reused(self):
-        supabase = Mock(bucket="videos", bucket_public=False)
+        supabase = Mock(bucket="videos", bucket_public=False, url="https://example.supabase.co")
         result = CloudPlaybackService(supabase).resolve_playback_url(
             {
                 "supabase_bucket": "videos",
@@ -24,7 +24,7 @@ class CloudPlaybackTests(unittest.TestCase):
         supabase.create_playback_url.assert_not_called()
 
     def test_expired_url_is_replaced_with_fresh_signed_url(self):
-        supabase = Mock(bucket="videos", bucket_public=False)
+        supabase = Mock(bucket="videos", bucket_public=False, url="https://example.supabase.co")
         supabase.create_playback_url.return_value = {
             "url": "https://example.supabase.co/fresh.mp4?token=new",
             "created_at": "2026-08-05T00:00:00+00:00",
@@ -43,7 +43,7 @@ class CloudPlaybackTests(unittest.TestCase):
         self.assertIn("fresh.mp4", result["url"])
 
     def test_local_path_is_never_returned(self):
-        supabase = Mock(bucket="videos", bucket_public=False)
+        supabase = Mock(bucket="videos", bucket_public=False, url="https://example.supabase.co")
         supabase.create_playback_url.return_value = {"url": r"C:\\videos\\clip.mp4"}
         result = CloudPlaybackService(supabase).resolve_playback_url(
             {"supabase_bucket": "videos", "supabase_path": "processed/clip.mp4", "mime_type": "video/mp4"}

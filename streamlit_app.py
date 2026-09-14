@@ -483,8 +483,11 @@ class DualCameraUIManager:
         return self.session
 
     def get_dashboard_state(self):
-        self.manager.process_live_ai(limit=2)
+        self.manager.process_preview_ai_async()
         frame, event = self.manager.detection_preview(getattr(self, "preview_role", "both"))
+        if getattr(self, "smooth_preview", True):
+            layout = {"both": "side_by_side", "front": "front_only", "rear": "rear_only"}
+            frame = self.manager.composite_preview(layout[getattr(self, "preview_role", "both")], height=480)
         status = self.manager.status()
         metrics = {
             "camera_fps": max((v.get("live_fps", 0) for v in status.values()), default=0.0),
@@ -1421,7 +1424,9 @@ def dash_cam_page(settings):
     with main_col:
         st.markdown('<div class="panel-title">Live Dash Cam</div>', unsafe_allow_html=True)
         preview_label = st.radio("Preview camera", ["Both cameras", "Main camera", "Rear / cabin"], horizontal=True, key="camera_preview_layout")
+        smooth_preview = st.toggle("Smooth live preview", value=True, help="Show the latest camera frames. Turn off to inspect boxes on exact AI sample frames.")
         if isinstance(camera_manager, DualCameraUIManager):
+            camera_manager.smooth_preview = smooth_preview
             camera_manager.preview_role = {"Both cameras": "both", "Main camera": "front", "Rear / cabin": "rear"}[preview_label]
         st.caption("Main: DroidCam · Cabin: computer webcam. Each feed shows its own detections. Preview saves no video; Start Recording saves each available camera.")
         frame_placeholder = st.empty()
@@ -1545,8 +1550,12 @@ def dash_cam_page(settings):
         )
 
     if active or preview_active:
-        @st.fragment(run_every=1 / settings["streamlit_preview_fps"])
+        @st.fragment(run_every=1 / (15 if getattr(camera_manager, "smooth_preview", False) else max(1, min(15, settings["streamlit_preview_fps"]))))
         def dash_fragment():
+            try:
+                AdminAuthService().decode_access_token(st.session_state.get("admin_token", ""))
+            except (ValueError, RuntimeError):
+                st.rerun(scope="app")
             current = st.session_state.get("camera_manager")
             if not current or not (current.active or getattr(current, "preview_active", False)):
                 return
@@ -1554,13 +1563,19 @@ def dash_cam_page(settings):
             if frame is not None:
                 frame_placeholder.image(frame, channels="BGR", width="stretch")
             elapsed = format_duration(current.elapsed) if current.active else "00:00"
-            render_static_hud(event, metrics, error, elapsed)
+            now = time.monotonic()
+            if now - st.session_state.get("preview_hud_updated_at", 0) >= 1:
+                render_static_hud(event, metrics, error, elapsed)
+                st.session_state.preview_hud_updated_at = now
             if error:
                 st.warning(f"AI scanner offline: {error}")
 
         dash_fragment()
     else:
         render_static_hud(latest_event, None, None, "00:00")
+    if isinstance(camera_manager, DualCameraUIManager) and (active or preview_active):
+        from services.driver_monitoring.performance_probe import render_performance_probe
+        render_performance_probe(camera_manager.manager)
     if st.session_state.get("last_record"):
         record = st.session_state.last_record
         st.success(f'Saved {record["filename"]}. {record.get("processing_status", "")}')
@@ -1609,6 +1624,7 @@ def video_matches_filter(video, selected_filter):
 def upload_processed_video_background(video_id, settings, task_id=None):
     service = VideoService()
     queue = UploadQueueService()
+    uploaded_media = False
     try:
         if task_id:
             queue.update_task(task_id, "compressing", 10, "Checking compressed processed video...")
@@ -1628,6 +1644,7 @@ def upload_processed_video_background(video_id, settings, task_id=None):
             settings.get("supabase_anon_key", ""),
             settings.get("supabase_bucket", "videos"),
         ).upload_processed_video(record)
+        uploaded_media = True
 
         if task_id:
             queue.update_task(task_id, "fetching_url", 55, "Fetching Supabase playback URL...")
@@ -1644,12 +1661,20 @@ def upload_processed_video_background(video_id, settings, task_id=None):
                 "playback_format": upload.get("upload_format") or Path(upload["object_name"]).suffix.lstrip("."),
             }
         )
-        if task_id:
-            queue.update_task(task_id, "syncing_firebase", 75, "Saving Firebase video document...")
-        firebase_result = firebase_service_from_settings(settings).push_video_link(
-            record,
-            upload["public_url"],
-        )
+        record["supabase_upload_status"] = "uploaded"
+        service.save(record)
+        from services.supabase_database_service import SupabaseDatabaseService
+        if SupabaseDatabaseService().enabled:
+            if task_id:
+                queue.update_task(task_id, "syncing_supabase", 75, "Saving Supabase video record...")
+            from services.supabase_sync_service import sync_video_record
+            database_result = sync_video_record(record)
+            firebase_result = {"configured": False, "backend": "supabase"}
+        else:
+            if task_id:
+                queue.update_task(task_id, "syncing_firebase", 75, "Saving Firebase video document...")
+            firebase_result = firebase_service_from_settings(settings).push_video_link(record, upload["public_url"])
+            database_result = firebase_result
 
         service.update_sync_fields(
             video_id,
@@ -1671,6 +1696,7 @@ def upload_processed_video_background(video_id, settings, task_id=None):
                 "synced" if firebase_result.get("configured") else "local_mode"
             ),
             firebase_document_result=firebase_result,
+            database_sync_result=database_result,
             firebase_push_url=settings.get("firebase_push_url", ""),
             firebase_push_result=firebase_result,
             sync_error=None,
@@ -1680,7 +1706,7 @@ def upload_processed_video_background(video_id, settings, task_id=None):
         if settings.get("notify_on_sync", True):
             notifier.notify(
                 "Processed video uploaded",
-                f'{record.get("filename")} was uploaded to Supabase and queued for Firebase push.',
+                f'{record.get("filename")} was uploaded and its cloud metadata was saved.',
                 level="success",
                 category="sync",
                 payload={
@@ -1694,8 +1720,8 @@ def upload_processed_video_background(video_id, settings, task_id=None):
         service.update_sync_fields(
             video_id,
             sync_status="Sync failed",
-            supabase_upload_status="failed",
-            supabase_upload_error=str(exc),
+            supabase_upload_status="uploaded" if uploaded_media else "failed",
+            supabase_upload_error=None if uploaded_media else str(exc),
             sync_error=str(exc),
         )
         if settings.get("notify_on_sync", True):
@@ -1908,18 +1934,24 @@ def cloud_video_matches_query(video, query):
 
 
 def render_cloud_videos(settings):
-    firebase = firebase_service_from_settings(settings)
-    status = firebase.status()
-    if not status["configured"] or status.get("mode") != "firestore":
-        st.info(status.get("message") or "Firebase sync unavailable. Local mode active.")
-        return
+    from services.supabase_database_service import SupabaseDatabaseService
+    cloud = SupabaseDatabaseService()
+    source_name = "Supabase" if cloud.enabled else "Supabase/Firebase"
     try:
-        docs = firebase.fetch_video_documents(limit=80)
-    except Exception as exc:
-        st.warning(f"Firebase sync unavailable. Local mode active. {exc}")
+        if cloud.enabled:
+            docs = cloud.list_videos(limit=80)
+        else:
+            firebase = firebase_service_from_settings(settings)
+            status = firebase.status()
+            if not status["configured"] or status.get("mode") != "firestore":
+                st.info(status.get("message") or "Cloud catalogue unavailable.")
+                return
+            docs = firebase.fetch_video_documents(limit=80)
+    except Exception:
+        st.warning("Cloud catalogue unavailable. Local videos remain available.")
         return
     if not docs:
-        st.info("No cloud video documents found in Firebase yet.")
+        st.info("No cloud video records found yet.")
         return
     query = st.text_input("Search cloud videos")
     docs = [doc for doc in docs if cloud_video_matches_query(doc, query)]
@@ -1940,7 +1972,7 @@ def render_cloud_videos(settings):
             with col:
                 with st.container(border=True):
                     st.markdown(f"#### {doc.get('title') or doc.get('video_id')}")
-                    st.caption(f"Source: Supabase/Firebase | {doc.get('created_at', '')[:19]}")
+                    st.caption(f"Source: {source_name} | {doc.get('created_at', '')[:19]}")
                     badge_text = "processed" if doc.get("processed") else "not processed"
                     st.write(f"**Status:** {doc.get('status', badge_text)}")
                     st.write(f"**Upload:** {doc.get('upload_status', 'unknown')}")
@@ -1948,7 +1980,9 @@ def render_cloud_videos(settings):
                     st.write(f"**Plates:** {', '.join(doc.get('plate_results', []) or []) or 'None'}")
                     if int(doc.get("incident_count", 0) or 0):
                         st.warning(f"{doc.get('incident_count')} incident(s)")
-                    url = doc.get("supabase_url")
+                    from services.cloud_playback_service import resolve_playback_url
+                    playback = resolve_playback_url(doc)
+                    url = playback.get("url") if playback.get("ok") else None
                     if url:
                         st.video(url)
                         st.link_button("Open Supabase video", url, width="stretch")
@@ -3002,6 +3036,63 @@ def settings_page(settings):
             st.info("No notifications yet.")
 
 
+def account_access_page():
+    from services.user_account_service import UserAccountService
+    import sqlite3
+    header("Welcome", "Roadwatch", "Sign in to your account or create a new one.")
+    sign_in, sign_up = st.tabs(["Sign in", "Create account"])
+    with sign_in:
+        with st.form("account-sign-in", clear_on_submit=True):
+            username = st.text_input("Username", max_chars=32)
+            password = st.text_input("Password", type="password")
+            submitted = st.form_submit_button("Sign in", type="primary")
+        if submitted:
+            try:
+                auth = AdminAuthService()
+                account = auth.authenticate(username, password)
+                if account:
+                    token = auth.issue_access_token(account)
+                    st.session_state.admin_token = token
+                    st.session_state.admin_authenticated = account["role"] in {"admin", "super_admin"}
+                    st.session_state.admin_account = account if st.session_state.admin_authenticated else None
+                    st.rerun()
+                else:
+                    st.error("Unable to sign in. Check your username and password, or try again in a minute.")
+            except (ValueError, RuntimeError, OSError, sqlite3.Error):
+                st.error("Sign-in is temporarily unavailable. Please contact the administrator.")
+    with sign_up:
+        st.caption("Create a personal account. Access to device cameras and recordings is restricted to administrators.")
+        with st.form("account-sign-up", clear_on_submit=True):
+            new_username = st.text_input("Choose a username", max_chars=32)
+            new_password = st.text_input("Create a password", type="password", help="8 characters or more. No capitals, numbers or symbols required.")
+            confirmation = st.text_input("Confirm password", type="password")
+            create = st.form_submit_button("Create account", type="primary")
+        if create:
+            if new_password != confirmation:
+                st.error("Passwords do not match.")
+            else:
+                try:
+                    UserAccountService().register(new_username, new_password)
+                    st.success("Account created. Open Sign in and enter your new credentials.")
+                except ValueError as exc:
+                    st.error(str(exc))
+                except (OSError, sqlite3.Error):
+                    st.error("Account creation is temporarily unavailable. Please try again later.")
+                except RuntimeError:
+                    st.error("Account creation is temporarily unavailable. Please contact the administrator.")
+
+
+def user_account_page(principal):
+    header("Your account", "Welcome to Roadwatch", "You are signed in.")
+    st.text("Username: " + principal["username"])
+    st.info("Your account is ready. Device cameras, recordings and administration are restricted to administrators.")
+    if st.button("Sign out", key="user-sign-out"):
+        st.session_state.pop("admin_token", None)
+        st.session_state.admin_authenticated = False
+        st.session_state.admin_account = None
+        st.rerun()
+
+
 def admin_login_page():
     header(
         "Admin access",
@@ -3019,6 +3110,7 @@ def admin_login_page():
             if admin:
                 st.session_state.admin_authenticated = True
                 st.session_state.admin_account = admin
+                st.session_state.admin_token = auth.issue_access_token(admin)
                 st.session_state.admin_login_redirect = "Admin Dashboard"
                 st.success("Admin access granted.")
                 st.rerun()
@@ -3147,6 +3239,7 @@ def roadwatch_home_page(service, settings):
         if st.session_state.get("admin_authenticated"):
             admin_dashboard_page(service, settings)
             if st.button("Sign out admin", key="home-admin-signout", width="stretch"):
+                st.session_state.pop("admin_token", None)
                 st.session_state.admin_authenticated = False
                 st.session_state.admin_account = None
                 st.rerun()
@@ -3162,9 +3255,29 @@ def main():
         initial_sidebar_state="expanded",
     )
     styles()
+    # Gate before cameras, GPS, storage services, or page handlers start.
+    try:
+        principal = AdminAuthService().decode_access_token(st.session_state.get("admin_token", ""))
+    except (ValueError, RuntimeError):
+        st.session_state.admin_authenticated = False
+        st.session_state.admin_account = None
+        account_access_page()
+        return
+    if principal["role"] == "user":
+        st.session_state.admin_authenticated = False
+        st.session_state.admin_account = None
+        user_account_page(principal)
+        return
+    if principal["role"] not in {"admin", "super_admin"}:
+        st.error("This device console requires an administrator account.")
+        return
+    st.session_state.admin_authenticated = True
+    st.session_state.admin_account = principal
     settings = load_settings()
     if not privacy_permission_gate(settings):
         return
+    from services.supabase_sync_service import ensure_cloud_sync
+    ensure_cloud_sync()
     ensure_background(settings, st.session_state.get("camera_manager"))
     ensure_location_tracking(settings)
     service = VideoService()
@@ -3218,6 +3331,7 @@ def main():
     sidebar_status(settings)
     if admin_route and st.session_state.get("admin_authenticated"):
         if st.sidebar.button("Sign out admin", width="stretch"):
+            st.session_state.pop("admin_token", None)
             st.session_state.admin_authenticated = False
             st.session_state.admin_account = None
             st.session_state.main_navigation = "Admin Login"

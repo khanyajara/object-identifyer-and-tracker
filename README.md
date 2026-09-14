@@ -1,5 +1,15 @@
 # Roadwatch Vision Recorder
 
+Supabase accounts and app-record sync: apply the [SQL migration](supabase/migrations/20260914_roadwatch.sql), then follow [activation steps](docs/supabase_setup.md). Activation is explicit so existing local accounts continue working until the schema and migration pass.
+
+The entry page offers **Sign in** and **Create account**. New users choose a username and confirm a password (at least 8 characters, no required capitals/numbers/symbols, at most 72 UTF-8 bytes), then sign in. Accounts persist in a Git-ignored local SQLite database under `data/accounts/`; only bcrypt password hashes are saved. Registration grants a personal account page, not access to shared cameras, recordings, settings or administrative APIs. Email verification, password recovery and per-user stream sharing are not implemented.
+
+Security update: sign-in requires a configured JWT secret; the device console additionally requires a configured administrator account, and binds to `127.0.0.1` by default. Existing administrator credentials use the same Sign in form. See [security review and streaming boundaries](docs/security_review.md) before any public deployment.
+
+Smooth live preview displays current camera frames at a target 15 refreshes per second, with AI in a bounded background batch. Switch it off to inspect detection boxes on their exact sampled frames. Recorded video encoding settings are unchanged. Live throughput needs hardware testing.
+
+Stationary fatigue calibration preparation: after closing the app to release its camera, run `python scripts/collect_driver_calibration.py --camera CABIN_INDEX`. Follow terminal prompts for five labelled poses. It saves scalar CSV samples and threshold suggestions under ignored `data/calibration/`, never images, and never enables thresholds automatically. Recognition thresholds require separate same-person/different-person validation; this collector does not train identity models.
+
 Roadwatch Vision Recorder is a standalone Python Streamlit app that turns a local webcam into a dashcam-style AI recorder. It records smooth original camera video, runs object detection and tracking, scans plates when possible, saves detection metadata under each recording, and generates an annotated processed video after recording stops.
 
 The app is designed to work beside an existing dashcam platform. The existing platform can stay as the main dashboard, while this Python app handles camera capture, AI analysis, video storage, and metadata export/sync.

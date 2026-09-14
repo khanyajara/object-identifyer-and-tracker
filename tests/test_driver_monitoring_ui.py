@@ -14,7 +14,7 @@ class DriverNavigationTests(unittest.TestCase):
         self.addCleanup(path.unlink, missing_ok=True)
         return AppTest.from_file(str(path), default_timeout=default_timeout)
 
-    def test_public_and_admin_navigation_survive_reruns(self):
+    def test_login_gate_and_admin_navigation_survive_reruns(self):
         script = '''
 import streamlit as st
 from unittest.mock import patch
@@ -22,10 +22,15 @@ import streamlit_app as app
 from services.driver_monitoring.runtime import DriverMonitoringRuntime
 from services.driver_monitoring.config import MonitoringConfig
 runtime = st.session_state.get("test_runtime")
+def decode(token):
+    if token != "test-authenticated":
+        raise ValueError("Not authenticated")
+    return {"username": "test-admin", "role": "admin"}
 if runtime is None:
     runtime = DriverMonitoringRuntime(MonitoringConfig())
     st.session_state.test_runtime = runtime
 with patch.object(app, "load_settings", return_value=dict(app.DEFAULTS)), \
+     patch.object(app.AdminAuthService, "decode_access_token", side_effect=decode), \
      patch.object(app, "privacy_permission_gate", return_value=True), \
      patch.object(app, "ensure_location_tracking"), \
      patch.object(app, "ensure_background") as automatic_start, \
@@ -37,11 +42,12 @@ with patch.object(app, "load_settings", return_value=dict(app.DEFAULTS)), \
      patch("services.driver_monitoring.ui.get_runtime", return_value=runtime), \
      patch.object(runtime.service.store, "list_drivers", return_value=[]):
     app.main()
-    assert automatic_start.call_count == 1
+    assert automatic_start.call_count == (1 if st.session_state.get("admin_token") else 0)
 '''
         app=self.app_from_script(script).run()
         self.assertEqual(len(app.exception),0)
-        self.assertNotIn("Drivers",app.sidebar.radio[0].options)
+        self.assertEqual(len(app.sidebar.radio), 0)
+        app.session_state.admin_token="test-authenticated"
         app.session_state.admin_authenticated=True
         app.session_state.admin_account={"username":"test-admin","role":"admin"}
         app.run()

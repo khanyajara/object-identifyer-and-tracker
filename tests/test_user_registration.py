@@ -1,0 +1,97 @@
+import json
+import tempfile
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+from services.auth_service import AdminAuthService, hash_password
+from services.user_account_service import UserAccountService
+
+
+class RegistrationTests(unittest.TestCase):
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.path = Path(self.directory.name) / "users.sqlite3"
+        self.db_patch = patch("services.user_account_service.ACCOUNT_DB", self.path)
+        self.db_patch.start()
+        self.addCleanup(self.db_patch.stop)
+        self.env = patch.dict("os.environ", {"ROADWATCH_ADMIN_ACCOUNTS": "[]", "ROADWATCH_JWT_SECRET": "s" * 40})
+        self.env.start()
+        self.addCleanup(self.env.stop)
+        self.store = UserAccountService()
+        self.password = "a-long-test-password"
+
+    def test_registration_persists_hash_and_authenticates_as_user(self):
+        self.store.register(" New.User ", self.password)
+        self.assertNotIn(self.password.encode(), self.path.read_bytes())
+        auth = AdminAuthService()
+        account = auth.authenticate("NEW.USER", self.password)
+        self.assertEqual(account, {"username": "new.user", "role": "user"})
+        self.assertEqual(auth.decode_access_token(auth.issue_access_token(account)), account)
+        self.assertIsNone(auth.authenticate("new.user", "incorrect"))
+
+    def test_duplicate_and_reserved_names_rejected(self):
+        self.store.register("newuser", self.password)
+        with self.assertRaises(ValueError):
+            self.store.register("NEWUSER", self.password)
+        with patch.dict("os.environ", {"ROADWATCH_ADMIN_ACCOUNTS": json.dumps([{"username": "Admin", "password_hash": hash_password(self.password), "role": "admin"}])}):
+            with self.assertRaises(ValueError):
+                self.store.register("admin", self.password)
+
+    def test_invalid_passwords_and_username_rejected(self):
+        for username, password in (("../bad", self.password), ("newuser", "short"), ("newuser", "a" * 73)):
+            with self.assertRaises(ValueError):
+                self.store.register(username, password)
+        self.assertFalse(self.path.exists())
+
+    def test_simple_eight_character_password_is_accepted(self):
+        self.store.register("simpleuser", "abcdefgh")
+        self.assertIsNotNone(AdminAuthService().authenticate("simpleuser", "abcdefgh"))
+
+    def test_registered_user_cannot_access_device_api(self):
+        from fastapi.testclient import TestClient
+        from api_app import app
+        account = self.store.register("newuser", self.password)
+        token = AdminAuthService().issue_access_token(account)
+        with TestClient(app) as client:
+            for method, path in (("get", "/videos"), ("get", "/health"), ("post", "/videos/sync")):
+                response = getattr(client, method)(path, headers={"Authorization": "Bearer " + token})
+                self.assertEqual(response.status_code, 403)
+
+    def test_signup_and_signin_forms(self):
+        from streamlit.testing.v1 import AppTest
+        source = Path(self.directory.name) / "app.py"
+        source.write_text('''
+import streamlit_app as app
+app.main()
+''', encoding="utf-8")
+        app = AppTest.from_file(str(source), default_timeout=40).run()
+        self.assertEqual(len(app.exception), 0)
+        def field(label):
+            return next(item for item in app.text_input if item.label == label)
+        def button(label):
+            return next(item for item in app.button if item.label == label)
+        field("Choose a username").set_value("newuser")
+        field("Create a password").set_value(self.password)
+        field("Confirm password").set_value("different-password")
+        button("Create account").click().run()
+        self.assertTrue(any("do not match" in item.value for item in app.error))
+        self.assertIsNone(self.store.find("newuser"))
+        field("Choose a username").set_value("newuser")
+        field("Create a password").set_value(self.password)
+        field("Confirm password").set_value(self.password)
+        button("Create account").click().run()
+        self.assertTrue(any("Account created" in item.value for item in app.success))
+        field("Username").set_value("newuser")
+        field("Password").set_value(self.password)
+        with patch("streamlit_app.ensure_background") as camera, patch("streamlit_app.VideoService") as videos:
+            button("Sign in").click().run()
+            self.assertEqual(len(app.exception), 0)
+            self.assertFalse(app.session_state.admin_authenticated)
+            self.assertEqual(len(app.sidebar.radio), 0)
+            camera.assert_not_called()
+            videos.assert_not_called()
+            self.assertTrue(any("Your account is ready" in item.value for item in app.info))
+            button("Sign out").click().run()
+        self.assertTrue(any(item.label == "Create account" for item in app.button))
