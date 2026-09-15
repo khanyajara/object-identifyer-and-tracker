@@ -16,11 +16,12 @@ Keep your existing secrets. Do not commit credentials to Git.
 1. Open the deployed HTTPS site on the computer running the DroidCam client.
 2. Open Dash Cam and allow browser camera permission if prompted. Cabin preview
    starts automatically using the browser's default camera.
-3. No second camera is required. To add one, expand Road camera (optional),
-   select a different device and press START. If the default cabin device is
-   wrong, enable Choose a different cabin camera under Camera options.
+3. The default browser camera supplies the cabin feed in the existing Live Dash
+   Cam preview. There is no separate camera setup panel. To change the default
+   device, use your browser's camera permissions/settings for this site.
 4. Press Start Recording to save video, then Stop Recording to finalize it.
-   Close Preview stops camera streams; Open / Retry Preview starts them again.
+   Close Preview stops the camera stream; Open / Retry Preview creates a fresh
+   connection, including when the previous attempt stalled.
 
 Keep the page open while recording. A disconnected stream closes its video
 writer; return to the page and press Stop Recording to finish processing.

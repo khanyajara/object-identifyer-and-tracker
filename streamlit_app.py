@@ -459,7 +459,7 @@ class DualCameraUIManager:
     def start_preview(self):
         if not self.manager.start_preview():
             if self.manager.browser_mode:
-                raise RuntimeError("Waiting for browser camera frames. Allow camera access; use Camera options if the default device is unavailable.")
+                raise RuntimeError("Waiting for browser camera frames. Allow camera access; check the camera permission and default device in your browser settings.")
             raise RuntimeError("No camera is supplying frames. Connect the computer webcam or DroidCam client, then retry Preview.")
 
     def close_preview(self):
@@ -1358,12 +1358,7 @@ def dash_cam_page(settings):
         unsafe_allow_html=True,
     )
 
-    if browser_mode:
-        from services.browser_camera_ui import render_browser_cameras
-        render_browser_cameras(camera_manager.manager)
-        preview_active = camera_manager.preview_active
-        st.caption("Browser capture uses this session's cameras. Driver identity and fatigue monitoring are currently available in local capture mode.")
-    else:
+    if not browser_mode:
         driver_status()
     preview_controls = st.columns([1, 1, 3])
     with preview_controls[0]:
@@ -1372,7 +1367,10 @@ def dash_cam_page(settings):
                 if not isinstance(camera_manager, DualCameraUIManager):
                     camera_manager = DualCameraUIManager(settings, cached_model(settings["model_name"]), cached_ocr() if settings["enable_ocr"] else None)
                 st.session_state.camera_manager = camera_manager
-                if browser_mode and not st.session_state.get("browser_preview_enabled", True):
+                if browser_mode:
+                    from uuid import uuid4
+                    camera_manager.close_preview()
+                    camera_manager.manager.browser_widget_id = uuid4().hex
                     st.session_state.browser_preview_enabled = True
                     st.rerun()
                 camera_manager.start_preview()
@@ -1457,8 +1455,12 @@ def dash_cam_page(settings):
             camera_manager.smooth_preview = smooth_preview
             camera_manager.preview_role = {"Both cameras": "both", "Main camera": "front", "Rear / cabin": "rear"}[preview_label]
         st.caption("Each connected browser camera shows its own detections. Start Recording saves each available camera." if browser_mode else "Main: DroidCam · Cabin: computer webcam. Each feed shows its own detections. Preview saves no video; Start Recording saves each available camera.")
+        if browser_mode:
+            from services.browser_camera_ui import render_browser_cameras
+            render_browser_cameras(camera_manager.manager)
+            preview_active = camera_manager.preview_active
         frame_placeholder = st.empty()
-        if not active and not preview_active:
+        if not active and not preview_active and not browser_mode:
             frame_placeholder.markdown(
                 f"""
                 <div class="camera-frame">
@@ -1591,7 +1593,7 @@ def dash_cam_page(settings):
             if frame is not None:
                 frame_placeholder.image(frame, channels="BGR", width="stretch")
             elif browser_mode:
-                frame_placeholder.info("Waiting for live browser camera frames.")
+                frame_placeholder.empty()
             elapsed = format_duration(current.elapsed) if current.active else "00:00"
             now = time.monotonic()
             if now - st.session_state.get("preview_hud_updated_at", 0) >= 1:
