@@ -1,5 +1,9 @@
 # Streamlit Cloud startup: OpenCV ImportError
 
+## Confirmed follow-up from deployment logs
+
+The supplied deployment log confirms Debian Trixie installed `libgl1` successfully. Startup then failed with `ImportError: libgthread-2.0.so.0: cannot open shared object file`. The root `packages.txt` now also includes `libglib2.0-0t64`, which supplies that library on Trixie. See the [Debian package file list](https://packages.debian.org/trixie/amd64/libglib2.0-0t64/filelist). Rebuild and verify startup after this additional dependency is installed; successful recovery is not yet confirmed.
+
 The reported traceback fails while loading OpenCV's native module, before application startup. The exception text is redacted, so the missing library cannot be identified conclusively without the deployment log.
 
 This repository uses `opencv-python`, which is also required by Ultralytics. The root `packages.txt` now includes `libgl1` so Community Cloud installs the Linux library needed for `libGL.so.1`. This follows [Streamlit's OpenCV guidance](https://docs.streamlit.io/knowledge-base/dependencies/libgl).
