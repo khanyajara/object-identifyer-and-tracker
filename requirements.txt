@@ -1,5 +1,6 @@
 streamlit==1.58.0
 ultralytics==8.4.62
+# Ultralytics requires this OpenCV distribution. Linux runtime libraries are in packages.txt.
 opencv-python==4.13.0.92
 pandas==3.0.3
 numpy==2.4.6
