@@ -15,6 +15,51 @@ from services.browser_camera_ui import rtc_configuration
 
 
 class BrowserCameraTests(unittest.TestCase):
+    def test_refresh_starts_only_ready_idle_channels(self):
+        from services.browser_camera_ui import refresh_browser_capture
+        manager = Mock()
+        ready, waiting, live = Mock(), Mock(), Mock()
+        ready.browser_source.ready, ready.is_live = True, False
+        waiting.browser_source.ready, waiting.is_live = False, False
+        live.browser_source.ready, live.is_live = True, True
+        manager.channels = {"ready": ready, "waiting": waiting, "live": live}
+        refresh_browser_capture(manager)
+        ready.ensure_capture.assert_called_once()
+        self.assertTrue(ready.preview_ai_enabled)
+        waiting.ensure_capture.assert_not_called()
+        live.ensure_capture.assert_not_called()
+
+    def test_dashboard_tick_connects_without_requesting_app_rerun(self):
+        # Exercise the actual nested dashboard tick with UI/storage boundaries mocked.
+        import ast
+        tree = ast.parse(Path("streamlit_app.py").read_text(encoding="utf-8"))
+        function = next(n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == "dash_fragment")
+        function.decorator_list = []
+        module = ast.fix_missing_locations(ast.Module(body=[function], type_ignores=[]))
+        current = Mock(active=False, preview_active=False)
+        current.manager.is_recording = False
+        st = Mock()
+        class State(dict):
+            __setattr__ = dict.__setitem__
+        st.session_state = State(camera_manager=current, admin_token="test")
+        placeholder = Mock()
+        namespace = {"st": st, "AdminAuthService": Mock(), "frame_placeholder": placeholder,
+                     "browser_mode": True, "time": time, "format_duration": str,
+                     "render_static_hud": Mock()}
+        exec(compile(module, "streamlit_app.py", "exec"), namespace)
+        with patch("services.browser_camera_ui.refresh_browser_capture") as refresh:
+            namespace["dash_fragment"]()
+            refresh.assert_called_once_with(current.manager)
+            current.preview_active = True
+            current.get_dashboard_state.return_value = (np.zeros((2,2,3)), {}, {}, None)
+            namespace["dash_fragment"]()
+            placeholder.image.assert_called_once()
+            st.rerun.assert_not_called()
+            namespace["AdminAuthService"].return_value.decode_access_token.side_effect = ValueError("expired")
+            namespace["dash_fragment"]()
+            st.error.assert_called_once()
+            st.rerun.assert_not_called()
+
     def test_cloud_mode_and_local_override(self):
         with patch("core.capture_mode.platform.system", return_value="Linux"), patch("core.capture_mode.Path.glob", return_value=iter([])), patch.dict(os.environ, {"CAMERA_INPUT_MODE": "auto"}):
             self.assertTrue(browser_capture_enabled())

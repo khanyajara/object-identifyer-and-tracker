@@ -1579,15 +1579,24 @@ def dash_cam_page(settings):
             unsafe_allow_html=True,
         )
 
-    if active or preview_active:
+    if browser_mode or active or preview_active:
         @st.fragment(run_every=1 / (15 if getattr(camera_manager, "smooth_preview", False) else max(1, min(15, settings["streamlit_preview_fps"]))))
         def dash_fragment():
             try:
                 AdminAuthService().decode_access_token(st.session_state.get("admin_token", ""))
             except (ValueError, RuntimeError):
-                st.rerun(scope="app")
+                frame_placeholder.empty()
+                st.error("Session expired. Reload the page to sign in again.")
+                return
             current = st.session_state.get("camera_manager")
+            if browser_mode and current:
+                from services.browser_camera_ui import refresh_browser_capture
+                refresh_browser_capture(current.manager)
+                if current.manager.is_recording and not any(channel.is_recording for channel in current.manager.channels.values()):
+                    st.warning("Camera stream ended. Press Stop Recording to finish processing the recorded portion.")
             if not current or not (current.active or getattr(current, "preview_active", False)):
+                if browser_mode:
+                    frame_placeholder.empty()
                 return
             frame, event, metrics, error = current.get_dashboard_state()
             if frame is not None:

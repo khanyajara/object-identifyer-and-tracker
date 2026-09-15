@@ -63,15 +63,10 @@ def render_browser_cameras(manager):
     # camera-selection panel. The normal dashboard renders received frames.
     render_feed("rear", enabled)
 
-    @st.fragment(run_every=1)
-    def connection_status():
-        previous = manager.preview_active
-        for channel in manager.channels.values():
-            if channel.browser_source.ready and not channel.is_live:
-                channel.preview_ai_enabled = True
-                channel.ensure_capture()
-        if manager.is_recording and not any(channel.is_recording for channel in manager.channels.values()):
-            st.warning("Camera streams ended. Press Stop Recording to finish processing the recorded portion.")
-        if previous != manager.preview_active:
-            st.rerun(scope="app")
-    connection_status()
+
+def refresh_browser_capture(manager):
+    """Advance capture from the dashboard's existing timer, without app reruns."""
+    for channel in manager.channels.values():
+        if channel.browser_source.ready and not channel.is_live:
+            channel.preview_ai_enabled = True
+            channel.ensure_capture()
