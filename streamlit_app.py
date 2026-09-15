@@ -158,7 +158,7 @@ DEFAULTS = {
     "rear_camera_ai_enabled": True,
     "log_flush_interval_seconds": 5,
     "model_name": "yolov8n.pt",
-    "confidence": 0.45,
+    "confidence": 0.88,
     "performance_mode": "balanced",
     "yolo_image_size": 416,
     "enable_ocr": True,
@@ -209,6 +209,13 @@ DEFAULTS = {
 }
 
 
+def normalize_detection_settings(settings):
+    from core.detection_policy import detection_confidence
+    settings["confidence"] = detection_confidence(settings.get("confidence"))
+    settings["enable_tracking"] = True
+    return settings
+
+
 def load_settings():
     env_settings = {}
     for env_key, setting_key in ENV_SETTING_KEYS.items():
@@ -224,13 +231,14 @@ def load_settings():
             stored_settings = json.loads(SETTINGS_PATH.read_text("utf-8"))
             for key in SENSITIVE_SETTING_KEYS:
                 stored_settings.pop(key, None)
-            return {**DEFAULTS, **stored_settings, **env_settings}
+            return normalize_detection_settings({**DEFAULTS, **stored_settings, **env_settings})
         except (OSError, json.JSONDecodeError):
             pass
-    return {**DEFAULTS, **env_settings}
+    return normalize_detection_settings({**DEFAULTS, **env_settings})
 
 
 def save_settings(settings):
+    settings = normalize_detection_settings(dict(settings))
     persistent_settings = {
         key: value
         for key, value in settings.items()
@@ -1487,7 +1495,7 @@ def dash_cam_page(settings):
         telemetry_box.markdown(
             f"""
             <div class="metric-grid" style="grid-template-columns:1fr">
-              <div class="metric-card"><div class="metric-label">AI Telemetry</div><div class="list-row"><span>Model</span><span>YOLOv8</span></div><div class="list-row"><span>Tracking</span><span>{'Deep SORT' if settings.get("enable_tracking") else 'Sampled'}</span></div><div class="list-row"><span>OCR</span><span>{'Active' if settings.get("enable_ocr") else 'Off'}</span></div><div class="list-row"><span>Frame Rate</span><span>{metrics.get("camera_fps", 0):.1f} FPS</span></div><div class="list-row"><span>Processing</span><span>{metrics.get("processing_time_ms", 0):.0f} ms</span></div></div>
+              <div class="metric-card"><div class="metric-label">AI Telemetry</div><div class="list-row"><span>Model</span><span>YOLOv8</span></div><div class="list-row"><span>Tracking</span><span>{'Enabled' if settings.get("enable_tracking") else 'Sampled'}</span></div><div class="list-row"><span>OCR</span><span>{'Active' if settings.get("enable_ocr") else 'Off'}</span></div><div class="list-row"><span>Frame Rate</span><span>{metrics.get("camera_fps", 0):.1f} FPS</span></div><div class="list-row"><span>Processing</span><span>{metrics.get("processing_time_ms", 0):.0f} ms</span></div></div>
               <div class="metric-card"><div class="metric-label">GPS Status</div><div class="metric-value" style="font-size:1rem;color:{'#22c55e' if gps["status"] == 'Active' else '#facc15'}">{gps["status"]}</div><div style="margin-top:.8rem;color:#dffcff">{gps.get("latitude") or "Latitude unavailable"}<br>{gps.get("longitude") or "Longitude unavailable"}<br><span class="muted">{esc(gps.get("address") or gps.get("message"))}</span></div><div class="list-row"><span>Source</span><span>{esc(gps.get("source") or "Unavailable")}</span></div><div class="list-row"><span>Accuracy</span><span>{esc(str(gps.get("accuracy_m") or "Unknown"))} m</span></div><div class="metric-spark"></div></div>
             </div>
             """,
@@ -2849,8 +2857,9 @@ def settings_page(settings):
                 index=list(PERFORMANCE_MODES).index(settings["performance_mode"]),
             )
             interval = st.slider("AI processing interval seconds", 0.25, 5.0, float(settings["ai_process_interval_seconds"]), 0.25)
-            confidence = st.slider("YOLO confidence", 0.1, 0.9, float(settings["confidence"]), 0.05)
-            tracking = st.toggle("Enable tracking", settings["enable_tracking"])
+            confidence = st.slider("Minimum object confidence", 0.88, 1.0, float(settings["confidence"]), 0.01, help="Filters model predictions; this is not a measured accuracy percentage.")
+            tracking = True
+            st.caption("Object tracking is enabled to retain IDs and reduce duplicate counts.")
             ocr = st.toggle("Enable OCR", settings["enable_ocr"])
             movement = st.toggle("Enable movement detection", settings.get("enable_movement", True))
             snapshots = st.toggle("Save snapshots", settings["save_snapshots"])
@@ -3061,7 +3070,7 @@ def account_access_page():
             except (ValueError, RuntimeError, OSError, sqlite3.Error):
                 st.error("Sign-in is temporarily unavailable. Please contact the administrator.")
     with sign_up:
-        st.caption("Create a personal account. Access to device cameras and recordings is restricted to administrators.")
+        st.caption("Create a personal account to use cameras, videos, missing-person and stolen-vehicle reporting, and emergency tools.")
         with st.form("account-sign-up", clear_on_submit=True):
             new_username = st.text_input("Choose a username", max_chars=32)
             new_password = st.text_input("Create a password", type="password", help="8 characters or more. No capitals, numbers or symbols required.")
@@ -3085,7 +3094,7 @@ def account_access_page():
 def user_account_page(principal):
     header("Your account", "Welcome to Roadwatch", "You are signed in.")
     st.text("Username: " + principal["username"])
-    st.info("Your account is ready. Device cameras, recordings and administration are restricted to administrators.")
+    st.info("Use the sidebar to access cameras, videos, reports, emergency contacts and your vehicle profile.")
     if st.button("Sign out", key="user-sign-out"):
         st.session_state.pop("admin_token", None)
         st.session_state.admin_authenticated = False
@@ -3107,7 +3116,7 @@ def admin_login_page():
         password = st.text_input("Admin password", type="password")
         if st.form_submit_button("Enter admin dashboard", type="primary"):
             admin = auth.authenticate(username, password)
-            if admin:
+            if admin and admin["role"] in {"admin", "super_admin"}:
                 st.session_state.admin_authenticated = True
                 st.session_state.admin_account = admin
                 st.session_state.admin_token = auth.issue_access_token(admin)
@@ -3216,7 +3225,7 @@ def admin_management_page():
     header(
         "Admin controls",
         "Admin Management",
-        "Local admin management summary. Add external user management later when authentication is introduced.",
+        "Review administrator access. Administrator roles are provisioned through ROADWATCH_ADMIN_ACCOUNTS in the server environment.",
     )
     auth = AdminAuthService()
     current_admin = st.session_state.get("admin_account") or {}
@@ -3224,12 +3233,14 @@ def admin_management_page():
         [
             ("Admin accounts", len(auth.list_admins()), "Hashed local credentials"),
             ("Current admin", current_admin.get("username", "Unknown"), current_admin.get("role", "")),
-            ("User login", "Disabled", "Normal users enter directly"),
+            ("User login", "Enabled", "Personal accounts with client access"),
             ("Devices", 1, "This recorder"),
-            ("Permissions", "Local", "No remote roles yet"),
+            ("Permissions", "Role based", "Admin tools require admin or super_admin"),
         ]
     )
 
+    st.dataframe(pd.DataFrame(auth.list_admins()), width="stretch", hide_index=True)
+    st.caption("Standard accounts cannot grant administrator privileges. Update administrator roles in the server configuration; changed roles invalidate existing tokens.")
 
 def roadwatch_home_page(service, settings):
     user_tab, admin_tab = st.tabs(["User Recorder", "Admin"])
@@ -3263,16 +3274,8 @@ def main():
         st.session_state.admin_account = None
         account_access_page()
         return
-    if principal["role"] == "user":
-        st.session_state.admin_authenticated = False
-        st.session_state.admin_account = None
-        user_account_page(principal)
-        return
-    if principal["role"] not in {"admin", "super_admin"}:
-        st.error("This device console requires an administrator account.")
-        return
-    st.session_state.admin_authenticated = True
-    st.session_state.admin_account = principal
+    st.session_state.admin_authenticated = principal["role"] in {"admin", "super_admin"}
+    st.session_state.admin_account = principal if st.session_state.admin_authenticated else None
     settings = load_settings()
     if not privacy_permission_gate(settings):
         return
@@ -3282,11 +3285,8 @@ def main():
     ensure_location_tracking(settings)
     service = VideoService()
     sidebar_brand("Dash Cam")
-    admin_query = str(st.query_params.get("admin", "")).lower()
-    admin_route = (
-        admin_query in {"1", "true", "yes"}
-        or st.session_state.get("admin_authenticated", False)
-    )
+    # Only the verified token role selects the administrative workspace.
+    admin_route = st.session_state.admin_authenticated
     public_pages = [
         "Roadwatch",
         "Videos",
@@ -3294,7 +3294,8 @@ def main():
         "Report Missing Person",
         "Emergency Contacts",
         "Vehicle Profile",
-        "Settings",
+        "GPS Tracking",
+        "Your Account",
     ]
     admin_pages = [
         "Admin Dashboard",
@@ -3329,13 +3330,12 @@ def main():
         label_visibility="collapsed",
     )
     sidebar_status(settings)
-    if admin_route and st.session_state.get("admin_authenticated"):
-        if st.sidebar.button("Sign out admin", width="stretch"):
-            st.session_state.pop("admin_token", None)
-            st.session_state.admin_authenticated = False
-            st.session_state.admin_account = None
-            st.session_state.main_navigation = "Admin Login"
-            st.rerun()
+    if st.sidebar.button("Sign out", width="stretch"):
+        st.session_state.pop("admin_token", None)
+        st.session_state.admin_authenticated = False
+        st.session_state.admin_account = None
+        st.session_state.pop("main_navigation", None)
+        st.rerun()
     system_top_bar(settings)
     upload_status_widget()
     {
@@ -3343,7 +3343,8 @@ def main():
         "Admin Dashboard": lambda: admin_dashboard_page(service, settings),
         "Drivers": lambda: drivers_page(settings),
         "Users / Devices": admin_management_page,
-        "Roadwatch": lambda: roadwatch_home_page(service, settings),
+        "Roadwatch": lambda: dash_cam_page(settings),
+        "Your Account": lambda: user_account_page(principal),
         "Live Dash Cam": lambda: dash_cam_page(settings),
         "Live Recorder": lambda: dash_cam_page(settings),
         "Videos": lambda: videos_page(service, settings),

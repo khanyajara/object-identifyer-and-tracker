@@ -65,14 +65,14 @@ def issue_token(
 
 @app.get("/health")
 def health(
-    _: Annotated[dict, Depends(require_roles("viewer", "operator", "admin", "super_admin"))],
+    _: Annotated[dict, Depends(require_roles("user", "viewer", "operator", "admin", "super_admin"))],
 ):
     return {"status": "ok"}
 
 
 @app.get("/videos")
 def videos(
-    _: Annotated[dict, Depends(require_roles("viewer", "operator", "admin", "super_admin"))],
+    _: Annotated[dict, Depends(require_roles("user", "viewer", "operator", "admin", "super_admin"))],
 ):
     return service.list_videos()
 
@@ -80,7 +80,7 @@ def videos(
 @app.get("/videos/{video_id}")
 def video(
     video_id: str,
-    _: Annotated[dict, Depends(require_roles("viewer", "operator", "admin", "super_admin"))],
+    _: Annotated[dict, Depends(require_roles("user", "viewer", "operator", "admin", "super_admin"))],
 ):
     try:
         return service.load(video_id)

@@ -49,15 +49,19 @@ class RegistrationTests(unittest.TestCase):
         self.store.register("simpleuser", "abcdefgh")
         self.assertIsNotNone(AdminAuthService().authenticate("simpleuser", "abcdefgh"))
 
-    def test_registered_user_cannot_access_device_api(self):
+    def test_registered_user_can_read_videos_but_cannot_ingest_sync(self):
         from fastapi.testclient import TestClient
         from api_app import app
         account = self.store.register("newuser", self.password)
         token = AdminAuthService().issue_access_token(account)
         with TestClient(app) as client:
-            for method, path in (("get", "/videos"), ("get", "/health"), ("post", "/videos/sync")):
+            for method, path in (("get", "/videos"), ("get", "/health")):
                 response = getattr(client, method)(path, headers={"Authorization": "Bearer " + token})
-                self.assertEqual(response.status_code, 403)
+                self.assertEqual(response.status_code, 200)
+            response = client.get("/videos/missing-test-video", headers={"Authorization": "Bearer " + token})
+            self.assertIn(response.status_code, {404, 422})
+            response = client.post("/videos/sync", json={"video_id": "test"}, headers={"Authorization": "Bearer " + token})
+            self.assertEqual(response.status_code, 403)
 
     def test_signup_and_signin_forms(self):
         from streamlit.testing.v1 import AppTest
@@ -85,13 +89,50 @@ app.main()
         self.assertTrue(any("Account created" in item.value for item in app.success))
         field("Username").set_value("newuser")
         field("Password").set_value(self.password)
-        with patch("streamlit_app.ensure_background") as camera, patch("streamlit_app.VideoService") as videos:
+        with patch("streamlit_app.ensure_background") as camera, patch("streamlit_app.VideoService") as videos, \
+             patch("streamlit_app.privacy_permission_gate", return_value=True), \
+             patch("services.supabase_sync_service.ensure_cloud_sync"), \
+             patch("streamlit_app.ensure_location_tracking"), \
+             patch("streamlit_app.sidebar_status"), patch("streamlit_app.system_top_bar"), \
+             patch("streamlit_app.upload_status_widget"), patch("streamlit_app.dash_cam_page") as recorder, \
+             patch("streamlit_app.videos_page") as video_page, \
+             patch("streamlit_app.missing_person_page") as missing, \
+             patch("streamlit_app.stolen_vehicle_page") as stolen:
             button("Sign in").click().run()
             self.assertEqual(len(app.exception), 0)
             self.assertFalse(app.session_state.admin_authenticated)
-            self.assertEqual(len(app.sidebar.radio), 0)
-            camera.assert_not_called()
-            videos.assert_not_called()
-            self.assertTrue(any("Your account is ready" in item.value for item in app.info))
+            options = app.sidebar.radio[0].options
+            for page in ("Roadwatch", "Videos", "Report Missing Person", "Report Stolen Vehicle", "Emergency Contacts", "Vehicle Profile", "GPS Tracking"):
+                self.assertIn(page, options)
+            for page in ("Admin Management", "Admin Dashboard", "Settings", "Missing Persons", "Stolen Vehicles"):
+                self.assertNotIn(page, options)
+            camera.assert_called()
+            videos.assert_called()
+            recorder.assert_called()
+            # Start a fresh test tree after sign-in's rerun removes the form widgets.
+            token = app.session_state.admin_token
+            app = AppTest.from_file(str(source), default_timeout=40)
+            app.session_state.admin_token = token
+            app.run()
+            app.sidebar.radio[0].set_value("Videos").run()
+            video_page.assert_called()
+            app.sidebar.radio[0].set_value("Report Missing Person").run()
+            missing.assert_called_with(admin_mode=False)
+            app.sidebar.radio[0].set_value("Report Stolen Vehicle").run()
+            self.assertFalse(stolen.call_args.kwargs["admin_mode"])
+            app.query_params["admin"] = "true"
+            app.run()
+            self.assertNotIn("Admin Management", app.sidebar.radio[0].options)
             button("Sign out").click().run()
         self.assertTrue(any(item.label == "Create account" for item in app.button))
+
+    def test_admin_login_rejects_standard_account(self):
+        from streamlit.testing.v1 import AppTest
+        self.store.register("newuser", self.password)
+        app = AppTest.from_string("from streamlit_app import admin_login_page\nadmin_login_page()", default_timeout=40).run()
+        app.text_input[0].set_value("newuser")
+        app.text_input[1].set_value(self.password)
+        app.button[0].click().run()
+        self.assertEqual(len(app.exception), 0)
+        self.assertNotIn("admin_token", app.session_state)
+        self.assertTrue(any("Invalid admin password" in item.value for item in app.error))

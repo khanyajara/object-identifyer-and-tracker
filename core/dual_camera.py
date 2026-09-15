@@ -1162,7 +1162,10 @@ class DualCameraManager:
             return frame, {"frame_number": frame_number, "camera_role": role, "objects": [], "movement_detected": False}
         started = time.monotonic()
         try:
-            annotated, event = self.pipeline.process(frame, frame_number, 0.0, media_timestamp_seconds=timestamp)
+            camera_context = {"camera_role": role} if isinstance(self.pipeline, VisionPipeline) else {}
+            annotated, event = self.pipeline.process(
+                frame, frame_number, 0.0, media_timestamp_seconds=timestamp, **camera_context
+            )
         except TypeError:
             annotated, event = self.pipeline.process(frame, frame_number, 0.0)
         except Exception as exc:  # pragma: no cover - pipeline dependent

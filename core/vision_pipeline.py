@@ -13,13 +13,14 @@ VEHICLES = {"car", "truck", "bus", "motorcycle", "bicycle"}
 
 class VisionPipeline:
     def __init__(
-        self, model_name, confidence, image_size, enable_tracking=False,
+        self, model_name, confidence, image_size, enable_tracking=True,
         enable_ocr=False, ocr_interval_seconds=5, model=None, ocr_reader=None
     ):
         self.detector = ObjectDetector(
             model_name, confidence, image_size, model=model
         )
         self.tracker = ObjectTracker() if enable_tracking else None
+        self._camera_trackers = {}
         self.movement = MovementDetector()
         self.plate_scanner = PlateScanner(ocr_reader) if enable_ocr else None
         self.ocr_interval_seconds = ocr_interval_seconds
@@ -35,12 +36,17 @@ class VisionPipeline:
 
     def process(
         self, frame, frame_number, camera_fps,
-        media_timestamp_seconds=None
+        media_timestamp_seconds=None, camera_role=None
     ):
         detections = self.detector.detect(frame)
+        tracker = self.tracker
+        if tracker and camera_role is not None:
+            if camera_role not in self._camera_trackers:
+                self._camera_trackers[camera_role] = ObjectTracker()
+            tracker = self._camera_trackers[camera_role]
         objects = (
-            self.tracker.update(detections, frame)
-            if self.tracker
+            tracker.update(detections, frame)
+            if tracker
             else [{**item, "tracking_id": None} for item in detections]
         )
         movement, score = self.movement.detect(frame)

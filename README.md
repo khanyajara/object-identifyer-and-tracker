@@ -2,7 +2,7 @@
 
 Supabase accounts and app-record sync: apply the [SQL migration](supabase/migrations/20260914_roadwatch.sql), then follow [activation steps](docs/supabase_setup.md). Activation is explicit so existing local accounts continue working until the schema and migration pass.
 
-The entry page offers **Sign in** and **Create account**. New users choose a username and confirm a password (at least 8 characters, no required capitals/numbers/symbols, at most 72 UTF-8 bytes), then sign in. Accounts persist in a Git-ignored local SQLite database under `data/accounts/`; only bcrypt password hashes are saved. Registration grants a personal account page, not access to shared cameras, recordings, settings or administrative APIs. Email verification, password recovery and per-user stream sharing are not implemented.
+The entry page offers **Sign in** and **Create account**. New users choose a username and confirm a password (at least 8 characters, no required capitals/numbers/symbols, at most 72 UTF-8 bytes), then sign in. Accounts persist in a Git-ignored local SQLite database under `data/accounts/`; only bcrypt password hashes are saved. Standard users can access the device camera, videos, missing-person and stolen-vehicle reporting, GPS, emergency contacts and vehicle profile after signing in and accepting privacy permissions. Admin and super-admin accounts additionally access review, system settings and admin management. Administrator privileges are provisioned through ROADWATCH_ADMIN_ACCOUNTS; self-registration always creates a standard user. Video read APIs accept standard users; the sync ingestion API remains restricted to operators and administrators. Email verification, password recovery and per-user stream sharing are not implemented.
 
 Security update: sign-in requires a configured JWT secret; the device console additionally requires a configured administrator account, and binds to `127.0.0.1` by default. Existing administrator credentials use the same Sign in form. See [security review and streaming boundaries](docs/security_review.md) before any public deployment.
 
@@ -558,3 +558,10 @@ Recognition is off until the model files, private driver storage and calibrated
 threshold are configured; road recording continues independently.
 
 Driver fatigue now reuses background driver landmarks for temporal warnings and linked local incidents. See [fatigue monitoring and deployment validation](docs/fatigue_monitoring.md). Alerts require administrator calibration; native-camera acceptance remains pending.
+
+
+### Object confidence and duplicate detections
+
+Object predictions use a minimum confidence of 88%; stricter saved values (including the current 90%) are preserved. This threshold is a model score, not a measured accuracy guarantee. Settings keep tracking enabled. Overlapping predictions are suppressed across class labels, and unmatched predicted tracks are not drawn as new detections. If Deep SORT cannot initialize, a bounded IoU tracker preserves IDs across nearby frames and short gaps. Front and rear cameras maintain separate tracking state. Recording summaries count a repeated tracking ID once, including when its predicted class fluctuates.
+
+Tracking is local to a camera/pipeline lifetime. Long occlusions, rapid motion, crossings and objects returning later can still change IDs; cross-camera identity matching is not implemented. Overlap suppression can hide closely overlapping real objects, and a higher confidence threshold can miss true objects. Validate these tradeoffs with labeled camera footage before claiming an accuracy rate. Previously saved recordings are unchanged unless reprocessed.

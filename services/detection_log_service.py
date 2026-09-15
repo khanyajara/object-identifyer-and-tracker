@@ -35,14 +35,17 @@ class DetectionLogService:
             if event["movement_detected"] and not self._previous_movement:
                 summary["movement_events"] += 1
             self._previous_movement = event["movement_detected"]
-            frame_counts = Counter(
-                item["label"] for item in event["objects"]
-            )
+            frame_labels = []
             for item in event["objects"]:
                 item["video_id"] = self.record["video_id"]
                 tracking_id = item.get("tracking_id")
                 if tracking_id is not None:
-                    self._tracked_labels[int(tracking_id)] = item["label"]
+                    # A class fluctuation must not count one ID as two objects.
+                    label = self._tracked_labels.setdefault(int(tracking_id), item["label"])
+                else:
+                    label = item["label"]
+                frame_labels.append(label)
+            frame_counts = Counter(frame_labels)
             summary["unique_tracking_ids"] = sorted(self._tracked_labels)
             tracked_counts = Counter(self._tracked_labels.values())
             for label, count in frame_counts.items():

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from ultralytics import YOLO
+from core.detection_policy import DUPLICATE_IOU, detection_confidence, suppress_duplicates
 
 
 def load_yolo_model(model_name):
@@ -13,18 +14,22 @@ def load_yolo_model(model_name):
 class ObjectDetector:
     def __init__(self, model_name, confidence, image_size, model=None):
         self.model = model or load_yolo_model(model_name)
-        self.confidence = confidence
+        self.confidence = detection_confidence(confidence)
         self.image_size = image_size
 
     def detect(self, frame):
         result = self.model.predict(
             frame,
             conf=self.confidence,
+            iou=DUPLICATE_IOU,
+            agnostic_nms=True,
             imgsz=self.image_size,
             verbose=False,
         )[0]
         detections = []
         for box in result.boxes:
+            if float(box.conf[0]) < self.confidence:
+                continue
             x1, y1, x2, y2 = box.xyxy[0].cpu().tolist()
             detections.append(
                 {
@@ -38,4 +43,4 @@ class ObjectDetector:
                     },
                 }
             )
-        return detections
+        return suppress_duplicates(detections)
