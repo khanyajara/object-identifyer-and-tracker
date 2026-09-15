@@ -74,7 +74,7 @@ class BrowserCameraChannel(CameraChannel):
 
     def _open_locked(self):
         if not self.browser_source.ready:
-            self.error = "Waiting for this browser camera. Select a camera and press START below."
+            self.error = "Waiting for browser camera frames. Allow camera access; use Camera options if the default device is unavailable."
             self.status = STATUS_FAILED
             return False
         return super()._open_locked()

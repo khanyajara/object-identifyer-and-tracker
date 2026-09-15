@@ -459,7 +459,7 @@ class DualCameraUIManager:
     def start_preview(self):
         if not self.manager.start_preview():
             if self.manager.browser_mode:
-                raise RuntimeError("Select a camera and press START on a browser feed first. When its live picture appears, retry Preview.")
+                raise RuntimeError("Waiting for browser camera frames. Allow camera access; use Camera options if the default device is unavailable.")
             raise RuntimeError("No camera is supplying frames. Connect the computer webcam or DroidCam client, then retry Preview.")
 
     def close_preview(self):
@@ -1372,19 +1372,24 @@ def dash_cam_page(settings):
                 if not isinstance(camera_manager, DualCameraUIManager):
                     camera_manager = DualCameraUIManager(settings, cached_model(settings["model_name"]), cached_ocr() if settings["enable_ocr"] else None)
                 st.session_state.camera_manager = camera_manager
+                if browser_mode and not st.session_state.get("browser_preview_enabled", True):
+                    st.session_state.browser_preview_enabled = True
+                    st.rerun()
                 camera_manager.start_preview()
                 preview_active = camera_manager.preview_active
             except Exception as exc:
                 st.error(str(exc))
     with preview_controls[1]:
-        if st.button("Close Preview", disabled=active or not preview_active, width="stretch"):
+        if st.button("Close Preview", disabled=active or (not preview_active and not browser_mode), width="stretch"):
             camera_manager.close_preview()
+            if browser_mode:
+                st.session_state.browser_preview_enabled = False
             st.session_state.camera_manager = None
             camera_manager = None
             preview_active = False
             st.rerun()
     with preview_controls[2]:
-        st.caption("Preview runs detection without saving video. Connect a camera above, then retry preview." if browser_mode else "Preview runs detection without saving video. Connect DroidCam whenever you are ready, then retry preview.")
+        st.caption("Preview starts when camera access is allowed; it does not save video." if browser_mode else "Preview runs detection without saving video. Connect DroidCam whenever you are ready, then retry preview.")
         if not browser_mode:
             st.caption("Closing preview does not stop an independently running driver-monitoring camera.")
     controls = st.columns([1.2, 1.2, 1.2, 4])

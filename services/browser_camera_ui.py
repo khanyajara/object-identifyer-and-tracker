@@ -33,7 +33,11 @@ def render_browser_cameras(manager):
         return
     if not hasattr(manager, "browser_widget_id"):
         manager.browser_widget_id = uuid4().hex
-    st.caption("Select PC Camera or DroidCam Video, allow camera access, then press START on either feed. This connects the preview; Start Recording saves video.")
+    enabled = st.session_state.get("browser_preview_enabled", True)
+    st.caption("Cabin preview starts automatically. Allow camera access if prompted. Start Recording saves video.")
+    with st.expander("Camera options (optional)"):
+        manual = st.checkbox("Choose a different cabin camera", key="browser_manual_camera", disabled=manager.is_recording)
+        st.caption("Use this only if the browser opens the wrong camera. Select your camera in the cabin preview controls.")
 
     def processor_factory(channel):
         class Processor(VideoProcessorBase):
@@ -48,17 +52,22 @@ def render_browser_cameras(manager):
                 self.source.release()
         return Processor
 
-    for column, role, label in zip(st.columns(2), ("front", "rear"), ("Main camera", "Cabin camera (optional)")):
-        with column:
-            st.markdown("**" + label + "**")
-            webrtc_streamer(
-                key="roadwatch-" + manager.browser_widget_id + "-" + role,
-                mode=WebRtcMode.SENDRECV,
-                video_processor_factory=processor_factory(manager.channel(role)),
-                rtc_configuration=rtc,
-                media_stream_constraints={"video": {"width": {"ideal": 640}, "height": {"ideal": 480}, "frameRate": {"ideal": 15, "max": 15}}, "audio": False},
-                async_processing=True,
-            )
+    def render_feed(role, desired):
+        return webrtc_streamer(
+            key="roadwatch-" + manager.browser_widget_id + "-" + role,
+            mode=WebRtcMode.SENDRECV,
+            video_processor_factory=processor_factory(manager.channel(role)),
+            rtc_configuration=rtc,
+            media_stream_constraints={"video": {"width": {"ideal": 640}, "height": {"ideal": 480}, "frameRate": {"ideal": 15, "max": 15}}, "audio": False},
+            desired_playing_state=desired,
+            async_processing=True,
+        )
+
+    st.markdown("**Cabin camera**")
+    render_feed("rear", (None if manual else True) if enabled else False)
+    with st.expander("Road camera (optional)"):
+        st.caption("If a second camera is connected, select it here and press START. Cabin preview works without it.")
+        render_feed("front", None if enabled else False)
     with st.expander("Camera connection help"):
         st.write("Use HTTPS (or localhost). Choose different devices for the two feeds. Keep DroidCam running on your PC if you select it. If the picture remains black, first check it in the Windows Camera app.")
         st.write("If the connection stays on connecting or fails on a work/mobile network, the administrator may need to configure a TURN relay in ROADWATCH_WEBRTC_ICE_SERVERS. A public STUN server alone does not work on every hosting network.")
