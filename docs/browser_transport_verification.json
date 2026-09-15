@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "received_webrtc_frames": 70,
+  "recorded_frames": 67,
+  "recording_decodes": true,
+  "capture_thread_stopped": true,
+  "mode": "Two local aiortc peers, synthetic images, real WebM encoder/decoder; no camera, cloud or TURN test"
+}

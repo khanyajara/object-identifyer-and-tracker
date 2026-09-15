@@ -758,7 +758,8 @@ class CameraChannel:
                 thread.join(timeout=5.0)
             if thread is None or not thread.is_alive():
                 self._thread = None
-        self._record_stopped_at = time.time()
+        if self._recording or not self._record_stopped_at:
+            self._record_stopped_at = time.time()
 
         duration = max(0.001, self._record_stopped_at - self._record_started_at)
         true_fps = round(self.frames_written / duration, 2) if self.frames_written else 0.0
@@ -836,12 +837,18 @@ class DualCameraManager:
         configs: Sequence[CameraConfig],
         video_dir: str = "data/videos",
         pipeline: Optional[VisionPipeline] = None,
+        browser_mode: bool = False,
     ):
         self.video_dir = video_dir
+        self.browser_mode = browser_mode
         self.channels: Dict[str, CameraChannel] = {}
         for config in configs:
-            from services.driver_monitoring.runtime import shared_driver_channel
-            self.channels[config.role] = shared_driver_channel(config) or CameraChannel(config)
+            if browser_mode:
+                from core.browser_camera import BrowserCameraChannel
+                self.channels[config.role] = BrowserCameraChannel(config)
+            else:
+                from services.driver_monitoring.runtime import shared_driver_channel
+                self.channels[config.role] = shared_driver_channel(config) or CameraChannel(config)
 
         self.session_id: Optional[str] = None
         self.started_at: Optional[str] = None
@@ -866,6 +873,13 @@ class DualCameraManager:
 
     @classmethod
     def from_settings(cls, settings: Optional[dict] = None, video_dir: str = "data/videos") -> "DualCameraManager":
+        from core.capture_mode import browser_capture_enabled
+        if browser_capture_enabled(settings):
+            settings = settings or {}
+            configs = [CameraConfig(index=i, role=role, label=label, width=640, height=480,
+                                    target_fps=15, ai_sample_interval=.5, mirror=False)
+                       for i, role, label in ((0, FRONT, "Browser · Main"), (1, REAR, "Browser · Cabin"))]
+            return cls(configs, video_dir=video_dir, browser_mode=True)
         manager = cls(camera_configs_from_settings(settings), video_dir=video_dir)
         settings = settings or {}
         value = settings.get("droidcam_fallback_enabled", settings.get("DROIDCAM_FALLBACK_ENABLED", os.getenv("DROIDCAM_FALLBACK_ENABLED", "true")))
@@ -987,7 +1001,7 @@ class DualCameraManager:
             self._preview_results.clear()
 
         from services.driver_monitoring.runtime import identity_metadata
-        self._driver_start_metadata = identity_metadata()
+        self._driver_start_metadata = identity_metadata({"driver_id": None, "driver_identity_status": "unknown", "driver_session_id": None}) if self.browser_mode else identity_metadata()
         self._driver_observations = {}
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         readable = datetime.now().strftime("%Y_%m_%d_%H%M%S")
@@ -1035,7 +1049,8 @@ class DualCameraManager:
             "recording": self._recording,
         }
         from services.driver_monitoring.runtime import recording_context
-        recording_context(session.get("primary_video_id"))
+        if not self.browser_mode:
+            recording_context(session.get("primary_video_id"))
         return session
 
     def stop_recording(self) -> dict:
@@ -1043,7 +1058,8 @@ class DualCameraManager:
         if self._preview_worker is not None:
             self._preview_worker.join()
         from services.driver_monitoring.runtime import recording_context
-        recording_context()
+        if not self.browser_mode:
+            recording_context()
         if not self.session_id:
             return {}
 
@@ -1157,7 +1173,7 @@ class DualCameraManager:
 
     def _handle_ai_frame(self, role: str, frame: np.ndarray, frame_number: int, timestamp: float):
         from services.driver_monitoring.runtime import identity_metadata
-        driver_context = identity_metadata()
+        driver_context = {"driver_id": None, "driver_identity_status": "unknown", "driver_session_id": None} if self.browser_mode else identity_metadata()
         if self.pipeline is None:
             return frame, {"frame_number": frame_number, "camera_role": role, "objects": [], "movement_detected": False}
         started = time.monotonic()
