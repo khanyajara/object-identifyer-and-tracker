@@ -28,3 +28,20 @@ Before activation, local account mode and the legacy Firebase metadata path rema
 Passwords require eight characters without composition rules; the bcrypt input limit remains 72 UTF-8 bytes.
 
 References: [Supabase private storage access](https://supabase.com/docs/guides/storage/security/access-control), [standard uploads](https://supabase.com/docs/guides/storage/uploads/standard-uploads).
+
+## Persistent website accounts
+
+Accounts now default to Supabase whenever SUPABASE_URL and a server secret key
+are configured, independently of ROADWATCH_SUPABASE_DATABASE_ENABLED (record
+sync). Set ROADWATCH_SUPABASE_ACCOUNTS_ENABLED="true" in Streamlit Cloud secrets
+to require cloud accounts, or "false" only for intentional local development.
+The default is "auto". Keep server secrets out of frontend variables.
+
+Before registration or login, legacy SQLite accounts are copied with their
+existing bcrypt hashes. Existing cloud usernames/password hashes are never
+overwritten. A conflicting username retains its cloud password. Accounts already
+lost in an earlier ephemeral deployment cannot be recovered from this migration.
+A cloud failure stops registration/login instead of silently saving locally.
+
+Deploy the updated branch and keep the Supabase URL/server secret configured in
+Streamlit Cloud Secrets. Editing a local secrets.toml does not update Cloud.

@@ -63,6 +63,35 @@ class DatabaseSyncTests(unittest.TestCase):
                 accounts.register("newuser", "abcdefgh")
             local.assert_not_called()
 
+    def test_accounts_persist_independently_of_record_sync(self):
+        from services.user_account_service import UserAccountService
+        from services.auth_service import verify_password
+        rows = {}
+        self.cloud.enabled = False
+        self.cloud.register.side_effect = lambda username, password_hash, **kwargs: rows.setdefault(username, {"username": username, "password_hash": password_hash})
+        self.cloud.find.side_effect = rows.get
+        with patch("services.supabase_database_service.SupabaseDatabaseService", return_value=self.cloud), patch("services.user_account_service.ACCOUNT_DB", self.root / "absent.sqlite3"), patch.dict("os.environ", {"ROADWATCH_SUPABASE_ACCOUNTS_ENABLED": "auto", "ROADWATCH_ADMIN_ACCOUNTS": "[]"}):
+            first = UserAccountService()
+            self.assertTrue(first.use_cloud)
+            first.register("durableuser", "persistent password")
+            second = UserAccountService()
+            self.assertTrue(verify_password("persistent password", second.find("durableuser")["password_hash"]))
+            self.assertFalse(second.path.exists())
+
+    def test_legacy_migration_preserves_existing_cloud_password(self):
+        import sqlite3
+        from services.user_account_service import UserAccountService
+        database = self.root / "legacy.sqlite3"
+        with sqlite3.connect(database) as connection:
+            connection.execute("CREATE TABLE users(username TEXT, password_hash TEXT)")
+            connection.execute("INSERT INTO users VALUES ('legacyuser', 'original-hash')")
+        connection.close()
+        with patch("services.supabase_database_service.SupabaseDatabaseService", return_value=self.cloud), patch("services.user_account_service.ACCOUNT_DB", database), patch.dict("os.environ", {"ROADWATCH_SUPABASE_ACCOUNTS_ENABLED": "true"}):
+            UserAccountService().find("legacyuser")
+            self.cloud.register.assert_called_once_with("legacyuser", "original-hash", ignore_existing=True)
+            UserAccountService().find("legacyuser")
+            self.cloud.register.assert_called_once()
+
     def test_new_secret_key_not_sent_as_bearer_jwt(self):
         with patch.dict("os.environ", {"SUPABASE_URL": "https://example.supabase.co", "SUPABASE_SECRET_KEY": "sb_secret_test"}), patch("services.supabase_database_service.requests.request") as request:
             request.return_value = Mock(status_code=201, content=b"")

@@ -1,9 +1,14 @@
-"""Local self-registration. Public accounts never inherit device permissions."""
+"""Persistent self-registration. Public accounts never inherit device permissions."""
 import re
+import os
+import threading
 import sqlite3
 from pathlib import Path
 
 ACCOUNT_DB = Path(__file__).resolve().parents[1] / "data" / "accounts" / "users.sqlite3"
+
+_MIGRATION_LOCK = threading.Lock()
+_MIGRATED = set()
 
 
 class UserAccountService:
@@ -11,7 +16,29 @@ class UserAccountService:
         self.path = Path(path) if path is not None else ACCOUNT_DB
         from services.supabase_database_service import SupabaseDatabaseService
         self.cloud = SupabaseDatabaseService()
-        self.use_cloud = path is None and self.cloud.enabled
+        mode = os.getenv("ROADWATCH_SUPABASE_ACCOUNTS_ENABLED", "auto").strip().lower()
+        if mode not in {"auto", "true", "false"}:
+            raise RuntimeError("ROADWATCH_SUPABASE_ACCOUNTS_ENABLED must be auto, true or false.")
+        configured = bool(self.cloud.url and self.cloud.key)
+        self.use_cloud = path is None and (mode == "true" or (mode == "auto" and (self.cloud.enabled or configured)))
+
+    def _migrate_local_accounts(self):
+        # A hosted restart can still have accounts created before cloud mode.
+        # Preserve hashes, never replace an existing cloud account's password.
+        if not self.path.is_file():
+            return
+        with _MIGRATION_LOCK:
+            marker = (str(self.path.resolve()), self.path.stat().st_mtime_ns, self.cloud.url)
+            if marker in _MIGRATED:
+                return
+            connection = sqlite3.connect(f"{self.path.as_uri()}?mode=ro", uri=True)
+            try:
+                rows = connection.execute("SELECT username, password_hash FROM users").fetchall()
+                for username, password_hash in rows:
+                    self.cloud.register(username, password_hash, ignore_existing=True)
+            finally:
+                connection.close()
+            _MIGRATED.add(marker)
 
     def _connect(self):
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -30,6 +57,7 @@ class UserAccountService:
         if any(a["username"].casefold() == username for a in _load_admin_accounts()):
             raise ValueError("That username is unavailable.")
         if self.use_cloud:
+            self._migrate_local_accounts()
             self.cloud.register(username, password_hash)
             return {"username": username, "role": "user"}
         connection = self._connect()
@@ -44,6 +72,7 @@ class UserAccountService:
 
     def find(self, username):
         if self.use_cloud:
+            self._migrate_local_accounts()
             return self.cloud.find((username or "").strip().casefold())
         if not self.path.is_file():
             return None

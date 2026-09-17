@@ -16,7 +16,7 @@ class RegistrationTests(unittest.TestCase):
         self.db_patch = patch("services.user_account_service.ACCOUNT_DB", self.path)
         self.db_patch.start()
         self.addCleanup(self.db_patch.stop)
-        self.env = patch.dict("os.environ", {"ROADWATCH_ADMIN_ACCOUNTS": "[]", "ROADWATCH_JWT_SECRET": "s" * 40})
+        self.env = patch.dict("os.environ", {"ROADWATCH_ADMIN_ACCOUNTS": "[]", "ROADWATCH_JWT_SECRET": "s" * 40, "ROADWATCH_SUPABASE_ACCOUNTS_ENABLED": "false"})
         self.env.start()
         self.addCleanup(self.env.stop)
         self.store = UserAccountService()
