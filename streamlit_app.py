@@ -24,7 +24,6 @@ from streamlit_js_eval import get_geolocation
 
 from core.detector import load_yolo_model
 from core.dual_camera import DualCameraManager
-from core.opencv_recorder import CameraManager
 from core.ocr import load_ocr_reader
 from core.vision_pipeline import VEHICLES, VisionPipeline
 from core.video_io import (
@@ -426,7 +425,9 @@ def is_dual_camera_enabled(settings):
 class DualCameraUIManager:
     def __init__(self, settings, model=None, ocr_reader=None):
         self.settings = settings
-        self.pipeline = VisionPipeline(
+        self.manager = DualCameraManager.from_settings(settings)
+        from core.lazy_vision_pipeline import LazyVisionPipeline
+        self.pipeline = LazyVisionPipeline(settings) if self.manager.browser_mode else VisionPipeline(
             settings["model_name"],
             settings["confidence"],
             settings["yolo_image_size"],
@@ -436,7 +437,6 @@ class DualCameraUIManager:
             model,
             ocr_reader,
         )
-        self.manager = DualCameraManager.from_settings(settings)
         self.manager.pipeline = self.pipeline
         self.started = 0.0
         self.record = {
@@ -514,7 +514,9 @@ class DualCameraUIManager:
                 for role, v in status.items() if self.manager.channels[role].config.enabled
             ),
         }
-        errors = [v.get("error") for v in status.values() if v.get("error")]
+        errors = [v.get("error") for role, v in status.items() if v.get("error") and self.manager.channels[role].config.enabled]
+        if event and event.get("error"):
+            errors.append(event["error"])
         error = "; ".join(errors) if errors else None
         return frame, event, metrics, error
 
@@ -546,7 +548,7 @@ def stop_and_process_dual(camera_manager, settings):
         "filename": f'dual_{session.get("session_id")}.json',
         "processing_status": session.get("processing_status"),
     }
-    if session.get("composite_video_path"):
+    if session.get("composite_video_path") or any(c.get("processed_video_path") for c in session.get("cameras", [])):
         if settings.get("notify_on_processing", True):
             NotificationService(notification_settings(settings)).notify(
                 "Dual camera processing complete",
@@ -556,7 +558,7 @@ def stop_and_process_dual(camera_manager, settings):
                 payload={"video_id": session.get("primary_video_id")},
             )
         processing_status.update(
-            label="Dual camera composite ready.",
+            label="Camera recording processed.",
             state="complete",
             expanded=False,
         )
@@ -1335,7 +1337,7 @@ def dash_cam_page(settings):
     browser_mode = browser_capture_enabled(settings)
     camera_manager, active = get_camera_state(settings)
     if browser_mode and not isinstance(camera_manager, DualCameraUIManager):
-        camera_manager = DualCameraUIManager(settings, cached_model(settings["model_name"]), cached_ocr() if settings["enable_ocr"] else None)
+        camera_manager = DualCameraUIManager(settings)
         st.session_state.camera_manager = camera_manager
     preview_active = bool(isinstance(camera_manager, DualCameraUIManager) and camera_manager.preview_active)
     capture_browser_location(
@@ -1396,19 +1398,13 @@ def dash_cam_page(settings):
             try:
                 if isinstance(camera_manager, DualCameraUIManager):
                     camera_manager.start()
-                elif is_dual_camera_enabled(settings):
+                else:
                     camera_manager = DualCameraUIManager(
                         settings,
                         cached_model(settings["model_name"]),
                         cached_ocr() if settings["enable_ocr"] else None,
                     )
                     camera_manager.start()
-                else:
-                    camera_manager = CameraManager(
-                        settings,
-                        cached_model(settings["model_name"]),
-                        cached_ocr() if settings["enable_ocr"] else None,
-                    )
                 st.session_state.camera_manager = camera_manager
                 if not browser_mode:
                     bind_recording(camera_manager, settings, gps)
@@ -1449,12 +1445,12 @@ def dash_cam_page(settings):
     main_col, side_col = st.columns([2.15, 1])
     with main_col:
         st.markdown('<div class="panel-title">Live Dash Cam</div>', unsafe_allow_html=True)
-        preview_label = st.radio("Preview camera", ["Both cameras", "Main camera", "Rear / cabin"], horizontal=True, key="camera_preview_layout")
+        preview_label = "Rear / cabin" if browser_mode else st.radio("Preview camera", ["Both cameras", "Main camera", "Rear / cabin"], horizontal=True, key="camera_preview_layout")
         smooth_preview = st.toggle("Smooth live preview", value=True, help="Show the latest camera frames. Turn off to inspect boxes on exact AI sample frames.")
         if isinstance(camera_manager, DualCameraUIManager):
             camera_manager.smooth_preview = smooth_preview
             camera_manager.preview_role = {"Both cameras": "both", "Main camera": "front", "Rear / cabin": "rear"}[preview_label]
-        st.caption("Each connected browser camera shows its own detections. Start Recording saves each available camera." if browser_mode else "Main: DroidCam · Cabin: computer webcam. Each feed shows its own detections. Preview saves no video; Start Recording saves each available camera.")
+        st.caption("Your browser camera supplies live preview, recording and background analysis. Start Recording saves video." if browser_mode else "Main: DroidCam · Cabin: computer webcam. Each feed shows its own detections. Preview saves no video; Start Recording saves each available camera.")
         if browser_mode:
             from services.browser_camera_ui import render_browser_cameras
             render_browser_cameras(camera_manager.manager)

@@ -1,6 +1,7 @@
 """Browser permission/device selection and session-scoped WebRTC callbacks."""
 import json
 import os
+import logging
 from uuid import uuid4
 
 
@@ -33,6 +34,7 @@ def render_browser_cameras(manager):
         return
     if not hasattr(manager, "browser_widget_id"):
         manager.browser_widget_id = uuid4().hex
+        logging.getLogger("roadwatch.camera").info("[Camera] backend selected: browser (session scoped)")
     enabled = st.session_state.get("browser_preview_enabled", True)
     def processor_factory(channel):
         class Processor(VideoProcessorBase):
@@ -40,7 +42,12 @@ def render_browser_cameras(manager):
                 self.source = channel.new_connection()
 
             def recv(self, frame):
-                self.source.offer(frame.to_ndarray(format="bgr24"))
+                try:
+                    self.source.offer(frame.to_ndarray(format="bgr24"))
+                except Exception as exc:
+                    if self.source.last_error is None:
+                        logging.getLogger("roadwatch.camera").exception("[Camera] browser frame conversion failed")
+                    self.source.last_error = str(exc)
                 return frame
 
             def on_ended(self):
@@ -56,12 +63,35 @@ def render_browser_cameras(manager):
             media_stream_constraints={"video": {"width": {"ideal": 640}, "height": {"ideal": 480}, "frameRate": {"ideal": 15, "max": 15}}, "audio": False},
             desired_playing_state=desired,
             async_processing=True,
+            video_receiver_size=1,
             media_toggle_controls=False,
         )
 
     # Transport lives inside the existing preview, without a second video or
     # camera-selection panel. The normal dashboard renders received frames.
-    render_feed("rear", enabled)
+    context = render_feed("rear", enabled)
+
+    @st.fragment(run_every=1)
+    def health_status():
+        if not enabled:
+            st.caption("Camera stopped. Select Open / Retry Preview to reconnect.")
+            return
+        health = manager.channel("rear").browser_source.health()
+        status = health["status"]
+        if status == "camera_active":
+            st.caption(f"Camera active · {health['width']}×{health['height']} · {health['frames_received']} frames received · {health['frames_dropped']} older frames dropped")
+        elif status == "camera_error":
+            st.warning("Camera connection timed out. Allow camera access in this site's browser settings, close other apps using the camera, then select Open / Retry Preview. If permission is allowed but no frames arrive, the administrator may need to configure a TURN relay.")
+        elif status in {"camera_stale", "camera_reconnecting"}:
+            st.warning("Camera stream interrupted. Waiting for fresh frames; if it does not recover, stop any recording and select Open / Retry Preview.")
+        elif context.state.signalling or context.state.playing:
+            st.info("Camera starting. Waiting for the first video frame.")
+        else:
+            st.info("Camera permission required. Allow camera access for this site. If access is blocked, allow it in browser settings and reload Roadwatch. If no camera is found, connect one; if it is busy, close other camera apps.")
+        if health["last_error"]:
+            st.error("Camera frame processing failed. Retry preview and check the server camera logs.")
+
+    health_status()
 
 
 def refresh_browser_capture(manager):
@@ -70,3 +100,4 @@ def refresh_browser_capture(manager):
         if channel.browser_source.ready and not channel.is_live:
             channel.preview_ai_enabled = True
             channel.ensure_capture()
+    manager.ensure_browser_driver()

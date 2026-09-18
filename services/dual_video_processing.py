@@ -20,6 +20,7 @@ from __future__ import annotations
 import logging
 import os
 import time
+from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
 import cv2
@@ -62,14 +63,14 @@ def _video_is_readable(path: Optional[str]) -> bool:
 def processed_path_for(camera: dict) -> str:
     os.makedirs(PROCESSED_DIR, exist_ok=True)
     video_id = camera.get("video_id") or "unknown"
-    filename = camera.get("filename") or f"{video_id}.webm"
+    filename = camera.get("filename") or f"{video_id}.mp4"
     stem = os.path.splitext(filename)[0]
-    return os.path.join(PROCESSED_DIR, f"{stem}_{video_id}_processed.webm")
+    return os.path.join(PROCESSED_DIR, f"{stem}_{video_id}_processed.mp4")
 
 
 def composite_path_for(session: dict) -> str:
     os.makedirs(PROCESSED_DIR, exist_ok=True)
-    return os.path.join(PROCESSED_DIR, f"{session.get('session_id', 'session')}_dual.webm")
+    return os.path.join(PROCESSED_DIR, f"{session.get('session_id', 'session')}_dual.mp4")
 
 
 # --------------------------------------------------------------------------
@@ -96,7 +97,7 @@ def _built_in_pass(
     writer, codec = open_video_writer(output_path, output_fps, (width, height))
     if writer is None:
         cap.release()
-        return False, [], "No usable codec for the processed video (tried VP9 then VP8)."
+        return False, [], "No usable MP4 codec for the processed video."
 
     detections: List[dict] = []
     role = camera.get("role")
@@ -198,6 +199,20 @@ def process_camera(
                 "detections": detections,
             }
         )
+        # Reuse the established H.264/faststart export and validation path.
+        # Raw mp4v is a recording intermediate, not a browser playback claim.
+        from services.compression_service import CompressionService
+        try:
+            target = Path(output_path).parent / "compressed" / Path(output_path).name
+            compression = CompressionService().compress_for_playback(output_path, target)
+            result.update(processed_compression_status="success" if compression["ok"] else "fallback",
+                          processed_compression_error=compression.get("error"),
+                          processed_compression_message=compression.get("message"),
+                          compressed_processed_path=str(compression["path"]) if compression["ok"] else None,
+                          upload_video_path=str(compression["path"]) if compression["ok"] else output_path)
+        except Exception as exc:
+            LOGGER.exception("[%s] compression failed; original and processed video retained", role)
+            result.update(processed_compression_status="fallback", processed_compression_error=str(exc))
         _report(progress, role, 1.0, "Done")
     else:
         result.update(

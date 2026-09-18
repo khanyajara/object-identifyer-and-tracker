@@ -20,6 +20,9 @@ from services.driver_monitoring.runtime import identity_metadata
 
 class CameraManager:
     def __init__(self, settings, model=None, ocr_reader=None):
+        from core.capture_mode import browser_capture_enabled
+        if browser_capture_enabled(settings):
+            raise RuntimeError("Browser capture requires the session-owned shared camera manager")
         self.settings = settings
         self.pipeline = VisionPipeline(
             settings["model_name"],

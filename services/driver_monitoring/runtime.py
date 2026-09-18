@@ -43,6 +43,7 @@ class DriverMonitoringRuntime:
         self.metrics = {"offered_frames": 0, "dropped_frames": 0, "processed_frames": 0,
                         "stale_frames": 0, "worker_recoveries": 0, "camera_retries": 0}
         self.message = "Driver monitoring unavailable."
+        self.source_idle_timeout = None
 
     @property
     def running(self):
@@ -54,8 +55,8 @@ class DriverMonitoringRuntime:
             if self._prepared or not self.config.enabled or not self.config.background:
                 return
             self._prepared = True
-            from core.dual_camera import CameraChannel, CameraConfig, camera_configs_from_settings
-            source_kind = settings.get("driver_camera_source") or os.getenv("DRIVER_CAMERA_SOURCE", "dedicated")
+            from core.dual_camera import CameraChannel, camera_configs_from_settings
+            source_kind = settings.get("driver_camera_source") or os.getenv("DRIVER_CAMERA_SOURCE", "shared")
             configs = camera_configs_from_settings(settings)
             front = next(c for c in configs if c.role == "front")
             rear = next(c for c in configs if c.role == "rear")
@@ -64,21 +65,15 @@ class DriverMonitoringRuntime:
                     return
                 camera_config = rear
             else:
-                try:
-                    index = int(settings.get("driver_camera_index", os.getenv("DRIVER_CAMERA_INDEX", "")))
-                except (ValueError, TypeError):
+                # Driver AI is a consumer of the configured rig. Even the old
+                # "dedicated" setting must not open an extra webcam handle.
+                camera_config = rear if rear.enabled and rear.index != front.index else front
+                if not camera_config.enabled:
                     return
-                excluded = {front.index, int(settings.get("camera_index", front.index))}
-                if rear.enabled:
-                    excluded.add(rear.index)
-                if index < 0 or index in excluded:
-                    return
-                camera_config = CameraConfig(index=index, role="driver", width=self.config.width,
-                    height=self.config.height, target_fps=15, ai_enabled=False)
             existing_channel = None
             dual = getattr(existing_manager, "manager", existing_manager)
-            if source_kind == "rear" and dual is not None and hasattr(dual, "channel"):
-                candidate = dual.channel("rear")
+            if dual is not None and hasattr(dual, "channel"):
+                candidate = dual.channel(camera_config.role)
                 if candidate is not None and candidate.config.index == camera_config.index:
                     existing_channel = candidate
             self.channel = existing_channel or CameraChannel(camera_config)
@@ -132,6 +127,7 @@ class DriverMonitoringRuntime:
         previous_token = None
         retry_at = 0.0
         failed = False
+        last_fresh_at = time.monotonic()
         try:
             while not self._stop.is_set():
                 try:
@@ -147,11 +143,16 @@ class DriverMonitoringRuntime:
                     frame, number, stamp = source()
                     age = max(0, time.time() - stamp)
                     if frame is None or age >= self.config.lost_timeout:
+                        if self.source_idle_timeout and time.monotonic() - last_fresh_at >= self.source_idle_timeout:
+                            self._closed = True
+                            self._stop.set()
+                            break
                         self.message = "Driver monitoring unavailable."
                         self._stop.wait(min(1, self.config.recovery_seconds))
                         continue
                     token = (generation, number, stamp)
                     if token != previous_token:
+                        last_fresh_at = time.monotonic()
                         previous_token = token
                         captured_at = time.monotonic() - age
                         if frame.shape[1] > self.config.width or frame.shape[0] > self.config.height:

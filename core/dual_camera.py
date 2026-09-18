@@ -10,7 +10,7 @@ Design rules carried over from the single-camera recorder:
     Save detections under the video they belong to.
 
 Each camera is an independent channel with its own OpenCV capture, its own
-background thread, and its own WebM writer. One camera failing (unplugged,
+background thread, and its own MP4 writer. One camera failing (unplugged,
 busy, USB bandwidth starved) never stops the other one. AI never touches the
 capture loop: the loop writes the frame, stores the latest frame for preview,
 and drops a sampled copy into a size-1 queue that AI consumers may or may not
@@ -44,6 +44,7 @@ from typing import Dict, List, Optional, Sequence, Tuple
 
 from core.vision_pipeline import VisionPipeline
 from core.camera_sources import windows_camera_devices, droidcam_index
+from core.frame_source import CameraSource, LocalOpenCVCameraSource
 
 import cv2
 import numpy as np
@@ -57,7 +58,7 @@ REAR = "rear"
 
 # Browser friendly first, legacy fallback second.
 _WEBM_CODECS = ("VP80", "VP90")
-_MP4_CODECS = ("avc1", "mp4v")
+_MP4_CODECS = ("mp4v", "avc1")  # intermediate; playback export uses H.264
 
 # Status values a channel can report.
 STATUS_IDLE = "idle"
@@ -234,6 +235,8 @@ def camera_configs_from_settings(settings: Optional[dict] = None) -> List[Camera
             front.index = fallback
             front.label = "DroidCam"
             rear.enabled = False
+    if front.enabled and rear.enabled and front.index == rear.index:
+        rear.enabled = False  # one owner per physical OpenCV device
     return [front, rear]
 
 
@@ -373,7 +376,7 @@ class CameraChannel:
         self.config = config
         self.role = config.role
 
-        self._capture: Optional[cv2.VideoCapture] = None
+        self._capture: Optional[CameraSource] = None
         self._writer: Optional[cv2.VideoWriter] = None
         self._thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
@@ -469,7 +472,7 @@ class CameraChannel:
         )
         return True
 
-    def _open_capture(self) -> Optional[cv2.VideoCapture]:
+    def _open_capture(self) -> Optional[CameraSource]:
         for backend in (self.config.backend, cv2.CAP_ANY):
             cap = cv2.VideoCapture(self.config.index, backend)
             if not cap.isOpened():
@@ -492,11 +495,11 @@ class CameraChannel:
                 cap.read()
             ok, frame = cap.read()
             if ok and frame is not None:
-                return cap
+                return LocalOpenCVCameraSource(cap)
             cap.release()
         return None
 
-    def _measure_fps(self, cap: cv2.VideoCapture, sample_frames: int = 20) -> float:
+    def _measure_fps(self, cap: CameraSource, sample_frames: int = 20) -> float:
         """Real throughput matters more than the driver's claim.
 
         Two cameras on one controller usually deliver less than the nominal
@@ -534,7 +537,7 @@ class CameraChannel:
             writer, codec = open_video_writer(video_path, fps, frame_size)
             if writer is None:
                 self.status = STATUS_DEGRADED
-                self.error = "No usable video codec (tried VP9 then VP8). Recording preview only."
+                self.error = "No usable MP4 video codec. Camera preview remains available."
                 LOGGER.error("[%s] %s", self.role, self.error)
             else:
                 with self._write_lock:
@@ -841,6 +844,8 @@ class DualCameraManager:
     ):
         self.video_dir = video_dir
         self.browser_mode = browser_mode
+        self.driver_runtime = None
+        self._driver_retry_at = 0.0
         self.channels: Dict[str, CameraChannel] = {}
         for config in configs:
             if browser_mode:
@@ -869,6 +874,7 @@ class DualCameraManager:
         self._ai_lock = threading.Lock()
         self._preview_worker_lock = threading.Lock()
         self._preview_worker = None
+        self._preview_generation = 0
         self._ai_started_at = time.monotonic()
 
     @classmethod
@@ -877,7 +883,7 @@ class DualCameraManager:
         if browser_capture_enabled(settings):
             settings = settings or {}
             configs = [CameraConfig(index=i, role=role, label=label, width=640, height=480,
-                                    target_fps=15, ai_sample_interval=.5, mirror=False)
+                                    target_fps=15, ai_sample_interval=.5, mirror=False, enabled=role == REAR)
                        for i, role, label in ((0, FRONT, "Browser · Main"), (1, REAR, "Browser · Cabin"))]
             return cls(configs, video_dir=video_dir, browser_mode=True)
         manager = cls(camera_configs_from_settings(settings), video_dir=video_dir)
@@ -895,6 +901,39 @@ class DualCameraManager:
     def channel(self, role: str) -> Optional[CameraChannel]:
         return self.channels.get(role)
 
+    def ensure_browser_driver(self):
+        """Session-scoped consumer; never invoke the process-global camera owner."""
+        if not self.browser_mode or not self.channel(REAR).browser_source.ready:
+            return
+        runtime = self.driver_runtime
+        if runtime is not None:
+            if not runtime._closed or any(t and t.is_alive() for t in (runtime._thread, runtime._producer_thread)):
+                return
+        if time.monotonic() < self._driver_retry_at:
+            return
+        try:
+            from services.driver_monitoring.runtime import DriverMonitoringRuntime
+            from services.driver_monitoring.config import MonitoringConfig
+            runtime = DriverMonitoringRuntime(MonitoringConfig.from_env())
+            runtime.source_idle_timeout = 15
+            runtime.start(source=self.channel(REAR).get_latest)
+            self.driver_runtime = runtime
+            LOGGER.info("[Camera] session driver consumer attached")
+        except Exception:
+            self._driver_retry_at = time.monotonic() + 30
+            LOGGER.exception("[Camera] driver initialization failed; capture continues")
+
+    def browser_driver_metadata(self):
+        runtime = self.driver_runtime
+        if runtime is None:
+            return {"driver_id": None, "driver_identity_status": "unknown", "driver_session_id": None}
+        state = runtime.snapshot()
+        session = runtime.service.sessions.snapshot()
+        verified = state["identity_status"] == "verified"
+        return {"driver_id": state["driver_id"] if verified else None,
+                "driver_identity_status": "verified" if verified else "unknown",
+                "driver_session_id": session["session_id"]}
+
     @property
     def preview_active(self) -> bool:
         return any(channel.preview_ai_enabled and channel.is_live for channel in self.channels.values())
@@ -911,8 +950,11 @@ class DualCameraManager:
     def close_preview(self) -> None:
         if self.is_recording:
             raise RuntimeError("Stop recording before closing the preview.")
+        self._preview_generation += 1
+        if self.driver_runtime is not None:
+            self.driver_runtime.stop()
         if self._preview_worker is not None:
-            self._preview_worker.join()
+            self._preview_worker.join(timeout=0 if self.browser_mode else None)
         for channel in self.channels.values():
             channel.preview_ai_enabled = False
             channel.release()
@@ -994,14 +1036,15 @@ class DualCameraManager:
         if self._recording:
             return self.session_summary()
 
+        self._preview_generation += 1
         if self._preview_worker is not None:
-            self._preview_worker.join()
+            self._preview_worker.join(timeout=0 if self.browser_mode else None)
 
         with self._ai_lock:
             self._preview_results.clear()
 
         from services.driver_monitoring.runtime import identity_metadata
-        self._driver_start_metadata = identity_metadata({"driver_id": None, "driver_identity_status": "unknown", "driver_session_id": None}) if self.browser_mode else identity_metadata()
+        self._driver_start_metadata = self.browser_driver_metadata() if self.browser_mode else identity_metadata()
         self._driver_observations = {}
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         readable = datetime.now().strftime("%Y_%m_%d_%H%M%S")
@@ -1020,7 +1063,7 @@ class DualCameraManager:
             if not channel.config.enabled:
                 continue
             video_id = f"vid_{stamp}_{role}_{short}"
-            filename = f"recording_{readable}_{role}.webm"
+            filename = f"recording_{readable}_{role}.mp4"
             path = os.path.join(self.video_dir, filename)
             ok = channel.start(video_path=path, video_id=video_id)
             started_any = started_any or (ok and channel.is_recording)
@@ -1051,15 +1094,20 @@ class DualCameraManager:
         from services.driver_monitoring.runtime import recording_context
         if not self.browser_mode:
             recording_context(session.get("primary_video_id"))
+        elif self.driver_runtime is not None:
+            self.driver_runtime.service.recording_context(session.get("primary_video_id"))
         return session
 
     def stop_recording(self) -> dict:
         """Stop both channels and return the finalized session record."""
+        self._preview_generation += 1
         if self._preview_worker is not None:
-            self._preview_worker.join()
+            self._preview_worker.join(timeout=0 if self.browser_mode else None)
         from services.driver_monitoring.runtime import recording_context
         if not self.browser_mode:
             recording_context()
+        elif self.driver_runtime is not None:
+            self.driver_runtime.service.recording_context()
         if not self.session_id:
             return {}
 
@@ -1099,8 +1147,11 @@ class DualCameraManager:
         return session
 
     def release(self) -> None:
+        self._preview_generation += 1
+        if self.driver_runtime is not None:
+            self.driver_runtime.stop()
         if self._preview_worker is not None:
-            self._preview_worker.join()
+            self._preview_worker.join(timeout=0 if self.browser_mode else None)
         for channel in self.channels.values():
             channel.release()
         self._recording = False
@@ -1172,8 +1223,9 @@ class DualCameraManager:
         return frame, {"camera_role": role, "objects": [], "plates": []}
 
     def _handle_ai_frame(self, role: str, frame: np.ndarray, frame_number: int, timestamp: float):
+        generation = self._preview_generation
         from services.driver_monitoring.runtime import identity_metadata
-        driver_context = {"driver_id": None, "driver_identity_status": "unknown", "driver_session_id": None} if self.browser_mode else identity_metadata()
+        driver_context = self.browser_driver_metadata() if self.browser_mode else identity_metadata()
         if self.pipeline is None:
             return frame, {"frame_number": frame_number, "camera_role": role, "objects": [], "movement_detected": False}
         started = time.monotonic()
@@ -1194,6 +1246,8 @@ class DualCameraManager:
         event.setdefault("objects", [])
         event.setdefault("movement_detected", False)
         with self._ai_lock:
+            if generation != self._preview_generation:
+                return annotated, event
             if self.is_recording and hasattr(self, "_driver_observations"):
                 samples = self._driver_observations.setdefault(role, [])
                 context = identity_metadata(event)

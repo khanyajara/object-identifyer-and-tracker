@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "received_webrtc_frames": 164,
+  "recorded_frames": 62,
+  "recording_decodes": true,
+  "capture_thread_stopped": true,
+  "measured_recording_fps": 30.85,
+  "frames_dropped": 1,
+  "browser_mp4_compression_passed": true,
+  "playback_codec": "libx264",
+  "mode": "Two local aiortc peers, synthetic images, real MP4 encoder/decoder; no camera, cloud or TURN test"
+}

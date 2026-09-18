@@ -44,7 +44,7 @@ async def verify():
         task = asyncio.create_task(consume())
     report = {}
     with tempfile.TemporaryDirectory(prefix="browser-transport-", dir=Path(__file__).resolve().parents[1] / "tmp") as directory:
-        path = str(Path(directory) / "transport.webm")
+        path = str(Path(directory) / "transport.mp4")
         try:
             sender.addTrack(SyntheticTrack())
             await sender.setLocalDescription(await sender.createOffer())
@@ -66,10 +66,16 @@ async def verify():
             capture = cv2.VideoCapture(path)
             ok, frame = capture.read()
             capture.release()
+            from services.compression_service import CompressionService
+            compression = await asyncio.to_thread(CompressionService().compress_for_playback, path, Path(directory) / "playback.mp4")
             report = {"passed": bool(ok and frame is not None and stats["frames_written"] > 10),
                       "received_webrtc_frames": received, "recorded_frames": stats["frames_written"],
                       "recording_decodes": bool(ok), "capture_thread_stopped": not channel.is_live,
-                      "mode": "Two local aiortc peers, synthetic images, real WebM encoder/decoder; no camera, cloud or TURN test"}
+                      "measured_recording_fps": stats["true_fps"], "frames_dropped": source.dropped,
+                      "browser_mp4_compression_passed": compression["ok"],
+                      "playback_codec": compression.get("codec"),
+                      "mode": "Two local aiortc peers, synthetic images, real MP4 encoder/decoder; no camera, cloud or TURN test"}
+            report["passed"] = report["passed"] and compression["ok"]
         finally:
             source.release()
             if task:

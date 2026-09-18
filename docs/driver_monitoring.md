@@ -65,8 +65,8 @@ All configuration is also documented in `.env.example`; no credentials were adde
 |---|---|
 | `DRIVER_MONITORING_ENABLED`, `DRIVER_MONITORING_BACKGROUND` | `true`, `true`; automatically starts the provisioned cabin source |
 | `DRIVER_FACE_RECOGNITION_ENABLED` | `true`; landmarks work when false |
-| `DRIVER_CAMERA_SOURCE` | `dedicated`; use `rear` only for a physically cabin-facing rear channel |
-| `DRIVER_CAMERA_INDEX` | blank; required for dedicated capture, cannot collide with road cameras |
+| `DRIVER_CAMERA_SOURCE` | `shared`; consumes the configured rear channel when available, otherwise front. `rear` explicitly requires that channel. Legacy `dedicated` no longer opens an additional camera. |
+| `DRIVER_CAMERA_INDEX` | legacy setting; not used to open another camera. Point the shared source toward the cabin for driver analysis. |
 | `DRIVER_FRAME_WIDTH`, `DRIVER_FRAME_HEIGHT` | `640`, `480` |
 | `DRIVER_FACE_DETECTION_FPS`, `DRIVER_LANDMARK_FPS` | `5`, `10` |
 | `DRIVER_NO_FACE_FPS`, `DRIVER_IDLE_DETECTION_FPS`, `DRIVER_IDLE_AFTER_SECONDS` | `4`, `1`, `30` |
