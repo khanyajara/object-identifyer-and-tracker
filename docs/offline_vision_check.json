@@ -1,0 +1,82 @@
+{
+  "media_roundtrip": {
+    "writer_codec": "mp4v",
+    "compression_tool": "moviepy",
+    "output_bytes": 19657,
+    "playable": true
+  },
+  "model": "yolov8n.pt",
+  "confidence": 0.5,
+  "image_size": 416,
+  "capabilities": {
+    "detector": "YOLOv8",
+    "tracker": "Deep SORT",
+    "ocr": "EasyOCR"
+  },
+  "samples": [
+    {
+      "image": "bus.jpg",
+      "seconds": 2.448,
+      "objects": [
+        {
+          "label": "bus",
+          "confidence": 88.93116116523743,
+          "tracking_id": 1
+        },
+        {
+          "label": "person",
+          "confidence": 87.46333718299866,
+          "tracking_id": 2
+        },
+        {
+          "label": "person",
+          "confidence": 80.84775805473328,
+          "tracking_id": 3
+        },
+        {
+          "label": "person",
+          "confidence": 50.36614537239075,
+          "tracking_id": 4
+        }
+      ],
+      "repeated_ids": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "initial_ids": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "movement": false
+    },
+    {
+      "image": "zidane.jpg",
+      "seconds": 0.709,
+      "objects": [
+        {
+          "label": "person",
+          "confidence": 91.29360914230347,
+          "tracking_id": 1
+        },
+        {
+          "label": "person",
+          "confidence": 70.7795798778534,
+          "tracking_id": 2
+        }
+      ],
+      "repeated_ids": [
+        1,
+        2
+      ],
+      "initial_ids": [
+        1,
+        2
+      ],
+      "movement": false
+    }
+  ]
+}

@@ -1,6 +1,17 @@
 [
   {
     "device_id": "roadwatch_local_01",
+    "timestamp": "2026-09-15T19:55:39.749187+00:00",
+    "latitude": -28.702204384518765,
+    "longitude": 24.714528773041295,
+    "address": null,
+    "speed_kmh": 0,
+    "accuracy_m": 183,
+    "source": "Browser",
+    "video_id": null
+  },
+  {
+    "device_id": "roadwatch_local_01",
     "timestamp": "2026-09-14T11:34:49.735077+00:00",
     "latitude": -28.699512,
     "longitude": 24.733036,
@@ -539,12 +550,12 @@
   },
   {
     "device_id": "roadwatch_local_01",
-    "timestamp": "2026-09-15T19:55:39.749187+00:00",
-    "latitude": -28.702204384518765,
-    "longitude": 24.714528773041295,
+    "timestamp": "2026-09-30T09:40:59.214853+00:00",
+    "latitude": -28.715861,
+    "longitude": 24.735348,
     "address": null,
     "speed_kmh": 0,
-    "accuracy_m": 183,
+    "accuracy_m": 100,
     "source": "Browser",
     "video_id": null
   }
