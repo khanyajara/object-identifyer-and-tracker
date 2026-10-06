@@ -174,6 +174,8 @@ Additional tests cover existing-camera adoption, writer attachment without new c
 
 ## Next phase
 
+Current status (2026-10-06): native setup passes. Recognition and fatigue thresholds await real-sample calibration; calibration was explicitly deferred. [Phase repair status](phase_repair_report.md) supersedes the older prerequisite notes below.
+
 Deployment preflight/calibration tools, temporal fatigue detection and linked local warnings/events are implemented. Native model setup and real-camera calibration remain incomplete. See [the three-phase report](fatigue_monitoring.md) and `driver_deployment_validation.json` for current readiness.
 
 ## Change inventory and completion status

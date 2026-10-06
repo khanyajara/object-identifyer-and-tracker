@@ -118,6 +118,16 @@ def open_video_writer(path, fps, size):
     return create_video_writer(path, fps, size)
 
 
+def validate_video_file(path):
+    """Validate a completed local upload source without guessing its filename."""
+    path = Path(path)
+    if not path.is_file():
+        raise RuntimeError("Video source is missing: " + str(path))
+    if not path.stat().st_size:
+        raise RuntimeError("Video source is empty: " + str(path))
+    return path
+
+
 def finalize_video_file(source_path, target_path):
     source_path = Path(source_path)
     target_path = Path(target_path)
@@ -131,6 +141,7 @@ def finalize_video_file(source_path, target_path):
             source_path.unlink()
         except OSError:
             pass
+    return target_path
 
 
 def compress_video_for_playback(source_path, target_path):

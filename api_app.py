@@ -5,6 +5,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, OAuth2Pas
 
 from services.auth_service import AdminAuthService
 from services.video_service import VideoService
+from services.account_identity import can_access_video
 
 
 app = FastAPI(title="Roadwatch Vision Recorder API")
@@ -74,7 +75,7 @@ def health(
 def videos(
     _: Annotated[dict, Depends(require_roles("user", "viewer", "operator", "admin", "super_admin"))],
 ):
-    return service.list_videos()
+    return [record for record in service.list_videos() if can_access_video(record, _)]
 
 
 @app.get("/videos/{video_id}")
@@ -83,7 +84,10 @@ def video(
     _: Annotated[dict, Depends(require_roles("user", "viewer", "operator", "admin", "super_admin"))],
 ):
     try:
-        return service.load(video_id)
+        record = service.load(video_id)
+        if not can_access_video(record, _):
+            raise HTTPException(status_code=404, detail="Video not found.")
+        return record
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:
@@ -95,4 +99,8 @@ def receive_sync(
     payload: dict,
     _: Annotated[dict, Depends(require_roles("operator", "admin", "super_admin"))],
 ):
-    return {"status": "received", "video_id": payload.get("video_id")}
+    try:
+        record = service.ingest_metadata(payload)
+    except (ValueError, TypeError, KeyError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {"status": "received", "video_id": record["video_id"], "persisted": True}

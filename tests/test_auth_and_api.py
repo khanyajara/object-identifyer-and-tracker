@@ -1,5 +1,6 @@
 import os
 import unittest
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -52,10 +53,13 @@ class ApiAuthorizationTests(unittest.TestCase):
         token = token_response.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
         self.assertEqual(self.client.get("/health", headers=headers).status_code, 200)
-        self.assertEqual(
-            self.client.post("/videos/sync", headers=headers, json={"video_id": "test"}).status_code,
-            200,
-        )
+        import api_app
+        with patch.object(api_app.service, "ingest_metadata", return_value={"video_id": "test"}) as ingest:
+            self.assertEqual(
+                self.client.post("/videos/sync", headers=headers, json={"video_id": "test"}).status_code,
+                200,
+            )
+            ingest.assert_called_once_with({"video_id": "test"})
 
     def test_video_id_cannot_escape_the_video_log_directory(self):
         service = AdminAuthService()

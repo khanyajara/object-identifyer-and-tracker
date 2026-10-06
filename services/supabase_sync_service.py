@@ -13,7 +13,7 @@ from urllib.parse import quote
 import requests
 from services.supabase_database_service import SupabaseDatabaseService
 
-DATA_ROOT = Path(__file__).resolve().parents[1] / "data"
+from core.storage_paths import DATA_DIR as DATA_ROOT
 RECORD_DIRS = ("logs", "videos", "incidents", "gps", "contacts", "profile", "stolen_vehicles", "missing_persons", "fatigue_events", "notifications", "uploads")
 ASSET_DIRS = ("snapshots", "exports", "stolen_vehicles", "missing_persons", "videos/thumbnails")
 MIME_TYPES = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp", ".pdf": "application/pdf", ".csv": "text/csv"}

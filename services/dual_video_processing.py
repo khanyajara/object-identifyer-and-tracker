@@ -35,7 +35,8 @@ from services import dual_session_service
 
 LOGGER = logging.getLogger("roadwatch.dual_processing")
 
-PROCESSED_DIR = os.path.join("data", "videos", "processed")
+from core.storage_paths import DATA_DIR
+PROCESSED_DIR = str(DATA_DIR / "videos" / "processed")
 
 ProgressCallback = Optional[Callable[[str, float, str], None]]
 
@@ -89,12 +90,17 @@ def _built_in_pass(
     source = camera.get("video_path")
     cap = cv2.VideoCapture(source)
     if not cap.isOpened():
+        cap.release()
         return False, [], f"Could not open {source}"
 
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 0
-    writer, codec = open_video_writer(output_path, output_fps, (width, height))
+    try:
+        writer, codec = open_video_writer(output_path, output_fps, (width, height))
+    except Exception:
+        cap.release()
+        raise
     if writer is None:
         cap.release()
         return False, [], "No usable MP4 codec for the processed video."
@@ -136,6 +142,8 @@ def _built_in_pass(
                         annotated = frame
                     if event:
                         event = dict(event)
+                        if event.get("error"):
+                            raise RuntimeError(event["error"])
                         event.update(
                             {
                                 "video_id": camera.get("video_id"),
@@ -146,7 +154,7 @@ def _built_in_pass(
                         detections.append(event)
                 except Exception as exc:
                     LOGGER.warning("[%s] frame %s failed: %s", role, frame_number, exc)
-                    annotated = frame
+                    raise RuntimeError(f"{role} frame {frame_number}: {exc}") from exc
 
             writer.write(annotated)
             if total and frame_number % 15 == 0:
@@ -189,7 +197,13 @@ def process_camera(
     output_path = processed_path_for(camera)
     _report(progress, role, 0.0, "Starting AI pass")
 
-    ok, detections, error = _built_in_pass(camera, pipeline, output_path, output_fps, progress)
+    result.update(upload_video_path=None, compressed_processed_path=None)
+    try:
+        if pipeline is not None and callable(getattr(pipeline, "fork_for_recording", None)):
+            pipeline = pipeline.fork_for_recording()
+        ok, detections, error = _built_in_pass(camera, pipeline, output_path, output_fps, progress)
+    except Exception as exc:
+        ok, detections, error = False, [], str(exc)
     if ok:
         result.update(
             {
@@ -205,14 +219,20 @@ def process_camera(
         try:
             target = Path(output_path).parent / "compressed" / Path(output_path).name
             compression = CompressionService().compress_for_playback(output_path, target)
+            if not compression["ok"]:
+                raise RuntimeError(compression.get("error") or "Video compression failed")
             result.update(processed_compression_status="success" if compression["ok"] else "fallback",
+                          compression_sizes={key: compression.get(key) for key in
+                                             ("source_size_bytes", "compressed_size_bytes", "space_saved_bytes")},
                           processed_compression_error=compression.get("error"),
                           processed_compression_message=compression.get("message"),
                           compressed_processed_path=str(compression["path"]) if compression["ok"] else None,
                           upload_video_path=str(compression["path"]) if compression["ok"] else output_path)
         except Exception as exc:
             LOGGER.exception("[%s] compression failed; original and processed video retained", role)
-            result.update(processed_compression_status="fallback", processed_compression_error=str(exc))
+            result.update(processed_compression_status="failed", processed_compression_error=str(exc),
+                          processing_error=str(exc), upload_video_path=None,
+                          processing_status="Compression failed; saved recordings retained.")
         _report(progress, role, 1.0, "Done")
     else:
         result.update(

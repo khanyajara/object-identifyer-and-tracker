@@ -26,14 +26,16 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 from typing import Dict, List, Optional
 
 from core.time_utils import utc_now
 
 LOGGER = logging.getLogger("roadwatch.dual_session")
 
-SESSIONS_DIR = os.path.join("data", "logs", "sessions")
-LOGS_DIR = os.path.join("data", "logs")
+from core.storage_paths import DATA_DIR
+SESSIONS_DIR = str(DATA_DIR / "logs" / "sessions")
+LOGS_DIR = str(DATA_DIR / "logs")
 
 
 def _ensure_dirs() -> None:
@@ -51,15 +53,19 @@ def _atomic_write(path: str, payload: dict) -> None:
 
 
 def session_path(session_id: str) -> str:
+    if not isinstance(session_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", session_id):
+        raise ValueError("Invalid session ID")
     return os.path.join(SESSIONS_DIR, f"{session_id}.json")
 
 
 def video_metadata_path(camera: dict) -> str:
     video_id = camera.get("video_id")
     if video_id:
+        if not isinstance(video_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", video_id):
+            raise ValueError("Invalid video ID")
         return os.path.join(LOGS_DIR, f"{video_id}.json")
     filename = camera.get("filename") or f"{camera.get('video_id')}.webm"
-    stem = os.path.splitext(filename)[0]
+    stem = os.path.splitext(os.path.basename(filename.replace('\\', '/')))[0]
     return os.path.join(LOGS_DIR, f"{stem}.json")
 
 
@@ -85,17 +91,24 @@ def build_video_metadata(
     ]
 
     if objects_summary is None:
-        objects_summary = {}
+        from core.detection_policy import update_recording_summary, empty_recording_summary
+        objects_summary = empty_recording_summary()
+        tracked, previous_movement = {}, False
         for event in detections:
-            for obj in event.get("objects", []):
-                label = obj.get("label", "unknown")
-                objects_summary[label] = objects_summary.get(label, 0) + 1
+            previous_movement = update_recording_summary(objects_summary, event, tracked, previous_movement)
+            for plate in event.get("plates", []):
+                if plate.get("text") and plate["text"] not in objects_summary["plates_detected"]:
+                    objects_summary["plates_detected"].append(plate["text"])
+            objects_summary["snapshots"] += len(event.get("snapshots", []))
 
     from services.driver_monitoring.runtime import identity_metadata
     return {
         **identity_metadata(session),
+        **{key: session[key] for key in ("user_id", "uid") if session.get(key)},
         "video_id": camera.get("video_id"),
         "filename": camera.get("filename"),
+        "document_name": camera.get("document_name") or session.get("document_name"),
+        "title": camera.get("title") or session.get("title") or camera.get("filename"),
         "video_format": os.path.splitext(camera.get("video_path") or "recording.mp4")[1].lstrip("."),
         "video_path": camera.get("video_path"),
         "original_video_path": camera.get("video_path"),
@@ -105,6 +118,7 @@ def build_video_metadata(
         "processed_compression_status": camera.get("processed_compression_status"),
         "processed_compression_error": camera.get("processed_compression_error"),
         "processed_compression_message": camera.get("processed_compression_message"),
+        "compression_sizes": camera.get("compression_sizes"),
         "processing_status": camera.get("processing_status", "Pending post-processing."),
         "processing_error": camera.get("processing_error"),
         # Dual camera fields
@@ -117,7 +131,9 @@ def build_video_metadata(
         "composite_video_path": session.get("composite_video_path"),
         # Capture facts
         "recorded_at": session.get("started_at"),
-        "duration_seconds": camera.get("duration_seconds"),
+        "started_at": session.get("started_at"),
+        "ended_at": session.get("stopped_at"),
+        "duration_seconds": camera.get("duration_seconds") or 0,
         "resolution": camera.get("resolution"),
         "codec": camera.get("codec"),
         "true_fps": camera.get("true_fps"),

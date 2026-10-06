@@ -4,8 +4,7 @@ from copy import deepcopy
 from pathlib import Path
 
 
-PROJECT_DIR = Path(__file__).resolve().parents[1]
-DATA_DIR = PROJECT_DIR / "data"
+from core.storage_paths import PROJECT_DIR, DATA_DIR
 _PATH_LOCKS = {}
 _PATH_LOCKS_GUARD = threading.Lock()
 

@@ -32,7 +32,7 @@ class IncidentService:
         generated.update({item["incident_id"]: item for item in self.store.read()})
         return sorted(
             generated.values(),
-            key=lambda item: item.get("timestamp", ""),
+            key=lambda item: item.get("timestamp") or "",
             reverse=True,
         )
 

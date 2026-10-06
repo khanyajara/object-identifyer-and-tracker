@@ -1,10 +1,10 @@
 import json
-from collections import Counter
 from datetime import datetime, timezone
 
 import cv2
 
 from services.video_service import LOGS_DIR, SNAPSHOTS_DIR
+from core.detection_policy import update_recording_summary, empty_recording_summary
 
 
 class DetectionLogService:
@@ -26,34 +26,10 @@ class DetectionLogService:
             )
             self.record["detections"].append(event)
             summary = self.record["objects_summary"]
-            summary["people_count_max"] = max(
-                summary["people_count_max"], event["people_count"]
-            )
-            summary["vehicle_count_max"] = max(
-                summary["vehicle_count_max"], event["vehicle_count"]
-            )
-            if event["movement_detected"] and not self._previous_movement:
-                summary["movement_events"] += 1
-            self._previous_movement = event["movement_detected"]
-            frame_labels = []
+            self._previous_movement = update_recording_summary(
+                summary, event, self._tracked_labels, self._previous_movement)
             for item in event["objects"]:
                 item["video_id"] = self.record["video_id"]
-                tracking_id = item.get("tracking_id")
-                if tracking_id is not None:
-                    # A class fluctuation must not count one ID as two objects.
-                    label = self._tracked_labels.setdefault(int(tracking_id), item["label"])
-                else:
-                    label = item["label"]
-                frame_labels.append(label)
-            frame_counts = Counter(frame_labels)
-            summary["unique_tracking_ids"] = sorted(self._tracked_labels)
-            tracked_counts = Counter(self._tracked_labels.values())
-            for label, count in frame_counts.items():
-                summary["object_counts"][label] = max(
-                    summary["object_counts"].get(label, 0),
-                    count,
-                    tracked_counts.get(label, 0),
-                )
             for plate in event["plates"]:
                 text = plate.get("text")
                 if text and text not in summary["plates_detected"]:
@@ -72,15 +48,7 @@ class DetectionLogService:
 
     def replace_all(self, entries):
         self.record["detections"] = []
-        self.record["objects_summary"] = {
-            "people_count_max": 0,
-            "vehicle_count_max": 0,
-            "plates_detected": [],
-            "movement_events": 0,
-            "object_counts": {},
-            "unique_tracking_ids": [],
-            "snapshots": 0,
-        }
+        self.record["objects_summary"] = empty_recording_summary()
         self._previous_movement = False
         self._tracked_labels = {}
         try:

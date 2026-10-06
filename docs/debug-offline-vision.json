@@ -3,9 +3,7 @@
     "writer_codec": "mp4v",
     "compression_tool": "moviepy",
     "output_bytes": 18885,
-    "playable": true,
-    "dual_processed_frames": 6,
-    "dual_playable": true
+    "playable": true
   },
   "model": "yolov8n.pt",
   "confidence": 0.5,
@@ -18,7 +16,7 @@
   "samples": [
     {
       "image": "bus.jpg",
-      "seconds": 2.286,
+      "seconds": 0.7,
       "objects": [
         {
           "label": "bus",
@@ -36,7 +34,7 @@
     },
     {
       "image": "zidane.jpg",
-      "seconds": 0.559,
+      "seconds": 0.502,
       "objects": [
         {
           "label": "person",

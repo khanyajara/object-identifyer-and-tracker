@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+import numpy as np
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -34,7 +35,7 @@ class ObjectDetectionPolicyTests(unittest.TestCase):
         model.names = {0: "car"}
         model.predict.return_value = [SimpleNamespace(boxes=[box(.87, 200), box(.88, 0), box(.95, 2)])]
         detector = ObjectDetector("unused", .3, 640, model=model)
-        result = detector.detect(None)
+        result = detector.detect(np.zeros((100, 300, 3), dtype=np.uint8))
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]["confidence"], 95)
         self.assertEqual(model.predict.call_args.kwargs["conf"], .88)

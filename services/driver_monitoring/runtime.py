@@ -28,6 +28,7 @@ class DriverMonitoringRuntime:
         self._frames = queue.Queue(maxsize=1)
         self._source = None
         self._generation = 0
+        self.live_ai_enabled = True
         self._inference_generation = None
         self.channel = None
         self._result = self.service.result()
@@ -130,6 +131,9 @@ class DriverMonitoringRuntime:
         last_fresh_at = time.monotonic()
         try:
             while not self._stop.is_set():
+                if not self.live_ai_enabled:
+                    self._stop.wait(.1)
+                    continue
                 try:
                     if self.channel is not None and not self.channel.is_live:
                         if time.monotonic() < retry_at:
@@ -234,6 +238,9 @@ class DriverMonitoringRuntime:
             while not self._stop.is_set():
                 try:
                     self._commands_once()
+                    if not self.live_ai_enabled:
+                        self._stop.wait(.1)
+                        continue
                     try:
                         item = self._frames.get(timeout=.25)
                     except queue.Empty:
@@ -243,11 +250,13 @@ class DriverMonitoringRuntime:
                         continue
                     try:
                         frame, captured_at, generation = item
-                        if generation != self._generation or time.monotonic()-captured_at >= min(1, self.config.lost_timeout):
+                        if not self.live_ai_enabled or generation != self._generation or time.monotonic()-captured_at >= min(1, self.config.lost_timeout):
                             self.metrics["stale_frames"] += 1
                             continue
                         if generation != self._inference_generation:
                             self.service.fatigue.reset()
+                            if self._inference_generation is not None:
+                                self.service.sessions.invalidate()
                             self._inference_generation = generation
                         if self.enrollment.status["status"] == "capturing":
                             self.service.fatigue.reset()
@@ -259,7 +268,8 @@ class DriverMonitoringRuntime:
                         else:
                             result = self.service.process_frame(frame, captured_at)
                         self.metrics["processed_frames"] += 1
-                        self._publish(result)
+                        if self.live_ai_enabled and generation == self._generation:
+                            self._publish(result)
                     finally:
                         self._frames.task_done()
                     if failed:
@@ -309,6 +319,12 @@ class DriverMonitoringRuntime:
                 self.service.index.invalidate()
         return self.submit(action)
 
+    def set_live_ai_enabled(self, enabled):
+        with self._lock:
+            if self.live_ai_enabled != bool(enabled):
+                self.live_ai_enabled = bool(enabled)
+                self._generation += 1
+
     def snapshot(self):
         with self._lock:
             result = copy.deepcopy(self._result)
@@ -325,6 +341,12 @@ class DriverMonitoringRuntime:
         if not self.running:
             result.update(identity_status="unknown", driver_id=None, driver_display_name="Unknown Driver", identity_confidence=0.0)
         result["message"] = self.message
+        if not self.live_ai_enabled:
+            result.update(identity_status="unknown", driver_id=None, driver_display_name="Unknown Driver",
+                          identity_confidence=0.0, face_detected=False, landmarks_available=False,
+                          fatigue_signals={}, fatigue={"status": "paused", "severity": "none", "score": None},
+                          message="Live AI paused.")
+        result["live_ai_enabled"] = self.live_ai_enabled
         return result
 
     def diagnostics(self):
@@ -369,6 +391,7 @@ def get_runtime():
 def ensure_background(settings=None, existing_manager=None):
     try:
         runtime = get_runtime()
+        runtime.set_live_ai_enabled((settings or {}).get("live_ai_enabled", True))
         runtime.prepare(settings or {}, existing_manager)
         if runtime._source is not None:
             runtime.start()
@@ -399,6 +422,12 @@ def identity_metadata(record=None):
     except Exception:
         pass
     return {"driver_id": None, "driver_identity_status": "unknown", "driver_session_id": None}
+
+
+def set_live_ai_enabled(enabled):
+    """Pause the existing local consumer without creating or closing a camera."""
+    if _runtime is not None:
+        _runtime.set_live_ai_enabled(enabled)
 
 
 def recording_context(video_id=None, **fields):

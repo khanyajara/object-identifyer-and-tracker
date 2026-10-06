@@ -66,6 +66,24 @@ def validate():
     checks["mouth_threshold_configured"] = fatigue.mouth_open_ratio is not None
     checks["neutral_pitch_configured"] = fatigue.neutral_pitch is not None
     checks["camera_source_configured"] = bool(os.getenv("DRIVER_CAMERA_INDEX") or os.getenv("DRIVER_CAMERA_SOURCE") == "rear")
+    # Match the application's settings precedence rather than only inspecting env.
+    settings_path = Path(__file__).resolve().parents[1] / "settings.json"
+    if settings_path.is_file():
+        try:
+            settings = json.loads(settings_path.read_text(encoding="utf-8"))
+            checks["camera_source_configured"] = checks["camera_source_configured"] or settings.get("driver_camera_source") == "rear"
+        except (OSError, json.JSONDecodeError):
+            checks["camera_settings_readable"] = False
+    report["software_ready"] = all(checks.get(name, False) for name in
+        ("yunet_asset", "sface_asset", "landmarker_asset", "yunet_native_load", "yunet_native_forward", "sface_native_load", "landmarker_native_load"))
+    report["calibration_pending"] = [name for name in
+        ("recognition_threshold_configured", "eye_threshold_configured", "mouth_threshold_configured", "neutral_pitch_configured")
+        if not checks[name]]
+    report["next_steps"] = []
+    if report["calibration_pending"]:
+        report["next_steps"].append("Collect stationary cabin samples with scripts/collect_driver_calibration.py; validate suggested fatigue thresholds independently.")
+        report["next_steps"].append("Use scripts/collect_recognition_samples.py and scripts/evaluate_driver_recognition.py with independent enrollment, calibration and test sessions.")
+    report["next_steps"].append("After calibration, validate real cabin capture and concurrent detection, recording and playback on the mounted rig.")
     report["ready_for_camera_acceptance"] = all(checks.values())
     return report
 

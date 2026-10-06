@@ -22,9 +22,19 @@ class VisionPipeline:
         self.tracker = ObjectTracker() if enable_tracking else None
         self._camera_trackers = {}
         self.movement = MovementDetector()
+        self._camera_movement = {}
         self.plate_scanner = PlateScanner(ocr_reader) if enable_ocr else None
         self.ocr_interval_seconds = ocr_interval_seconds
         self.last_ocr = 0.0
+        self._ocr_times = {}
+
+    def fork_for_recording(self):
+        return VisionPipeline(
+            "", self.detector.confidence, self.detector.image_size,
+            self.tracker is not None, self.plate_scanner is not None,
+            self.ocr_interval_seconds, model=self.detector.model,
+            ocr_reader=self.plate_scanner.reader if self.plate_scanner else None,
+        )
 
     @property
     def capabilities(self):
@@ -49,7 +59,10 @@ class VisionPipeline:
             if tracker
             else [{**item, "tracking_id": None} for item in detections]
         )
-        movement, score = self.movement.detect(frame)
+        movement_detector = self.movement
+        if camera_role is not None:
+            movement_detector = self._camera_movement.setdefault(camera_role, MovementDetector())
+        movement, score = movement_detector.detect(frame)
         vehicles = [item for item in objects if item["label"] in VEHICLES]
         plates = []
         now = (
@@ -60,10 +73,13 @@ class VisionPipeline:
         if (
             self.plate_scanner
             and vehicles
-            and now - self.last_ocr >= self.ocr_interval_seconds
+            and (camera_role not in self._ocr_times
+                 or now < self._ocr_times[camera_role]
+                 or now - self._ocr_times[camera_role] >= self.ocr_interval_seconds)
         ):
             plates = self.plate_scanner.scan(frame, vehicles)
             self.last_ocr = now
+            self._ocr_times[camera_role] = now
         counts = Counter(item["label"] for item in objects)
         event = {
             "frame_number": frame_number,

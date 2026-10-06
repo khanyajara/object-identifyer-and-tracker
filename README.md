@@ -14,6 +14,10 @@ Roadwatch Vision Recorder is a standalone Python Streamlit app that turns a loca
 
 The app is designed to work beside an existing dashcam platform. The existing platform can stay as the main dashboard, while this Python app handles camera capture, AI analysis, video storage, and metadata export/sync.
 
+Repair update, 6 October 2026: recording validation, upload verification, camera-specific movement/OCR state, preview overlays, processing cleanup and account ownership are repaired in the existing components. Current recording output is MP4; older WebM/AVI evidence remains supported. See [phase repair status](docs/phase_repair_report.md). Phase 1 native models load, but real-sample recognition/fatigue calibration remains pending and alerts are not enabled with guessed thresholds.
+
+For the full regression suite, install `requirements-dev.txt` after the runtime requirements and run `python -m pytest tests -q`. The historical unittest command below omits pytest-style tests.
+
 ## What It Does
 
 - Opens a local webcam with OpenCV.
@@ -394,6 +398,10 @@ GET  /videos/{video_id}
 POST /videos/sync
 ```
 
+All endpoints require a bearer token. Video reads enforce account ownership; sync ingestion requires an operator or administrator. `POST /videos/sync` now persists metadata rather than merely acknowledging it. Send a valid Roadwatch `video_id` and the recording owner's `user_id` (or `uid`); optional fields include `detections`, camera/device IDs, timestamps, resolution, duration and FPS. Repeated requests update the same metadata record. Incoming local filesystem paths are ignored, existing owners cannot be changed, and video bytes are transferred through the existing processed-video upload workflow.
+
+Runtime recordings, app records, dual sessions and sync share `core/storage_paths.py`. Local mode retains the existing project data directory; temporary cloud mode uses the common staging directory. Existing local evidence is not moved or deleted when the storage mode changes.
+
 ## Default Settings
 
 Current defaults are aimed at smooth camera recording with useful AI:
@@ -550,6 +558,15 @@ Process AI without blocking recording.
 Save detections under the video they belong to.
 Generate annotated saved video after recording stops.
 ```
+
+Stopping a recording opens a Save recording popup for its document name.
+Save and upload stores the name before processing, and then automatically queues each successfully
+processed and compressed MP4 for Supabase upload. The upload verifies the remote
+file size, saves a playback URL locally before cloud metadata sync, and refreshes
+expired signed URLs during playback. Upload failures remain available for retry
+in the Videos page; repeated requests reuse an active upload job. Compression
+records input/output sizes and bytes saved. Originals are retained, so smaller
+cloud uploads do not automatically remove local evidence.
 # Driver monitoring
 
 Roadwatch includes an optional, isolated YuNet/SFace/MediaPipe cabin subsystem.

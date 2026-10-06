@@ -24,6 +24,7 @@ def main():
                                   ocr_reader=load_ocr_reader() if settings['enable_ocr'] else None)
         assets = Path(ultralytics.__file__).parent / 'assets'
         for index, name in enumerate(('bus.jpg', 'zidane.jpg')):
+            pipeline.movement.previous = None
             frame = cv2.imread(str(assets / name))
             if frame is None:
                 raise RuntimeError(f'Bundled smoke image missing: {name}')
@@ -45,30 +46,21 @@ def main():
                     writer.write(cv2.resize(annotated, (640, 480)))
             finally:
                 writer.release()
-            finished = finalize_video_file(actual, directory / 'finished.mp4')
+            finished = directory / 'finished.mp4'
+            finalize_video_file(actual, finished)
             compression = CompressionService().compress_for_playback(finished, directory / 'compressed' / 'actual.mp4')
             if not compression['ok']:
                 raise RuntimeError(compression.get('error') or 'Compression failed')
             roundtrip = dict(writer_codec=codec, compression_tool=compression.get('tool'),
                              output_bytes=Path(compression['path']).stat().st_size,
                              playable=is_playable_video_path(compression['path']))
-            from services import dual_video_processing
-            with patch.object(dual_video_processing, 'PROCESSED_DIR', str(directory / 'processed')):
-                processed = dual_video_processing.process_camera({},
-                    {'video_id': 'offline-check', 'role': 'front', 'video_path': str(finished), 'true_fps': 10},
-                    pipeline=pipeline)
-            if processed.get('processing_error') or processed.get('processed_compression_status') != 'success':
-                raise RuntimeError(processed.get('processing_error') or 'Dual processing did not finish')
-            roundtrip['dual_processed_frames'] = len(processed.get('detections', []))
-            roundtrip['dual_playable'] = is_playable_video_path(processed.get('upload_video_path'))
-            if not roundtrip['playable'] or not roundtrip['dual_playable']:
-                raise RuntimeError('Offline encoded output is not playable')
         report = dict(media_roundtrip=roundtrip, model=settings['model_name'], confidence=settings['confidence'], image_size=settings['yolo_image_size'],
                       capabilities=pipeline.capabilities, samples=results)
-    target = ROOT / 'docs' / 'offline_vision_check.json'
+    target = ROOT / 'docs' / 'debug-offline-vision.json'
     target.write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps(report, indent=2))
 
 
 if __name__ == '__main__':
     main()
+

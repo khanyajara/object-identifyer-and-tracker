@@ -24,6 +24,8 @@ class CameraManager:
         if browser_capture_enabled(settings):
             raise RuntimeError("Browser capture requires the session-owned shared camera manager")
         self.settings = settings
+        self.live_ai_enabled = bool(settings.get("live_ai_enabled", True))
+        self._live_ai_generation = 0
         self.pipeline = VisionPipeline(
             settings["model_name"],
             settings["confidence"],
@@ -48,6 +50,7 @@ class CameraManager:
             self.recording_fps,
             f"{self.actual_width}x{self.actual_height}",
             settings.get("device_id", "roadwatch_local_01"),
+            user_id=settings.get("recording_user_id"),
         )
         self.record["camera_index"] = settings["camera_index"]
         self.record["performance"] = {
@@ -213,6 +216,8 @@ class CameraManager:
         last_sample_time = 0.0
         last_frame_number = 0
         while not self._stop.wait(0.01):
+            if not self.live_ai_enabled:
+                continue
             now = time.monotonic()
             if now - last_sample_time < interval:
                 continue
@@ -281,9 +286,14 @@ class CameraManager:
                 continue
             began = time.monotonic()
             try:
+                generation = self._live_ai_generation
+                if not self.live_ai_enabled:
+                    continue
                 _, event = self.pipeline.process(
                     ai_frame, number, self.metrics["camera_fps"]
                 )
+                if not self.live_ai_enabled or generation != self._live_ai_generation:
+                    continue
                 event = self._scale_event(event, original_frame, ai_frame)
                 event["video_id"] = self.record["video_id"]
                 event.update(driver_context)
@@ -306,6 +316,8 @@ class CameraManager:
                 )
                 count += 1
                 with self._state_lock:
+                    if not self.live_ai_enabled or generation != self._live_ai_generation:
+                        continue
                     self._latest_event = event
                     self.latest_error = None
                     self._metrics["processing_time_ms"] = (
@@ -322,7 +334,8 @@ class CameraManager:
                     pass
             except Exception as exc:
                 with self._state_lock:
-                    self.latest_error = f"AI frame {number}: {exc}"
+                    if self.live_ai_enabled and generation == self._live_ai_generation:
+                        self.latest_error = f"AI frame {number}: {exc}"
             finally:
                 self._ai_queue.task_done()
 
@@ -360,6 +373,15 @@ class CameraManager:
             self.video_service.save(self.record)
             with self._detection_lock:
                 self._flushed_detection_count += len(pending)
+
+    def set_live_ai_enabled(self, enabled):
+        with self._state_lock:
+            if self.live_ai_enabled != bool(enabled):
+                self.live_ai_enabled = bool(enabled)
+                self._live_ai_generation += 1
+                self._latest_event = None
+                self.latest_error = None
+                self._metrics.update(ai_fps=0.0, processing_time_ms=0.0)
 
     def get_dashboard_state(self):
         with self._state_lock:

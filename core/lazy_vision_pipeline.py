@@ -12,6 +12,9 @@ class LazyVisionPipeline:
         self._retry_at = 0
         self._error = None
 
+    def fork_for_recording(self):
+        return LazyVisionPipeline(self.settings)
+
     def process(self, frame, frame_number, camera_fps, **kwargs):
         with self._lock:
             if self._pipeline is None:
@@ -19,9 +22,11 @@ class LazyVisionPipeline:
                     return frame, {"objects": [], "error": self._error}
                 try:
                     from core.vision_pipeline import VisionPipeline
+                    from core.ocr import load_ocr_reader
                     s = self.settings
                     self._pipeline = VisionPipeline(s["model_name"], s["confidence"], s["yolo_image_size"],
-                                                    s["enable_tracking"], s["enable_ocr"], s["ocr_interval_seconds"])
+                                                    s["enable_tracking"], s["enable_ocr"], s["ocr_interval_seconds"],
+                                                    ocr_reader=load_ocr_reader() if s["enable_ocr"] else None)
                 except Exception as exc:
                     self._error = str(exc)
                     self._retry_at = time.monotonic() + 30

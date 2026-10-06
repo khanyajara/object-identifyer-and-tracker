@@ -32,6 +32,8 @@ class VideoProcessingService:
         temporary_path = output_path.with_suffix(".raw")
         record["processing_status"] = "Processing detection overlays..."
         record["processing_error"] = None
+        record["upload_video_path"] = None
+        record["upload_mp4_path"] = None
         self.video_service.save(record)
         try:
             events, frame_count, actual_temporary_path = self._process_video(
@@ -46,6 +48,11 @@ class VideoProcessingService:
             compression = CompressionService().compress_for_playback(
                 output_path, compressed_target
             )
+            record["processed_video_path"] = str(output_path)
+            if not compression["ok"]:
+                record["processed_compression_status"] = "failed"
+                record["processed_compression_error"] = compression.get("error")
+                raise RuntimeError(compression.get("error") or "Video compression failed.")
             record["processed_compression_status"] = (
                 "success" if compression["ok"] else "fallback"
             )
@@ -53,6 +60,8 @@ class VideoProcessingService:
                 None if compression["ok"] else compression.get("error")
             )
             record["processed_compression_message"] = compression["message"]
+            record["compression_sizes"] = {key: compression.get(key) for key in
+                                           ("source_size_bytes", "compressed_size_bytes", "space_saved_bytes")}
             self._replace_detection_metadata(record, events)
             record["processed_video_path"] = str(output_path)
             if output_path.suffix.lower() == ".mp4":
@@ -95,17 +104,21 @@ class VideoProcessingService:
                     path.unlink()
                 except OSError:
                     pass
-            record["processed_video_path"] = None
+            record["upload_video_path"] = None
+            record["upload_mp4_path"] = None
+            record["compressed_processed_path"] = None
+            record["compressed_mp4_path"] = None
             record["processing_status"] = "Post-processing failed"
             record["processing_error"] = str(exc)
         self.video_service.save(record)
-        return record
+        return Path(record["upload_video_path"]) if not record.get("processing_error") and record.get("upload_video_path") else None
 
     def _process_video(self, record, original_path, temporary_path):
         if not original_path.exists() or not original_path.stat().st_size:
             raise RuntimeError("Original video is unavailable for processing.")
         capture = cv2.VideoCapture(str(original_path))
         if not capture.isOpened():
+            capture.release()
             raise RuntimeError("Could not open the original saved video.")
         writer = None
         try:
@@ -125,7 +138,7 @@ class VideoProcessingService:
                 self.settings["model_name"],
                 self.settings["confidence"],
                 self.settings["yolo_image_size"],
-                True,
+                self.settings.get("enable_tracking", True),
                 self.settings["enable_ocr"],
                 self.settings["ocr_interval_seconds"],
                 self.model,
@@ -136,7 +149,7 @@ class VideoProcessingService:
             started_at = self._parse_started_at(record.get("started_at"))
             while True:
                 ok, frame = capture.read()
-                if not ok:
+                if not ok or frame is None:
                     break
                 frame_number += 1
                 media_seconds = (frame_number - 1) / fps
@@ -146,6 +159,8 @@ class VideoProcessingService:
                     fps,
                     media_timestamp_seconds=media_seconds,
                 )
+                if event.get("error"):
+                    raise RuntimeError(event["error"])
                 event["video_id"] = record["video_id"]
                 event["timestamp"] = (
                     started_at + timedelta(seconds=media_seconds)

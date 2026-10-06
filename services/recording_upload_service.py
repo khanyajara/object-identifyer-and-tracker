@@ -23,7 +23,10 @@ def retry_source(record):
         raise RuntimeError("No completed upload source. Process the recording first.")
     if os.name != "nt" and PureWindowsPath(value).drive:
         raise RuntimeError("This Windows source is unavailable on this server. Restore and reprocess the recording.")
-    return validate_video_file(Path(value))
+    try:
+        return validate_video_file(Path(value))
+    except RuntimeError as exc:
+        raise RuntimeError("Retry requires an existing completed video source: " + str(exc)) from exc
 
 
 def publish_recording(record, local_path, *, storage, firebase, save):

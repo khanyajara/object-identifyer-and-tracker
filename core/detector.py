@@ -1,13 +1,21 @@
 from pathlib import Path
+import threading
+import weakref
+import numpy as np
 
 from ultralytics import YOLO
 from core.detection_policy import DUPLICATE_IOU, detection_confidence, suppress_duplicates
 
+_MODEL_LOCKS = weakref.WeakKeyDictionary()
+_LOCK_REGISTRY = threading.Lock()
+
 
 def load_yolo_model(model_name):
     local = Path(model_name)
-    if not local.exists():
+    if not local.is_file():
         local = Path(__file__).resolve().parents[1] / model_name
+    if not local.is_file():
+        raise FileNotFoundError("YOLO weights are missing: " + str(local))
     return YOLO(str(local))
 
 
@@ -16,8 +24,16 @@ class ObjectDetector:
         self.model = model or load_yolo_model(model_name)
         self.confidence = detection_confidence(confidence)
         self.image_size = image_size
+        with _LOCK_REGISTRY:
+            self._model_lock = _MODEL_LOCKS.setdefault(self.model, threading.RLock())
 
     def detect(self, frame):
+        if not isinstance(frame, np.ndarray) or frame.ndim != 3 or frame.shape[2] != 3 or not frame.size:
+            raise ValueError("Expected a nonempty BGR frame")
+        with self._model_lock:
+            return self._detect_locked(frame)
+
+    def _detect_locked(self, frame):
         result = self.model.predict(
             frame,
             conf=self.confidence,

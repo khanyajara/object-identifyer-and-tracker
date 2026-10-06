@@ -6,7 +6,7 @@ import requests
 
 class SupabaseDatabaseService:
     def __init__(self):
-        self.url = os.getenv("SUPABASE_URL", "").rstrip("/")
+        self.url = os.getenv("SUPABASE_URL", "").rstrip("/").removesuffix("/rest/v1")
         self.key = os.getenv("SUPABASE_SECRET_KEY") or os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
     @property
@@ -53,5 +53,5 @@ class SupabaseDatabaseService:
             item = row["payload"]
             if not isinstance(item, dict) or not item.get("video_id") or not item.get("supabase_processed_path"):
                 continue
-            videos.append({**item, "title": item.get("filename") or item["video_id"], "created_at": item.get("started_at") or "", "processed": True, "upload_status": item.get("supabase_upload_status", "uploaded"), "plate_results": item.get("objects_summary", {}).get("plates_detected", [])})
+            videos.append({**item, "title": item.get("title") or item.get("document_name") or item.get("filename") or item["video_id"], "created_at": item.get("started_at") or "", "processed": True, "upload_status": item.get("supabase_upload_status", "uploaded"), "plate_results": item.get("objects_summary", {}).get("plates_detected", [])})
         return videos

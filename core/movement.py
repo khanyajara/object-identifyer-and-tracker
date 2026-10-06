@@ -9,7 +9,7 @@ class MovementDetector:
     def detect(self, frame):
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (11, 11), 0)
-        if self.previous is None:
+        if self.previous is None or self.previous.shape != gray.shape:
             self.previous = gray
             return False, 0.0
         score = float(cv2.absdiff(self.previous, gray).mean())

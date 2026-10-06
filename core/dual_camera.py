@@ -31,6 +31,7 @@ Typical use:
 from __future__ import annotations
 
 import logging
+import inspect
 import os
 import platform
 import queue
@@ -50,6 +51,7 @@ import cv2
 import numpy as np
 
 from core.time_utils import utc_now
+from core.storage_paths import DATA_DIR
 
 LOGGER = logging.getLogger("roadwatch.dual_camera")
 
@@ -385,6 +387,7 @@ class CameraChannel:
         self._lifecycle_lock = threading.RLock()
         self.keep_capture_alive = False
         self.preview_ai_enabled = False
+        self.live_ai_enabled = True
 
         self._latest_frame: Optional[np.ndarray] = None
         self._latest_index: int = -1
@@ -649,7 +652,7 @@ class CameraChannel:
                 self._latest_ts = now
 
             # 3. Offer a sampled copy to AI. Never block, never queue up.
-            if self.config.ai_enabled and (not self.keep_capture_alive or self._recording or self.preview_ai_enabled) and (now - self._last_ai_push) >= self.config.ai_sample_interval:
+            if self.live_ai_enabled and self.config.ai_enabled and (not self.keep_capture_alive or self._recording or self.preview_ai_enabled) and (now - self._last_ai_push) >= self.config.ai_sample_interval:
                 self._last_ai_push = now
                 item = (self.role, frame.copy(), self.frames_read, now)
                 try:
@@ -838,11 +841,11 @@ class DualCameraManager:
     def __init__(
         self,
         configs: Sequence[CameraConfig],
-        video_dir: str = "data/videos",
+        video_dir: Optional[str] = None,
         pipeline: Optional[VisionPipeline] = None,
         browser_mode: bool = False,
     ):
-        self.video_dir = video_dir
+        self.video_dir = str(video_dir) if video_dir is not None else str(DATA_DIR / "videos")
         self.browser_mode = browser_mode
         self.driver_runtime = None
         self._driver_retry_at = 0.0
@@ -863,6 +866,7 @@ class DualCameraManager:
         self._ai_order: List[str] = list(self.channels.keys())
         self._ai_cursor = 0
         self.pipeline = pipeline
+        self.live_ai_enabled = True
         self.latest_event: Optional[Dict[str, object]] = None
         self.latest_annotated_frame: Optional[np.ndarray] = None
         self._preview_results = {}
@@ -878,7 +882,7 @@ class DualCameraManager:
         self._ai_started_at = time.monotonic()
 
     @classmethod
-    def from_settings(cls, settings: Optional[dict] = None, video_dir: str = "data/videos") -> "DualCameraManager":
+    def from_settings(cls, settings: Optional[dict] = None, video_dir: Optional[str] = None) -> "DualCameraManager":
         from core.capture_mode import browser_capture_enabled
         if browser_capture_enabled(settings):
             settings = settings or {}
@@ -903,7 +907,7 @@ class DualCameraManager:
 
     def ensure_browser_driver(self):
         """Session-scoped consumer; never invoke the process-global camera owner."""
-        if not self.browser_mode or not self.channel(REAR).browser_source.ready:
+        if not self.live_ai_enabled or not self.browser_mode or not self.channel(REAR).browser_source.ready:
             return
         runtime = self.driver_runtime
         if runtime is not None:
@@ -933,6 +937,25 @@ class DualCameraManager:
         return {"driver_id": state["driver_id"] if verified else None,
                 "driver_identity_status": "verified" if verified else "unknown",
                 "driver_session_id": session["session_id"]}
+
+    def set_live_ai_enabled(self, enabled):
+        enabled = bool(enabled)
+        with self._ai_lock:
+            if enabled == self.live_ai_enabled:
+                return
+            self.live_ai_enabled = enabled
+            self._preview_generation += 1
+            self._preview_results.clear()
+            self.latest_event = None
+            self.latest_annotated_frame = None
+            self.ai_metrics.update(processed_frames=0.0, processing_time_ms=0.0, ai_fps=0.0)
+            self._ai_started_at = time.monotonic()
+        for channel in self.channels.values():
+            channel.live_ai_enabled = enabled
+            while channel.get_ai_frame() is not None:
+                pass
+        if self.driver_runtime is not None:
+            self.driver_runtime.set_live_ai_enabled(enabled)
 
     @property
     def preview_active(self) -> bool:
@@ -1045,6 +1068,8 @@ class DualCameraManager:
 
         from services.driver_monitoring.runtime import identity_metadata
         self._driver_start_metadata = self.browser_driver_metadata() if self.browser_mode else identity_metadata()
+        if getattr(self, "recording_user_id", None):
+            self._driver_start_metadata.update(user_id=self.recording_user_id, uid=self.recording_user_id)
         self._driver_observations = {}
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         readable = datetime.now().strftime("%Y_%m_%d_%H%M%S")
@@ -1063,7 +1088,7 @@ class DualCameraManager:
             if not channel.config.enabled:
                 continue
             video_id = f"vid_{stamp}_{role}_{short}"
-            filename = f"recording_{readable}_{role}.mp4"
+            filename = f"recording_{readable}_{role}_{short}.mp4"
             path = os.path.join(self.video_dir, filename)
             ok = channel.start(video_path=path, video_id=video_id)
             started_any = started_any or (ok and channel.is_recording)
@@ -1210,6 +1235,9 @@ class DualCameraManager:
                 "movement_detected": any(source.get("movement_detected", False) for source in events),
                 "plate_text": ", ".join(source["plate_text"] for source in events if source.get("plate_text")),
             }
+            errors = [source["error"] for source in events if source.get("error")]
+            if errors:
+                event["error"] = "; ".join(errors)
             return frame, event
         channel = self.channels.get(role)
         label = channel.config.label if channel else role.title()
@@ -1222,7 +1250,38 @@ class DualCameraManager:
             frame = placeholder_frame(960, 540, label + " offline")
         return frame, {"camera_role": role, "objects": [], "plates": []}
 
+    def smooth_detection_preview(self, role: str = FRONT, max_age_seconds: float = 2.0):
+        """Overlay fresh, dimension-matched detections on current camera frames."""
+        if role == "both":
+            front, front_event = self.smooth_detection_preview(FRONT, max_age_seconds)
+            rear, rear_event = self.smooth_detection_preview(REAR, max_age_seconds)
+            _, event = self.detection_preview("both", max_age_seconds)
+            event["objects"] = [{**item, "camera_role": source["camera_role"]}
+                                for source in (front_event, rear_event) for item in source.get("objects", [])]
+            event["plates"] = [{**item, "camera_role": source["camera_role"]}
+                               for source in (front_event, rear_event) for item in source.get("plates", [])]
+            event["people_count"] = sum(source.get("people_count", 0) for source in (front_event, rear_event))
+            event["vehicle_count"] = sum(source.get("vehicle_count", 0) for source in (front_event, rear_event))
+            event["movement_detected"] = any(source.get("movement_detected", False) for source in (front_event, rear_event))
+            event["plate_text"] = ", ".join(source["plate_text"] for source in (front_event, rear_event) if source.get("plate_text"))
+            return compose_side_by_side(front, rear, height=480), event
+        from core.annotation import annotate_frame
+        channel = self.channels.get(role)
+        frame = channel.get_preview() if channel else None
+        empty = {"camera_role": role, "objects": [], "plates": []}
+        if frame is None:
+            return placeholder_frame(960, 540, role.title() + " offline"), empty
+        with self._ai_lock:
+            result = self._preview_results.get(role)
+            if result is None or time.monotonic() - result[2] > max_age_seconds or result[0].shape != frame.shape:
+                return frame, empty
+            event = deepcopy(result[1])
+        return annotate_frame(frame.copy(), event.get("objects", []), event.get("plates", []),
+                              event.get("movement_detected", False), 0), event
+
     def _handle_ai_frame(self, role: str, frame: np.ndarray, frame_number: int, timestamp: float):
+        if not self.live_ai_enabled:
+            return frame, {"camera_role": role, "objects": [], "plates": [], "live_ai_enabled": False}
         generation = self._preview_generation
         from services.driver_monitoring.runtime import identity_metadata
         driver_context = self.browser_driver_metadata() if self.browser_mode else identity_metadata()
@@ -1230,12 +1289,13 @@ class DualCameraManager:
             return frame, {"frame_number": frame_number, "camera_role": role, "objects": [], "movement_detected": False}
         started = time.monotonic()
         try:
-            camera_context = {"camera_role": role} if isinstance(self.pipeline, VisionPipeline) else {}
+            parameters = inspect.signature(self.pipeline.process).parameters
+            accepts_kwargs = any(p.kind == inspect.Parameter.VAR_KEYWORD for p in parameters.values())
+            context = {"media_timestamp_seconds": timestamp, "camera_role": role}
+            camera_context = {key: value for key, value in context.items() if accepts_kwargs or key in parameters}
             annotated, event = self.pipeline.process(
-                frame, frame_number, 0.0, media_timestamp_seconds=timestamp, **camera_context
+                frame, frame_number, 0.0, **camera_context
             )
-        except TypeError:
-            annotated, event = self.pipeline.process(frame, frame_number, 0.0)
         except Exception as exc:  # pragma: no cover - pipeline dependent
             annotated = frame
             event = {"frame_number": frame_number, "camera_role": role, "objects": [], "movement_detected": False, "error": str(exc)}
@@ -1297,6 +1357,8 @@ class DualCameraManager:
 
     def process_preview_ai_async(self):
         """At most one inference batch; UI never waits or queues inference jobs."""
+        if not self.live_ai_enabled:
+            return
         with self._preview_worker_lock:
             if self._preview_worker is not None and self._preview_worker.is_alive():
                 return
@@ -1310,6 +1372,7 @@ class DualCameraManager:
 
     def session_summary(self) -> dict:
         return {
+            **getattr(self, "_driver_start_metadata", {}),
             "session_id": self.session_id,
             "started_at": self.started_at,
             "recording": self._recording,

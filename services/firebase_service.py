@@ -83,8 +83,9 @@ class FirebaseService:
         from services.driver_monitoring.runtime import identity_metadata
         return {
             **identity_metadata(record),
+            **{key: record[key] for key in ("user_id", "uid") if record.get(key)},
             "video_id": record.get("video_id"),
-            "title": record.get("filename") or record.get("video_id"),
+            "title": record.get("title") or record.get("document_name") or record.get("filename") or record.get("video_id"),
             "created_at": record.get("started_at") or utc_now(),
             "updated_at": utc_now(),
             "source": "roadwatch",
@@ -94,7 +95,8 @@ class FirebaseService:
             "supabase_url": supabase_url or record.get("supabase_processed_url") or "",
             "supabase_webm_url": record.get("supabase_webm_url", ""),
             "supabase_mp4_url": record.get("supabase_mp4_url", ""),
-            "playback_source": record.get("playback_source") or record.get("supabase_webm_url") or record.get("supabase_mp4_url") or supabase_url or record.get("supabase_processed_url") or "",
+            "playback_source": supabase_url or record.get("supabase_mp4_url") or record.get("supabase_webm_url") or record.get("supabase_processed_url") or "",
+            "processing_status": "completed" if not record.get("processing_error") and record.get("processed_compression_status") == "success" else record.get("processing_status", "pending"),
             "playback_format": record.get("playback_format", ""),
             "processed": bool(record.get("processed_video_path")),
             "compressed": bool(record.get("compressed_processed_path")),
@@ -145,6 +147,7 @@ class FirebaseService:
         size = float(video_object.get("size") or 0)
         document = {
             "video_id": video_id,
+            **{key: video_object[key] for key in ("user_id", "uid") if video_object.get(key)},
             "title": filename,
             "created_at": video_object.get("created_at") or utc_now(),
             "updated_at": video_object.get("updated_at") or utc_now(),

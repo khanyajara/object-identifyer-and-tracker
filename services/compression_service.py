@@ -13,6 +13,11 @@ class CompressionService:
         result = compress_video_for_playback(source_path, target_path)
         if result["ok"] and not is_playable_video_path(result["path"]):
             return {"ok": False, "path": Path(source_path), "message": "Compressed output is not playable. Using saved fallback video.", "error": "Compressed output could not be opened by OpenCV."}
+        if result["ok"]:
+            original_size = Path(source_path).stat().st_size
+            compressed_size = Path(result["path"]).stat().st_size
+            result.update(source_size_bytes=original_size, compressed_size_bytes=compressed_size,
+                          space_saved_bytes=max(0, original_size - compressed_size))
         return result
 
     def create_thumbnail(self, source_path, target_path):

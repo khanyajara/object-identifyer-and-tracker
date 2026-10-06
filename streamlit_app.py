@@ -6,7 +6,7 @@ import sys
 import threading
 import time
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 PROJECT_DIR = Path(__file__).resolve().parent
@@ -23,7 +23,18 @@ import streamlit as st
 from streamlit_js_eval import get_geolocation
 
 from core.detector import load_yolo_model
-from core.dual_camera import DualCameraManager
+import core.dual_camera as dual_camera_module
+
+
+def load_dual_camera_manager_class():
+    """Refresh pre-switch imports retained by Streamlit after source edits."""
+    if not hasattr(dual_camera_module.DualCameraManager, "set_live_ai_enabled"):
+        import importlib
+        importlib.reload(dual_camera_module)
+    return dual_camera_module.DualCameraManager
+
+
+DualCameraManager = load_dual_camera_manager_class()
 from core.ocr import load_ocr_reader
 from core.vision_pipeline import VEHICLES, VisionPipeline
 from core.video_io import (
@@ -241,7 +252,7 @@ def save_settings(settings):
     persistent_settings = {
         key: value
         for key, value in settings.items()
-        if key not in SENSITIVE_SETTING_KEYS
+        if key not in SENSITIVE_SETTING_KEYS and key not in {"recording_user_id", "live_ai_enabled"}
     }
     temporary = SETTINGS_PATH.with_suffix(".json.tmp")
     temporary.write_text(json.dumps(persistent_settings, indent=2), encoding="utf-8")
@@ -426,6 +437,9 @@ class DualCameraUIManager:
     def __init__(self, settings, model=None, ocr_reader=None):
         self.settings = settings
         self.manager = DualCameraManager.from_settings(settings)
+        self.manager.recording_user_id = settings.get("recording_user_id")
+        if self.manager.recording_user_id:
+            self.manager.video_dir = str(Path(self.manager.video_dir) / "users" / self.manager.recording_user_id)
         from core.lazy_vision_pipeline import LazyVisionPipeline
         self.pipeline = LazyVisionPipeline(settings) if self.manager.browser_mode else VisionPipeline(
             settings["model_name"],
@@ -438,6 +452,7 @@ class DualCameraUIManager:
             ocr_reader,
         )
         self.manager.pipeline = self.pipeline
+        self.manager.set_live_ai_enabled(settings.get("live_ai_enabled", True))
         self.started = 0.0
         self.record = {
             "video_id": None,
@@ -492,15 +507,29 @@ class DualCameraUIManager:
         )
         return self.session
 
+    def set_live_ai_enabled(self, enabled):
+        self.manager.set_live_ai_enabled(enabled)
+        if not self.manager.browser_mode:
+            from services.driver_monitoring.runtime import set_live_ai_enabled
+            set_live_ai_enabled(enabled)
+
     def get_dashboard_state(self):
         self.manager.process_preview_ai_async()
         frame, event = self.manager.detection_preview(getattr(self, "preview_role", "both"))
-        if getattr(self, "smooth_preview", True):
+        if getattr(self, "smooth_preview", False):
+            frame, event = self.manager.smooth_detection_preview(getattr(self, "preview_role", "both"))
+        if getattr(self.manager, "live_ai_enabled", True) is False:
             layout = {"both": "side_by_side", "front": "front_only", "rear": "rear_only"}
             frame = self.manager.composite_preview(layout[getattr(self, "preview_role", "both")], height=480)
+            event = {"objects": [], "plates": [], "live_ai_enabled": False}
         status = self.manager.status()
         metrics = {
             "camera_fps": max((v.get("live_fps", 0) for v in status.values()), default=0.0),
+            "live_ai_enabled": getattr(self.manager, "live_ai_enabled", True),
+            "camera_sources": [{"role": role, "label": self.manager.channels[role].config.label,
+                                "fps": values.get("live_fps", 0), "target_fps": self.manager.channels[role].config.target_fps,
+                                "resolution": values.get("resolution", "?"), "status": values.get("status", "offline")}
+                               for role, values in status.items() if self.manager.channels[role].config.enabled],
             "ai_fps": self.manager.ai_metrics.get("ai_fps", 0.0),
             "processing_time_ms": self.manager.ai_metrics.get("processing_time_ms", 0.0),
             "active_resolution": ", ".join(
@@ -529,9 +558,10 @@ class DualCameraUIManager:
         return self.record
 
 
-def stop_and_process_dual(camera_manager, settings):
+def stop_and_process_dual(camera_manager, settings, already_stopped=False):
     processing_status = st.status("Processing dual camera session...", expanded=True)
-    camera_manager.stop()
+    if not already_stopped:
+        camera_manager.stop()
     camera_manager.record["video_id"] = None
     st.session_state.camera_manager = camera_manager
     unlink_location_from_video()
@@ -542,10 +572,15 @@ def stop_and_process_dual(camera_manager, settings):
         save=True,
         progress=None,
     )
+    for camera in session.get("cameras", []):
+        if camera.get("video_id"):
+            auto_upload_completed_video(VideoService().load(camera["video_id"]), settings)
     st.session_state.last_record = {
         "video_id": session.get("primary_video_id"),
         "session_id": session.get("session_id"),
         "filename": f'dual_{session.get("session_id")}.json',
+        "document_name": session.get("document_name"),
+        "title": session.get("title"),
         "processing_status": session.get("processing_status"),
     }
     if session.get("composite_video_path") or any(c.get("processed_video_path") for c in session.get("cameras", [])):
@@ -1090,7 +1125,9 @@ def video_url_candidates(record):
 
 def fetch_cloud_playback_url(record, settings):
     existing = video_url_candidates(record)
-    if existing:
+    from services.cloud_playback_service import _as_utc
+    expiry = _as_utc(record.get("playback_url_expires_at"))
+    if existing and (expiry is None or expiry > datetime.now(timezone.utc)):
         return existing[0]
     if not settings:
         return None
@@ -1115,6 +1152,8 @@ def fetch_cloud_playback_url(record, settings):
                     **{url_key: result["public_url"]},
                     playback_video_url=result["public_url"],
                     playback_source=result["public_url"],
+                    playback_url_created_at=result.get("created_at"),
+                    playback_url_expires_at=result.get("expires_at"),
                     playback_format="webm" if url_key == "supabase_webm_url" else "mp4",
                 )
                 record.update(updated)
@@ -1211,7 +1250,34 @@ def playback_diagnostics(record, selected_path=None):
     return rows
 
 
+def account_videos(videos=None):
+    from services.account_identity import can_access_video
+    try:
+        principal = AdminAuthService().decode_access_token(st.session_state.get("admin_token", ""))
+    except (ValueError, RuntimeError):
+        return []
+    return [record for record in (VideoService().list_videos() if videos is None else videos)
+            if can_access_video(record, principal)]
+
+
+def close_account_capture():
+    """Finalize existing evidence before releasing a signed-out session's camera."""
+    manager = st.session_state.get("camera_manager")
+    if manager is None:
+        return
+    if manager.active:
+        manager.stop()
+        if isinstance(manager, DualCameraUIManager) and manager.session:
+            dual_session_service.save_session(manager.session)
+    if isinstance(manager, DualCameraUIManager):
+        manager.close_preview()
+    st.session_state.camera_manager = None
+
+
 def render_video_player(record, settings=None):
+    if not any(item.get("video_id") == record.get("video_id") for item in account_videos()):
+        st.warning("Video not available for this account.")
+        return None
     fetch_cloud_playback_url(record, settings)
     playback_info = get_best_playback_info(record)
     source = playback_info.get("source")
@@ -1282,15 +1348,15 @@ def get_camera_state(_settings):
     return camera_manager, active
 
 
-def stop_and_process(camera_manager, settings):
+def stop_and_process(camera_manager, settings, already_stopped=False):
     if isinstance(camera_manager, DualCameraUIManager):
-        return stop_and_process_dual(camera_manager, settings)
+        return stop_and_process_dual(camera_manager, settings, already_stopped=already_stopped)
 
     processing_status = st.status("Processing detection overlays...", expanded=True)
-    record = camera_manager.stop()
+    record = camera_manager.record if already_stopped else camera_manager.stop()
     st.session_state.camera_manager = None
     unlink_location_from_video()
-    record = VideoProcessingService(
+    VideoProcessingService(
         settings,
         cached_model(settings["model_name"]),
         cached_ocr() if settings["enable_ocr"] else None,
@@ -1298,6 +1364,7 @@ def stop_and_process(camera_manager, settings):
     IncidentService().sync_generated(
         [record], StolenVehicleService().list_reports()
     )
+    auto_upload_completed_video(record, settings)
     st.session_state.last_record = record
     notifier = NotificationService(notification_settings(settings))
     if record.get("processed_video_path"):
@@ -1332,6 +1399,41 @@ def stop_and_process(camera_manager, settings):
     return record
 
 
+def name_completed_recording(camera_manager, name):
+    name = str(name).strip()
+    if not name or len(name) > 120:
+        raise ValueError("Enter a document name between 1 and 120 characters.")
+    if isinstance(camera_manager, DualCameraUIManager):
+        camera_manager.session.update(document_name=name, title=name)
+        for camera in camera_manager.session.get("cameras", []):
+            camera.update(document_name=name, title=f"{name} · {camera.get('label') or camera.get('role', 'Camera')}")
+        dual_session_service.save_session(camera_manager.session)
+    else:
+        camera_manager.record.update(document_name=name, title=name)
+        VideoService().save(camera_manager.record)
+    return name
+
+
+@st.dialog("Save recording", dismissible=False)
+def save_recording_dialog():
+    pending = st.session_state.get("pending_recording_save")
+    if not pending:
+        return
+    st.caption("Recording has stopped. Name this document before processing and upload.")
+    with st.form("recording_document_name"):
+        name = st.text_input("Document name", value=pending["default_name"], max_chars=120)
+        submitted = st.form_submit_button("Save and upload", type="primary")
+    if submitted:
+        try:
+            name_completed_recording(pending["manager"], name)
+        except ValueError as exc:
+            st.error(str(exc))
+            return
+        stop_and_process(pending["manager"], pending["settings"], already_stopped=True)
+        st.session_state.pop("pending_recording_save", None)
+        st.rerun()
+
+
 def dash_cam_page(settings):
     from core.capture_mode import browser_capture_enabled
     browser_mode = browser_capture_enabled(settings)
@@ -1346,7 +1448,7 @@ def dash_cam_page(settings):
     )
     gps = location_status(settings)
     storage_rows = StorageService().status()
-    videos = VideoService().list_videos()
+    videos = account_videos()
     latest_videos = videos[:3]
     latest_record = latest_videos[0] if latest_videos else {}
     latest_event = latest_event_from_record(latest_record) if latest_record else {}
@@ -1394,7 +1496,7 @@ def dash_cam_page(settings):
             st.caption("Closing preview does not stop an independently running driver-monitoring camera.")
     controls = st.columns([1.2, 1.2, 1.2, 4])
     with controls[0]:
-        if st.button("Start Recording", type="primary", disabled=active, width="stretch"):
+        if st.button("Start Recording", type="primary", disabled=active or bool(st.session_state.get("pending_recording_save")), width="stretch"):
             try:
                 if isinstance(camera_manager, DualCameraUIManager):
                     camera_manager.start()
@@ -1417,9 +1519,16 @@ def dash_cam_page(settings):
     with controls[1]:
         if st.button("Stop Recording", disabled=not active, width="stretch"):
             if camera_manager:
-                stop_and_process(camera_manager, settings)
+                camera_manager.stop()
+                unlink_location_from_video()
+                st.session_state.pending_recording_save = {
+                    "manager": camera_manager, "settings": dict(settings),
+                    "default_name": f"Recording {datetime.now():%Y-%m-%d %H:%M:%S}",
+                }
             active = False
             preview_active = bool(isinstance(camera_manager, DualCameraUIManager) and camera_manager.preview_active)
+    if st.session_state.get("pending_recording_save"):
+        save_recording_dialog()
     with controls[2]:
         if st.button("SOS", width="stretch"):
             active_contacts = ContactService().active_count()
@@ -1447,6 +1556,15 @@ def dash_cam_page(settings):
         st.markdown('<div class="panel-title">Live Dash Cam</div>', unsafe_allow_html=True)
         preview_label = "Rear / cabin" if browser_mode else st.radio("Preview camera", ["Both cameras", "Main camera", "Rear / cabin"], horizontal=True, key="camera_preview_layout")
         smooth_preview = st.toggle("Smooth live preview", value=True, help="Show the latest camera frames. Turn off to inspect boxes on exact AI sample frames.")
+        live_ai = st.toggle("Live AI", value=True, key="live_ai_enabled",
+                            help="Pause live object detection, tracking, OCR and driver monitoring to compare camera FPS. Recording and later object analysis stay available.")
+        if camera_manager is not None:
+            camera_manager.set_live_ai_enabled(live_ai)
+            if not isinstance(camera_manager, DualCameraUIManager):
+                from services.driver_monitoring.runtime import set_live_ai_enabled
+                set_live_ai_enabled(live_ai)
+        if not live_ai:
+            st.caption("Live AI paused: no live detections or driver warnings. Recording continues; saved video is analyzed after Stop Recording.")
         if isinstance(camera_manager, DualCameraUIManager):
             camera_manager.smooth_preview = smooth_preview
             camera_manager.preview_role = {"Both cameras": "both", "Main camera": "front", "Rear / cabin": "rear"}[preview_label]
@@ -1476,6 +1594,7 @@ def dash_cam_page(settings):
         st.caption("Object detection runs on every connected camera. Driver monitoring uses the rear/cabin camera.")
         telemetry_box = st.empty()
         source_box = st.empty()
+        fps_box = st.empty()
 
     bottom_metrics_box = st.empty()
     location_box = st.empty()
@@ -1507,9 +1626,20 @@ def dash_cam_page(settings):
         plate = event.get("plate_text") or (latest_summary.get("plates_detected", ["None"]) or ["None"])[0]
         people = event.get("people_count", latest_summary.get("people_count_max", 0))
         vehicles = event.get("vehicle_count", latest_summary.get("vehicle_count_max", 0))
+        object_count = len(objects) or sum(latest_summary.get("object_counts", {}).values())
+        if not live_ai:
+            label_text = movement = "PAUSED"
+            plate = "Paused"
+            people = vehicles = object_count = 0
         storage_ready = sum(1 for row in storage_rows if row["Exists"])
-        ai_status = "ERROR" if error else ("ONLINE" if active or preview_active else "STANDBY")
-        source_box.caption(metrics.get("camera_status") or "Connect your dashcam or DroidCam client to begin.")
+        ai_status = "PAUSED" if not live_ai else ("ERROR" if error else ("ONLINE" if active or preview_active else "STANDBY"))
+        camera_sources = metrics.get("camera_sources", [])
+        if camera_sources:
+            fps_box.dataframe(pd.DataFrame(camera_sources).rename(columns={"label": "Camera", "fps": "Measured FPS", "target_fps": "Target FPS", "resolution": "Resolution", "status": "Status"}).drop(columns=["role"]),
+                              hide_index=True, width="stretch")
+        else:
+            fps_box.caption(f"Camera: {metrics.get('camera_fps', 0):.1f} FPS · Preview: up to 15 FPS")
+        source_box.caption((metrics.get("camera_status") or "Connect your dashcam or DroidCam client to begin.") + " · Dashboard preview: up to 15 FPS.")
         telemetry_box.markdown(
             f"""
             <div class="metric-grid" style="grid-template-columns:1fr">
@@ -1523,7 +1653,7 @@ def dash_cam_page(settings):
             f"""
             <div class="metric-grid" style="margin-top:.85rem">
               <div class="metric-card"><div class="metric-label">AI Scanner</div><div class="metric-value" style="font-size:1.05rem;color:#22c55e">{ai_status}</div><div class="muted">Processing frames</div><div class="metric-spark"></div></div>
-              <div class="metric-card"><div class="metric-label">Objects Detected</div><div class="metric-value">{len(objects) or sum(latest_summary.get("object_counts", {}).values())}</div><div class="muted">Vehicles {vehicles} / People {people}</div></div>
+              <div class="metric-card"><div class="metric-label">Objects Detected</div><div class="metric-value">{object_count}</div><div class="muted">Vehicles {vehicles} / People {people}</div></div>
               <div class="metric-card"><div class="metric-label">Movement</div><div class="metric-value" style="font-size:1rem;color:{'#22c55e' if movement == 'CLEAR' else '#facc15'}">{movement}</div><div class="metric-spark"></div></div>
               <div class="metric-card"><div class="metric-label">Latest Plate</div><div class="metric-value" style="font-size:1.25rem">{plate}</div><div class="muted">Latest plate scan</div></div>
               <div class="metric-card"><div class="metric-label">Storage</div><div class="metric-value">{int((storage_ready / max(len(storage_rows), 1)) * 100)}%</div><div class="muted">{storage_ready}/{len(storage_rows)} folders ready</div><div class="metric-spark"></div></div>
@@ -1615,7 +1745,7 @@ def dash_cam_page(settings):
         render_performance_probe(camera_manager.manager)
     if st.session_state.get("last_record"):
         record = st.session_state.last_record
-        st.success(f'Saved {record["filename"]}. {record.get("processing_status", "")}')
+        st.success(f'Saved {record.get("title") or record.get("document_name") or record["filename"]}. {record.get("processing_status", "")}')
         if record.get("compression_status") == "fallback":
             st.warning(record.get("compression_message") or "Compression unavailable. Saved compatible fallback video.")
         if record.get("processed_compression_status") == "fallback":
@@ -1627,6 +1757,8 @@ def video_matches_query(video, query):
         return True
     query = query.lower()
     haystack = [
+        video.get("document_name") or "",
+        video.get("title") or "",
         video.get("filename", ""),
         video.get("started_at", ""),
         " ".join(video.get("objects_summary", {}).get("plates_detected", [])),
@@ -1676,11 +1808,18 @@ def upload_processed_video_background(video_id, settings, task_id=None):
         record = service.load(video_id)
         if task_id:
             queue.update_task(task_id, "uploading_supabase", 30, "Uploading processed video...")
+        from services.recording_upload_service import retry_source
+        from services.account_identity import video_owner
+        source = retry_source(record)
+        owner = video_owner(record)
         upload = SupabaseService(
             settings.get("supabase_url", ""),
             settings.get("supabase_anon_key", ""),
             settings.get("supabase_bucket", "videos"),
-        ).upload_processed_video(record)
+            user_id=owner,
+        ).upload_processed_video(source, recording_id=record["video_id"], bucket=settings.get("supabase_bucket", "videos"))
+        if not upload.get("verified"):
+            raise RuntimeError("Supabase upload was not verified.")
         uploaded_media = True
 
         if task_id:
@@ -1690,6 +1829,9 @@ def upload_processed_video_background(video_id, settings, task_id=None):
                 "supabase_bucket": upload["bucket"],
                 "supabase_processed_path": upload["object_name"],
                 "supabase_processed_url": upload["public_url"],
+                "playback_video_url": upload["public_url"],
+                "playback_url_created_at": upload.get("playback_url_created_at"),
+                "playback_url_expires_at": upload.get("playback_url_expires_at"),
                 "supabase_webm_url": upload.get("webm_url") or record.get("supabase_webm_url"),
                 "supabase_mp4_url": upload.get("mp4_url") or record.get("supabase_mp4_url"),
                 "upload_webm_path": upload.get("webm_path") or record.get("upload_webm_path"),
@@ -1699,6 +1841,8 @@ def upload_processed_video_background(video_id, settings, task_id=None):
             }
         )
         record["supabase_upload_status"] = "uploaded"
+        record["upload_status"] = "metadata_pending"
+        record["file_size_bytes"] = upload.get("size_bytes", source.stat().st_size)
         service.save(record)
         from services.supabase_database_service import SupabaseDatabaseService
         if SupabaseDatabaseService().enabled:
@@ -1712,6 +1856,9 @@ def upload_processed_video_background(video_id, settings, task_id=None):
                 queue.update_task(task_id, "syncing_firebase", 75, "Saving Firebase video document...")
             firebase_result = firebase_service_from_settings(settings).push_video_link(record, upload["public_url"])
             database_result = firebase_result
+
+        if not database_result.get("configured"):
+            raise RuntimeError("Video object verified, but cloud metadata was not acknowledged. Local source retained.")
 
         service.update_sync_fields(
             video_id,
@@ -1737,6 +1884,8 @@ def upload_processed_video_background(video_id, settings, task_id=None):
             firebase_push_url=settings.get("firebase_push_url", ""),
             firebase_push_result=firebase_result,
             sync_error=None,
+            cloud_ready=True,
+            upload_status="uploaded",
         )
         if task_id:
             queue.update_task(task_id, "complete", 100, "Upload complete")
@@ -1751,6 +1900,7 @@ def upload_processed_video_background(video_id, settings, task_id=None):
                     "supabase_processed_url": upload["public_url"],
                 },
             )
+        return upload
     except Exception as exc:
         if task_id:
             queue.update_task(task_id, "failed", 100, "Upload failed", str(exc))
@@ -1760,6 +1910,8 @@ def upload_processed_video_background(video_id, settings, task_id=None):
             supabase_upload_status="uploaded" if uploaded_media else "failed",
             supabase_upload_error=None if uploaded_media else str(exc),
             sync_error=str(exc),
+            cloud_ready=False,
+            upload_status="metadata_pending" if uploaded_media else "failed",
         )
         if settings.get("notify_on_sync", True):
             NotificationService(notification_settings(settings)).notify(
@@ -1771,7 +1923,33 @@ def upload_processed_video_background(video_id, settings, task_id=None):
             )
 
 
+_upload_queue_lock = threading.Lock()
+
+
+def auto_upload_completed_video(record, settings):
+    """Queue each finalized compressed recording; keep failures available for retry."""
+    if not record or record.get("processing_error") or record.get("processed_compression_status") != "success":
+        return None
+    if record.get("supabase_upload_status") == "uploaded":
+        return None
+    try:
+        return queue_processed_video_upload(record, settings)
+    except Exception as exc:
+        VideoService().update_sync_fields(record["video_id"], supabase_upload_status="failed",
+                                         upload_status="failed", sync_status="Sync failed", sync_error=str(exc),
+                                         supabase_upload_error=str(exc))
+        return None
+
+
 def queue_processed_video_upload(record, settings):
+    with _upload_queue_lock:
+        for task in UploadQueueService().active_tasks():
+            if task.get("video_id") == record["video_id"]:
+                return task
+        return _queue_processed_video_upload(record, settings)
+
+
+def _queue_processed_video_upload(record, settings):
     processed_path = (
         record.get("upload_video_path")
         or record.get("compressed_processed_path")
@@ -1805,21 +1983,7 @@ def queue_processed_video_upload(record, settings):
 
 
 def retry_processed_video_upload(record, settings):
-    task = UploadQueueService().retry_task(record["video_id"], "Retrying processed video upload...")
-    VideoService().update_sync_fields(
-        record["video_id"],
-        sync_status="Upload retry queued",
-        supabase_upload_status="queued",
-        supabase_upload_error=None,
-        sync_error=None,
-    )
-    worker = threading.Thread(
-        target=upload_processed_video_background,
-        args=(record["video_id"], dict(settings), task["task_id"]),
-        daemon=True,
-    )
-    worker.start()
-    return task
+    return queue_processed_video_upload(record, settings)
 
 
 def retry_firebase_sync(record, settings):
@@ -1991,7 +2155,7 @@ def render_cloud_videos(settings):
         st.info("No cloud video records found yet.")
         return
     query = st.text_input("Search cloud videos")
-    docs = [doc for doc in docs if cloud_video_matches_query(doc, query)]
+    docs = [doc for doc in account_videos(docs) if cloud_video_matches_query(doc, query)]
     if not docs:
         st.warning("No cloud videos match that search.")
         return
@@ -2037,7 +2201,7 @@ def videos_page(service, settings):
     if source == "Cloud Videos":
         render_cloud_videos(settings)
         return
-    videos = service.list_videos()
+    videos = account_videos(service.list_videos())
     if not videos:
         st.info("No local recordings yet.")
         return
@@ -2084,7 +2248,7 @@ def videos_page(service, settings):
                 with col:
                     with st.container(border=True):
                         st.markdown('<div class="evidence-thumb">VIDEO</div>', unsafe_allow_html=True)
-                        st.markdown(f'#### {video.get("filename", "Recording")}')
+                        st.markdown(f'#### {video.get("title") or video.get("document_name") or video.get("filename", "Recording")}')
                         st.caption(video.get("processing_status", video.get("sync_status", "Local evidence")))
                         c1, c2 = st.columns(2)
                         c1.metric("Duration", format_duration(video.get("duration_seconds", 0)))
@@ -2099,7 +2263,7 @@ def videos_page(service, settings):
         st.warning("No videos match that search/filter.")
         return
     labels = {
-        f'{video["filename"]} | {video.get("started_at", "")[:16]}': video["video_id"]
+        f'{video.get("title") or video.get("filename")} | {video["video_id"]}': video["video_id"]
         for video in filtered
     }
     selected_video_id = labels[st.selectbox("Open recording", list(labels))]
@@ -3125,6 +3289,7 @@ def user_account_page(principal):
     st.text("Username: " + principal["username"])
     st.info("Use the sidebar to access cameras, videos, reports, emergency contacts and your vehicle profile.")
     if st.button("Sign out", key="user-sign-out"):
+        close_account_capture()
         st.session_state.pop("admin_token", None)
         st.session_state.admin_authenticated = False
         st.session_state.admin_account = None
@@ -3299,6 +3464,7 @@ def main():
     try:
         principal = AdminAuthService().decode_access_token(st.session_state.get("admin_token", ""))
     except (ValueError, RuntimeError):
+        close_account_capture()
         st.session_state.admin_authenticated = False
         st.session_state.admin_account = None
         account_access_page()
@@ -3306,6 +3472,12 @@ def main():
     st.session_state.admin_authenticated = principal["role"] in {"admin", "super_admin"}
     st.session_state.admin_account = principal if st.session_state.admin_authenticated else None
     settings = load_settings()
+    from services.account_identity import account_uid
+    settings["recording_user_id"] = account_uid(principal)
+    settings["live_ai_enabled"] = st.session_state.get("live_ai_enabled", True)
+    existing_camera = st.session_state.get("camera_manager")
+    if existing_camera is not None and existing_camera.settings.get("recording_user_id") != settings["recording_user_id"]:
+        close_account_capture()
     if not privacy_permission_gate(settings):
         return
     from services.supabase_sync_service import ensure_cloud_sync

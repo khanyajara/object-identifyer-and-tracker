@@ -12,7 +12,9 @@ def driver_status():
         runtime = get_runtime()
         data = runtime.snapshot()
         fatigue = data.get("fatigue", {})
-        if fatigue.get("severity") in {"medium", "high"}:
+        if data.get("live_ai_enabled") is False:
+            st.caption("DRIVER MONITORING · Paused with Live AI")
+        elif fatigue.get("severity") in {"medium", "high"}:
             st.warning("Possible fatigue detected. Stop safely and take a break.")
         elif data["identity_status"] == "verified":
             name = html.escape(data["driver_display_name"])

@@ -19,7 +19,10 @@ class CameraProcessingTests(unittest.TestCase):
                 processing, "processed_path_for", return_value="processed.webm"
             ), patch.object(
                 processing, "_built_in_pass", return_value=(ok, events, error)
-            ) as process:
+            ) as process, patch(
+                'services.compression_service.CompressionService.compress_for_playback',
+                return_value={'ok': True, 'path': 'compressed.mp4', 'message': 'done'}
+            ):
                 progress = Mock()
                 result = processing.process_camera({}, camera, pipeline, progress)
                 process.assert_called_once_with(
